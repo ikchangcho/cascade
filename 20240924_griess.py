@@ -43,7 +43,7 @@ class GreissAssay:
 
 
     def detect_outliers_900(self):
-        """Detects outliers in data_900 using the rule 2*q75 - q25 or 2*q25 - q75."""
+        """Detects outliers in data_900."""
         if self.data_900 is None:
             raise ValueError("Data for 900 nm not loaded. Please call load_data() first.")
 
