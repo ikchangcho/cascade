@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. Load the CSV file into a numpy array
-data = np.loadtxt('data/20240914_Ik_NO2_standard_540_avg.csv', delimiter=',')
+data = np.loadtxt('data/20240914_Ik_NO2_standard_540_average.csv', delimiter=',')
 
 # 2. Reshape the array into 8 rows and 9 columns
 reshaped_data = data.reshape(8, 9)
