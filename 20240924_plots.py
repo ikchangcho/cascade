@@ -1,103 +1,52 @@
-import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
+# 1. Load the CSV file into a numpy array
+data = np.loadtxt('data/20240914_Ik_NO2_standard_540_avg.csv', delimiter=',')
 
-class GreissAssay:
-    def __init__(self, filepath_540, filepath_900):
-        self.filepath_540 = filepath_540
-        self.filepath_900 = filepath_900
-        self.data_540 = None
-        self.data_900 = None
-        self.outliers = None
+# 2. Reshape the array into 8 rows and 9 columns
+reshaped_data = data.reshape(8, 9)
 
-    def load_data(self):
-        """Load 540 nm and 900 nm data from the respective CSV files"""
-        self.data_540 = self._process_csv(self.filepath_540)
-        self.data_900 = self._process_csv(self.filepath_900)
+# 3. Define x values
+x_values = np.array([2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0])
 
-    def _process_csv(self, filepath):
-        """Extracts rows 6, 7, 10, 11, 14, 15, ... and columns 0 and 1, and returns as a NumPy array."""
-        # Load the data
-        df = pd.read_csv(filepath, header=None)
+# 4. Check for rows where all three values are NaN, and remove those rows
+valid_rows = ~np.all(np.isnan(reshaped_data[:, :3]), axis=1)
 
-        # Get the number of rows in the DataFrame
-        num_rows = df.shape[0]
+# Filter out invalid rows from reshaped_data and x_values
+reshaped_data = reshaped_data[valid_rows]
+x_values = x_values[valid_rows]
 
-        # Generate row indices for rows 6, 7, 10, 11, 14, 15, ...
-        rows_to_extract = []
-        for n in range((num_rows - 6) // 4 + 1):
-            rows_to_extract.append(6 + 4 * n)
-            rows_to_extract.append(7 + 4 * n)
+# 5. Calculate the mean and standard deviation for the first three columns (replicates), ignoring NaN values
+mean_values = np.nanmean(reshaped_data[:, :3], axis=1)
+std_dev = np.nanstd(reshaped_data[:, :3], axis=1)
 
-        # Extract only the specified columns (0 and 1) and the rows
-        extracted_df = df.loc[rows_to_extract, [0, 1]]
+# 6. Plot the mean with error bars (standard deviation), with smaller dots
+plt.figure()
+plt.errorbar(x_values, mean_values, yerr=std_dev, fmt='o', capsize=5, markersize=5)
 
-        # Convert the extracted data to float values using pd.to_numeric
-        extracted_df[0] = pd.to_numeric(extracted_df[0], errors='coerce')
-        extracted_df[1] = pd.to_numeric(extracted_df[1], errors='coerce')
+# 7. Fit a quadratic function (2nd degree polynomial) using the remaining valid data
+coefficients = np.polyfit(x_values, mean_values, 2)
+quadratic_fit = np.poly1d(coefficients)
 
-        # Convert the extracted data into a NumPy array
-        extracted_array = extracted_df.to_numpy(dtype=float)
+# Generate points for the fit curve
+x_fit = np.linspace(min(x_values), max(x_values), 100)
+y_fit = quadratic_fit(x_fit)
+equation_text = f'y = {coefficients[0]:.4f}x² + {coefficients[1]:.4f}x + {coefficients[2]:.4f}'
 
-        return extracted_array
+# Plot the fitted quadratic curve
+plt.plot(x_fit, y_fit, label=equation_text, linestyle='--')
 
-    def compute_averages_540(self):
-        """
-        Compute the average of 540 nm data, ignoring outliers in the corresponding 900 nm sections.
-        Take the average of every two rows (rows 1 and 2 give one average, and so on).
-        """
-        if self.data_540 is None:
-            raise ValueError("Data for 540 nm not loaded. Please call load_data() first.")
+# # Dynamically adjust the position of the equation text to fit on the plot
+# x_text_pos = np.mean(x_values)
+# y_text_pos = np.max(mean_values) + (np.max(mean_values) - np.min(mean_values)) * 0.1
+# plt.text(x_text_pos, y_text_pos, equation_text, fontsize=10, color='black')
 
-        # Get the mask for valid data from the 900 nm analysis
-        mask = self.detect_outliers_900()
+# Labels and title
+plt.xlabel('[$NO_2$] (mM)')
+plt.ylabel('Absorbance')
+plt.title('$NO_2$ Standard Curve (540 nm)')
+plt.legend()
 
-        # Apply the mask to the 540 nm data (ignoring outliers by setting them to NaN)
-        flat_data_540 = self.data_540.flatten()
-        flat_data_540[mask] = np.nan
-
-        reshaped_array = flat_data_540.reshape(-1, 4)
-        averages_540 = np.empty(reshaped_array.shape[0])
-
-        # Iterate over each row in the reshaped array and calculate the mean, handling NaNs
-        for i, row in enumerate(reshaped_array):
-            if np.all(np.isnan(row)):
-                # If all values are NaN, return NaN
-                averages_540[i] = np.nan
-            else:
-                # Otherwise, compute the mean ignoring NaN
-                averages_540[i] = np.nanmean(row)
-
-        return averages_540
-
-    def detect_outliers_900(self):
-        """Detects outliers in data_900 using the rule 2*q75 - q25 or 2*q25 - q75."""
-        if self.data_900 is None:
-            raise ValueError("Data for 900 nm not loaded. Please call load_data() first.")
-
-        # Flatten the data_900 array to apply quartile calculations
-        flat_data_900 = self.data_900.flatten()
-
-        # Calculate the 25th and 75th percentiles (q25 and q75)
-        q25 = np.percentile(flat_data_900, 25)
-        q75 = np.percentile(flat_data_900, 75)
-
-        # Calculate the outlier thresholds
-        upper_threshold = q75 + 1.5 * (q75 - q25)
-        lower_threshold = q25 - 1.5 * (q75 - q25)
-
-        # Create a boolean mask where True indicates outliers
-        mask = (flat_data_900 > upper_threshold) | (flat_data_900 < lower_threshold)
-
-        return mask
-
-
-
-if __name__ == '__main__':
-    filepath_540 = 'data/20240914_Ik_NO2_standard_540.csv'
-    filepath_900 = 'data/20240914_Ik_NO2_standard_900.csv'
-    griess = GreissAssay(filepath_540, filepath_900)
-    griess.load_data()
-
-
-
+# Display the plot
+plt.show()
