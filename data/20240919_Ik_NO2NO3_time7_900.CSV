@@ -1,0 +1,128 @@
+User: USER,Path: C:\Program Files (x86)\BMG\CLARIOstar\User\Data,Test run no.: 139
+Test name: Ik_NO2NO3,Date: 9/19/2024,Time: 9:21:08 PM
+
+ID1: time7,
+Absorbance
+
+
+A01
+X1 Raw Data (Well scan) 900
+0.082,0.0541
+0.0668,0.0496
+
+A02
+X2 Raw Data (Well scan) 900
+0.0721,0.0581
+0.0552,0.0492
+
+A03
+X3 Raw Data (Well scan) 900
+0.0675,0.0718
+0.0555,0.0492
+
+A04
+X4 Raw Data (Well scan) 900
+0.0661,0.0492
+0.0932,0.0466
+
+A05
+X5 Raw Data (Well scan) 900
+0.0663,0.0496
+0.1117,0.0468
+
+A06
+X6 Raw Data (Well scan) 900
+0.063,0.0506
+0.0706,0.0471
+
+A07
+X7 Raw Data (Well scan) 900
+0.0742,0.053
+0.0807,0.049
+
+A08
+X8 Raw Data (Well scan) 900
+0.0565,0.0967
+0.0742,0.0486
+
+A09
+X9 Raw Data (Well scan) 900
+0.0613,0.0616
+0.07,0.0506
+
+A10
+X10 Raw Data (Well scan) 900
+0.061,0.0993
+0.1123,0.0525
+
+A11
+X11 Raw Data (Well scan) 900
+0.1902,0.0549
+0.0678,0.0537
+
+A12
+X12 Raw Data (Well scan) 900
+0.1307,0.0783
+0.0951,0.0639
+
+B01
+X13 Raw Data (Well scan) 900
+0.0582,0.0461
+0.0732,0.0474
+
+B02
+X14 Raw Data (Well scan) 900
+0.0643,0.0552
+0.0533,0.0491
+
+B03
+X15 Raw Data (Well scan) 900
+0.0556,0.0472
+0.085,0.0498
+
+B04
+X16 Raw Data (Well scan) 900
+0.0684,0.0437
+0.0479,0.0457
+
+B05
+X17 Raw Data (Well scan) 900
+0.0516,0.0526
+0.0502,0.0478
+
+B06
+X18 Raw Data (Well scan) 900
+0.0625,0.0426
+0.0515,0.0458
+
+B07
+X19 Raw Data (Well scan) 900
+0.052,0.0609
+0.0919,0.0546
+
+B08
+X20 Raw Data (Well scan) 900
+0.06,0.0554
+0.1023,0.056
+
+B09
+X21 Raw Data (Well scan) 900
+0.071,0.0472
+0.1309,0.0575
+
+B10
+X22 Raw Data (Well scan) 900
+0.051,0.0571
+0.0959,0.0547
+
+B11
+X23 Raw Data (Well scan) 900
+0.0641,0.0488
+0.1187,0.0761
+
+B12
+X24 Raw Data (Well scan) 900
+0.1418,0.0924
+0.0519,0.0524
+
+
