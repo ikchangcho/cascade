@@ -97,21 +97,21 @@ class GreissAssay:
         return averages_540
 
 if __name__ == '__main__':
-    # filepath_540 = 'data/20240914_Ik_NO2_standard_540.csv'
-    # filepath_900 = 'data/20240914_Ik_NO2_standard_900.csv'
-    # griess = GreissAssay(filepath_540, filepath_900)
-    # griess.load_data()
-    # griess.compute_averages_540()
+    filepath_540 = 'data/20240914_Ik_NO2NO3_standard_540.csv'
+    filepath_900 = 'data/20240914_Ik_NO2NO3_standard_900.csv'
+    griess = GreissAssay(filepath_540, filepath_900)
+    griess.load_data()
+    griess.compute_averages_540()
 
-    patterns = ['data/*_Ik_NO2_time*_540.CSV', 'data/*_Ik_NO2NO3_time*_540.CSV']
-
-    for pattern in patterns:
-        filepaths_540 = glob.glob(pattern)
-
-        for filepath_540 in filepaths_540:
-            filepath_900 = filepath_540.replace('540', '900')
-
-            griess = GreissAssay(filepath_540, filepath_900)
-            griess.load_data()
-            griess.compute_averages_540()
+    # patterns = ['data/*_Ik_NO2_time*_540.CSV', 'data/*_Ik_NO2NO3_time*_540.CSV']
+    #
+    # for pattern in patterns:
+    #     filepaths_540 = glob.glob(pattern)
+    #
+    #     for filepath_540 in filepaths_540:
+    #         filepath_900 = filepath_540.replace('540', '900')
+    #
+    #         griess = GreissAssay(filepath_540, filepath_900)
+    #         griess.load_data()
+    #         griess.compute_averages_540()
 
