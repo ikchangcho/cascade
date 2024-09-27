@@ -47,6 +47,14 @@ def remove_bubbles(data_in, data_540, data_900):
 
 
 def read_griess(meta_fn, data_fn=None, data_540_fn=None, data_900_fn=None):
+    '''
+    Bubbles correction and take average on 540 nm absorbance data
+    :param meta_fn:
+    :param data_fn:
+    :param data_540_fn:
+    :param data_900_fn:
+    :return: N x 2 dataframe
+    '''
     # returns absorbance data at 540 nm
     # corrects for bubbles if well scan measurements are provided
     # there are three valid cases that this function works for:
@@ -73,7 +81,7 @@ def read_griess(meta_fn, data_fn=None, data_540_fn=None, data_900_fn=None):
         bub_900 = find_outliers(data_900)
         for row in data_540.index:
             if sum(np.isnan(bub_900.loc[row])) < 4:
-                data_540.loc[row][bub_900.loc[row]] = np.NaN  # Set bubbles to NaN
+                data_540.loc[row, bub_900.loc[row]] = np.nan  # Set bubbles to NaN
             else:
                 data_540.loc[row] = data_540.loc[row] - data_900.loc[row]
         data_out = data_540.median(axis=1)

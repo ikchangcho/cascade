@@ -1,6 +1,6 @@
 #below is code to fit denitrification data for a single strain.
 import sys
-sys.path.append('/Users/kylecrocker/Documents/Research/microbial_ecology/20240907_kiseok')
+sys.path.append('/Users/kylecrocker/Documents/Research/microbial_ecology/custom_functions')
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

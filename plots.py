@@ -21,3 +21,5 @@ params = {'legend.fontsize': 'xx-large',
          'xtick.labelsize':'xx-large',
          'ytick.labelsize':'xx-large'}
 pylab.rcParams.update(params)
+
+

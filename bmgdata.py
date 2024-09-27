@@ -95,6 +95,14 @@ def read_abs_endpoint(file_name):
     return df
     
 def read_abs_wellscan(file_name):
+    '''
+    load well scan data
+    :param meta_fn:
+    :param data_fn:
+    :param data_540_fn:
+    :param data_900_fn:
+    :return: N x 4 dataframe
+    '''
     #print(file_name)
     with open(file_name,encoding='latin_1') as csv_file:
         data = list(csv.reader(csv_file, delimiter=','))

@@ -1042,7 +1042,8 @@ def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, 
     NO2NO3_OD540[NO2NO3_OD540<0] = 0.0
     #print(NO2_OD540)
     #print(NO2NO3_OD540)
-
+        
+   
     #Returns inferred concentrations
     print("Calculated NO2, NO3 concentrations")
     NO2_mM = ((-g_fit[1] + np.sqrt(g_fit[1]**2 - 4*(g_fit[0]- NO2_OD540 )*g_fit[2]))/2/g_fit[2]).rename("NO2_mM") ## solve quadratic formula
@@ -1057,14 +1058,16 @@ def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, 
     print(NO3_mM)
 
     # combine it into a dataframe
-    df_read = pd.DataFrame()
-    df_read = df_read.append([NO2_OD540, NO2NO3_OD540, NO2_mM, NO2NO3_mM, NO3_mM]).T
+    df_read = pd.concat([NO2_OD540, NO2NO3_OD540, NO2_mM, NO2NO3_mM, NO3_mM], axis=1)
+    df_read['Well'] = df_read.index
 
     df_meta = pd.read_csv(meta_fn,index_col=0).dropna()
-    df_out = pd.concat([df_meta, df_read], axis=1)
-    df_out.to_excel(excel_output) 
+    df_out = pd.merge(df_meta, df_read, how='left', on='Well')
+    df_out.to_excel(excel_output, index=False ) 
     return
-    
+
+
+
 
 def load_plate_timeseries(meta_fn,od_fn,no2_fns,no2no3_540_fns,no2no3_900_fns,fit,pidx): #written by KG, added by KC 08/16/2021
     plate_meta = pd.read_csv(meta_fn,index_col=0).dropna()  #import metadata and drop rows with any empty elements
