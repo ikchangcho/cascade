@@ -62,7 +62,7 @@ def read_abs_endpoint(file_name):
             row = data[idx].copy()
             wl[j] = [int(i) for i in row[0].replace('nm','').split() if i.isdigit()][0]
 
-    #Find first data row and fill in data starting at that row.
+    #Find first data_20240914 row and fill in data_20240914 starting at that row.
     start_idx = find_first_well(data)
     for idx in range(start_idx,len(data)-1):
         row = data[idx].copy()
@@ -84,9 +84,9 @@ def read_abs_endpoint(file_name):
             else:
                 data_array = np.asarray(row, dtype=np.float64, order='C')
         except:
-            row_label.pop(-1) #if row contains unparseable data, remove label
+            row_label.pop(-1) #if row contains unparseable data_20240914, remove label
 
-    #Turn into data frame.
+    #Turn into data_20240914 frame.
     if temp_exists:
         df = pd.DataFrame(data_array,columns = np.append(wl,'T'),index = row_label)
     else:
@@ -95,19 +95,11 @@ def read_abs_endpoint(file_name):
     return df
     
 def read_abs_wellscan(file_name):
-    '''
-    load well scan data
-    :param meta_fn:
-    :param data_fn:
-    :param data_540_fn:
-    :param data_900_fn:
-    :return: N x 4 dataframe
-    '''
     #print(file_name)
     with open(file_name,encoding='latin_1') as csv_file:
         data = list(csv.reader(csv_file, delimiter=','))
 
-    #Find first data row and fill in data starting at that row.
+    #Find first data_20240914 row and fill in data_20240914 starting at that row.
     start_idx = find_first_well(data)
     row_label = []
     #print('above the loop')
@@ -125,21 +117,21 @@ def read_abs_wellscan(file_name):
             
             if 'data_array' in locals():
                 #print(row)
-                row[:] = [x for x in row if x] #removes blanks ('') which show up in some data and cause an error
+                row[:] = [x for x in row if x] #removes blanks ('') which show up in some data_20240914 and cause an error
                 #print(row)
                 #print('in the if')
                 data_array = np.vstack((data_array,np.asarray(row, dtype=np.float64, order='C')))
             else:
                 #print('in the else')
                 #print(row)
-                row[:] = [x for x in row if x] #removes blanks ('') which show up in some data and cause an error
+                row[:] = [x for x in row if x] #removes blanks ('') which show up in some data_20240914 and cause an error
                 #print(row)
                 data_array = np.asarray(row, dtype=np.float64, order='C')
         except:
             #print('in the except')
-            row_label.pop(-1) #if row contains unparseable data, remove label
+            row_label.pop(-1) #if row contains unparseable data_20240914, remove label
 
-    #Turn into data frame.
+    #Turn into data_20240914 frame.
     df = pd.DataFrame(data_array,index = row_label)
     
     return df

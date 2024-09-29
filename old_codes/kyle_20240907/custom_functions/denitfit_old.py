@@ -3,8 +3,6 @@
 #0.2 20210420 Removed computation of CIs for rates, which doesn't work for Nar and Nir strains because only one parameter is varied/fit.
 #0.2 20210421 Updated fitYields to fit an intercept as well, and treat Nar/Nir, Nar, and Nir differently. Changed CI to 68% (comparable to 1 standard error)
 #0.2.1 20210428 Added the computation of R2 to fityields. Added a function to compute the RMSE of a global fit.
-#0.2.2 20210609 Removed nan values from residuals before fitting.
-
 import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
@@ -12,7 +10,6 @@ from lmfit import Minimizer, conf_interval
 import statsmodels.api as sm
 from sklearn.metrics import r2_score
 import copy
-import random as rd
 
 class experiment:
     #This class contains the experimental data_20240914 for a given condition
@@ -27,7 +24,7 @@ class experiment:
         self.I = I
         self.t = t
         
-def fitYields(experiments):                   #kyle added offset 08/07/2021
+def fitYields(experiments):
     if experiments[0].phen == 'Nar/Nir':
         DelA = np.array([])
         DelI = np.array([])
@@ -56,7 +53,7 @@ def fitYields(experiments):                   #kyle added offset 08/07/2021
     mod = sm.OLS(DelOD, x)
     res = mod.fit()
     ci = res.conf_int(0.32)   # 68% confidence interval. comparable to 1 standard error
-    offset = res.params[2]
+    
     #compute R2
     DelOD_pred = res.predict()
     r2 = r2_score(DelOD,DelOD_pred)
@@ -73,9 +70,9 @@ def fitYields(experiments):                   #kyle added offset 08/07/2021
         gamI = res.params[0]
         ci = np.array((np.zeros(2),ci[0],ci[1]))
 
-    return gamA, gamI, ci, r2, offset
+    return gamA, gamI, ci, r2
         
-def fitRates(params,experiments,n=1):            
+def fitRates(params,experiments,n=1):
     fitter = Minimizer(residualGlobLMFit, params, fcn_args=(experiments,))
     result_brute = fitter.minimize(method='brute')
     best_result = copy.deepcopy(result_brute)
@@ -88,39 +85,6 @@ def fitRates(params,experiments,n=1):
     # return best_result, ci
     return best_result
 
-def fitRatesBootstrap(params,experiments,n=1,num_resamples=100):       #kyle added 08/09/2021 
-    raise NameError('Throws error, fix this!')
-    best_results = []
-    for i in range(num_resamples):
-        experiments_resample = []
-        for j in range(len(experiments)):
-            resampled_A = []
-            resampled_I = []
-            if (len(experiments[j].A[:,0]) != len(experiments[j].I[:,0])) or (np.ndim(np.asarray(experiments[j].t))>1):
-                raise NameError('check array dimensions')
-            for k in range(len(experiments[j].A)):
-                resampled_A.append(experiments[j].A[rd.randint(0,len(experiments[j].A)-1)])
-                resampled_I.append(experiments[j].I[rd.randint(0,len(experiments[j].I)-1)])
-            #print('original is ' + str(experiments[j].A))
-            experiments_resample.append(experiment(experiments[j].ID,experiments[j].phen,experiments[j].N0,experiments[j].Nend,experiments[j].A0,resampled_A,experiments[j].I0,resampled_I,experiments[j].t))
-            #print('resampled is ' + str(resampled_A))
-        #print(experiments)
-        #print(experiments_resample)
-        #error
-        fitter = Minimizer(residualGlobLMFit, params, fcn_args=(experiments_resample,))
-        result_brute = fitter.minimize(method='brute')
-        best_result = copy.deepcopy(result_brute)
-        #print(best_result.params['rA'].value)
-        for candidate in result_brute.candidates:
-            trial = fitter.minimize(method='leastsq', params=candidate.params)
-            if trial.chisqr < best_result.chisqr:
-                best_result = trial
-        best_results.append(best_result)
-    #compute 99% CI
-    # ci = conf_interval(fitter, best_result,sigmas=[0.99])
-    # return best_result, ci
-    return best_results
-
 def plotDenitFit(p,experiment,n=1, tick_labels=True, axes_labels=True):
     lines = np.array([[0.000,0.447,0.741],[0.850,0.325,0.098]])
     plt.rcParams.update({"text.usetex": False, 'font.size': 16});
@@ -129,7 +93,8 @@ def plotDenitFit(p,experiment,n=1, tick_labels=True, axes_labels=True):
     th = np.linspace(experiment.t[0],experiment.t[-1],256)
 #     y0 = np.append(experiment.N0, [experiment.A0, experiment.I0])
 #     th = np.linspace(0,experiment.t[-1],256)
-    yh = denitODE(y0,th,p,n)    
+    yh = denitODE(y0,th,p,n)
+    
     plt.plot(th,yh[:,-2],'-',color=(lines[0,0],lines[0,1],lines[0,2]),linewidth=4,alpha=0.5)
     plt.plot(th,yh[:,-1],'-',color=(lines[1,0],lines[1,1],lines[1,2]),linewidth=4,alpha=0.5)
     plt.plot(experiment.t,experiment.A.transpose(),'o',color=(lines[0,0],lines[0,1],lines[0,2]))
@@ -175,13 +140,10 @@ def RMSE(p,experiments,n=1):
 
 def residual(p,experiment,n=1):
     #Compute the residual vector for the A and I variables using the replicate measurements taken in a given condition
-    #print(experiment)
     y0 = np.append(experiment.N0, [np.nanmedian(experiment.A[:,0]), np.nanmedian(experiment.I[:,0])])
 #     y0 = np.append(experiment.N0, [experiment.A0, experiment.I0])
     yh = denitODE(y0,experiment.t,p,n)
-    res = np.ravel([experiment.A-yh[:,-2],experiment.I-yh[:,-1]])
-    res = res[~np.isnan(res)] #remove any nan elements
-    return res
+    return np.ravel([experiment.A-yh[:,-2],experiment.I-yh[:,-1]])
 
 def denitODE(y0,t,p,n=1):
     sol = odeint(F, y0, t, Dfun=J, args=(p,n), rtol=1e-6)

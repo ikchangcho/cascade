@@ -11,7 +11,7 @@ import statsmodels.api as sm
 
 
 def find_outliers(data):  # Modified by Kiseok Lee 230622
-    val_above = 1  # it was originally 1.5 (I alleviated the threshold because there were too many outliers)
+    val_above = 1.5
     print("returns true for elements more than " + str(val_above) + " interquartile ranges above the upper quartile")
     q75 = np.quantile(data, 0.75)
     q25 = np.quantile(data, 0.25)
@@ -90,7 +90,7 @@ def read_griess(meta_fn, data_fn=None, data_540_fn=None, data_900_fn=None):
     return data_out
 
 
-def plot_griess_fit(meta_fn, no2_fn, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
+def plot_griess_fit(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
                     no2no3_900_fn=None):  # KC added 08/06/2021
     meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
     meta = meta[['NO2', 'NO3']]  # keep only the NO2/NO3 concentration columns
@@ -167,7 +167,7 @@ def plot_griess_fit(meta_fn, no2_fn, no2_540_fn=None, no2_900_fn=None, no2no3_fn
     return
 
 
-def plot_vcl_fit(meta_fn, no2_fn, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
+def plot_vcl_fit(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
                  no2no3_900_fn=None):  # KC added 08/06/2021
     meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
     meta = meta[['NO2', 'NO3']]  # keep only the NO2/NO3 concentration columns
@@ -390,7 +390,7 @@ def plot_vcl_fit_only_nitrate_standards(meta_fn, no2_fn, no2_540_fn=None, no2_90
 
 
 # only use nitrate standards
-def plot_no3_fit(meta_fn, no2_fn, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
+def plot_no3_fit(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
                  no2no3_900_fn=None):  # Kiseok added 10/06/2021
     meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
     meta = meta[['NO2', 'NO3']]  # keep only the NO2/NO3 concentration columns
@@ -924,7 +924,7 @@ def plot_nitrate_standard_predict_no2no3(meta_fn, no2_fn, no2_540_fn=None, no2_9
     return
 
 
-def fit_griess(meta_fn, no2_fn, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
+def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
                no2no3_900_fn=None):
     meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
     meta = meta[['NO2', 'NO3']]  # keep only the NO2/NO3 concentration columns
@@ -1119,12 +1119,63 @@ def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, 
 
     # combine it into a dataframe
     df_read = pd.DataFrame()
-    df_read = df_read.append([NO2_OD540, NO2NO3_OD540, NO2_mM, NO2NO3_mM, NO3_mM]).T
+    df_read = pd.concat([df_read, pd.DataFrame([NO2_OD540, NO2NO3_OD540, NO2_mM, NO2NO3_mM, NO3_mM]).T])
 
     df_meta = pd.read_csv(meta_fn, index_col=0).dropna()
     df_out = pd.concat([df_meta, df_read], axis=1)
     df_out.to_excel(excel_output)
     return
+
+
+def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=None, no2_540_fn=None,
+                           no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None):
+    # read NO2
+    print(meta_fn)
+    print("Before subtracting blank value")
+    NO2_OD540_plus_blank = read_griess(meta_fn, data_fn=None, data_540_fn=no2_540_fn, data_900_fn=no2_900_fn).rename(
+        "NO2_OD540")
+    print(NO2_OD540_plus_blank)
+
+    # read NO2NO3
+    NO2NO3_OD540_plus_blank = read_griess(meta_fn, data_fn=None, data_540_fn=no2no3_540_fn,
+                                          data_900_fn=no2no3_900_fn).rename("NO2NO3_OD540")
+    print(NO2NO3_OD540_plus_blank)
+
+    # Get NO2
+    # subtract blanks
+    print("Subtracted blank value")
+    NO2_OD540 = NO2_OD540_plus_blank - no2_blank
+    # print(NO2_OD540)
+    NO2NO3_OD540 = NO2NO3_OD540_plus_blank - no2no3_blank
+    # print(NO2NO3_OD540)
+
+    NO2_OD540[NO2_OD540 < 0] = 0.0
+    NO2NO3_OD540[NO2NO3_OD540 < 0] = 0.0
+    # print(NO2_OD540)
+    # print(NO2NO3_OD540)
+
+    # Returns inferred concentrations
+    print("Calculated NO2, NO3 concentrations")
+    NO2_mM = ((-g_fit[1] + np.sqrt(g_fit[1] ** 2 - 4 * (g_fit[0] - NO2_OD540) * g_fit[2])) / 2 / g_fit[2]).rename(
+        "NO2_mM")  ## solve quadratic formula
+    NO2_mM[NO2_mM < 0] = 0.0  # make it zero if it is less than zero
+    NO2NO3_mM = ((-v_fit[1] + np.sqrt(v_fit[1] ** 2 - 4 * (v_fit[0] - NO2NO3_OD540) * v_fit[2])) / 2 / v_fit[2]).rename(
+        "NO2NO3_mM")  ## solve quadratic formula
+    NO2NO3_mM[NO2NO3_mM < 0] = 0.0  # make it zero if it is less than zero
+    NO3_mM = (NO2NO3_mM - NO2_mM).rename("NO3_mM")  ## solve quadratic formula
+    NO3_mM[NO3_mM < 0] = 0.0  # make it zero if it is less than zero
+
+    print(NO2_mM)
+    print(NO2NO3_mM)
+    print(NO3_mM)
+
+    # combine it into a dataframe
+    df_read = pd.DataFrame()
+    df_read = pd.concat([df_read, pd.DataFrame([NO2_OD540, NO2NO3_OD540, NO2_mM, NO2NO3_mM, NO3_mM]).T])
+    df_meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
+    df_out = pd.concat([df_meta, df_read], axis=1)
+    #df_out.to_csv(output_fn)
+    return df_out
 
 
 def load_plate_timeseries(meta_fn, od_fn, no2_fns, no2no3_540_fns, no2no3_900_fns, fit,

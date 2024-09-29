@@ -14,11 +14,9 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-meta_fn = 'data/standards_metadata.csv'
-data_540_fn = 'data/20240914_Ik_NO2_standard_540.CSV'
-data_900_fn = 'data/20240914_Ik_NO2_standard_900.CSV'
+meta_fn = '/Users/ik/Pycharm/cascade/data_20240914/sample_metadata.csv'
+data_540_fn = 'data_20240914/20240914_Ik_NO2_standard_540.CSV'
+data_900_fn = 'data_20240914/20240914_Ik_NO2_standard_900.CSV'
 
-bd.read_abs_wellscan(data_540_fn)
-data = gr.read_griess(meta_fn, data_540_fn=data_540_fn, data_900_fn=data_900_fn)
-fn = glob.glob(f"/Users/ik/Pycharm/cascade/data/*_Ik_NO2NO3_time0_900*")[0]
-print(bd.read_abs_wellscan(fn))
+meta_df = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
+print(meta_df)
