@@ -117,5 +117,5 @@ for no2_540_fn, no2_900_fn, no2no3_540_fn, no2no3_900_fn in zip(no2_540_fns, no2
 no2_time_series = pd.DataFrame(no2_time_series_dic)
 no3_time_series = pd.DataFrame(no3_time_series_dic)
 meta_df = pd.read_csv(meta_fn).dropna(how='all')
-time = np.array([0, 97, 207, 330, 518, 905, 1400, 1770])/60
+time = np.array([0, 22*60 + 35-21*60-50, 34*60 + 40-21*60-50, 39*60 + 40-21*60-50, 43*60+55-21*60-50, 58*60+30-21*60-50, 63*60+20-21*60-50, 68*60+19-21*60-50])/60
 six_col_plot(no2_time_series, no3_time_series, meta_df)

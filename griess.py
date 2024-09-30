@@ -1128,7 +1128,7 @@ def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, 
 
 
 def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=None, no2_540_fn=None,
-                           no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None):
+                           no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None, extract_factor = 2.5): # Editted by Ikchang
     # read NO2
     print(meta_fn)
     print("Before subtracting blank value")
@@ -1164,6 +1164,10 @@ def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=Non
     NO2NO3_mM[NO2NO3_mM < 0] = 0.0  # make it zero if it is less than zero
     NO3_mM = (NO2NO3_mM - NO2_mM).rename("NO3_mM")  ## solve quadratic formula
     NO3_mM[NO3_mM < 0] = 0.0  # make it zero if it is less than zero
+
+    NO2_mM = NO2_mM * extract_factor
+    NO2NO3_mM = NO2NO3_mM * extract_factor
+    NO3_mM = NO3_mM * extract_factor
 
     print(NO2_mM)
     print(NO2NO3_mM)
