@@ -17,14 +17,14 @@ filepath = 'data_20240914'
 
 # create x axis from time points
 datetime_array = [
-    datetime(2024, 10, 1, 13, 1),
-    datetime(2024, 10, 2, 5, 0),
-    datetime(2024, 10, 2, 16, 12),
-    datetime(2024, 10, 3, 11, 11),
-    datetime(2024, 10, 3, 11, 11),
-    datetime(2024, 10, 3, 11, 11),
-    datetime(2024, 10, 3, 11, 11),
-    datetime(2024, 10, 3, 11, 11)]
+    datetime(2024, 1, 1, 21, 50),       # T0
+    datetime(2024, 1, 1, 22, 35),       # T1
+    datetime(2024, 1, 2, 10, 40),       # T2
+    datetime(2024, 1, 2, 15, 40),       # T3
+    datetime(2024, 1, 2, 19, 55),       # T4
+    datetime(2024, 1, 3, 10, 30),       # T5
+    datetime(2024, 1, 3, 15, 20),       # T6
+    datetime(2024, 1, 3, 20, 19)]
 
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -94,8 +94,8 @@ for i in range(num_plots):
     title_str = f'NO2={nitrite_input}, NO3={nitrate_input}\nNH4={ammonium_input}, {sample_type}'
 
     # Plot NO2 and NO3 for each row with dynamic marker size
-    axes[i].plot(times, no2_time_series.iloc[i, :], label='NO2', marker='o', markersize=marker_size)
-    axes[i].plot(times, no3_time_series.iloc[i, :], label='NO3', marker='x', markersize=marker_size)
+    axes[i].plot(times[:], no2_time_series.iloc[i, :], label='NO2', marker='o', markersize=marker_size)
+    axes[i].plot(times[:], no3_time_series.iloc[i, :], label='NO3', marker='x', markersize=marker_size)
 
     # Make title 1.5x larger
     axes[i].set_title(title_str, fontsize=10 * 1.5)

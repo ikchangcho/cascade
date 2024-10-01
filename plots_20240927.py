@@ -80,7 +80,7 @@ pylab.rcParams.update(params)
 current_date = datetime.now().strftime("%Y%m%d")
 
 #fit griess assay model using standard curves
-std_meta_fn = '/Users/ik/Pycharm/cascade/data_20240914/standards_metadata.csv'
+std_meta_fn = '/Users/ik/Pycharm/cascade/data_20240914/standard_metadata.csv'
 std_no2_540_fn = "data_20240914/20240914_Ik_NO2_standard_540.CSV"
 std_no2_900_fn = "data_20240914/20240914_Ik_NO2_standard_900.CSV"
 std_no2no3_540_fn = "data_20240914/20240914_Ik_NO2NO3_standard_540.CSV"
