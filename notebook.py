@@ -14,9 +14,19 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-meta_fn = '/Users/ik/Pycharm/cascade/data_20240914/sample_metadata.csv'
-data_540_fn = 'data_20240914/20240914_Ik_NO2_standard_540.CSV'
-data_900_fn = 'data_20240914/20240914_Ik_NO2_standard_900.CSV'
+datetime_array = [
+    datetime(2024, 10, 1, 13, 1),
+    datetime(2024, 10, 2, 5, 0),
+    datetime(2024, 10, 2, 16, 12),
+    datetime(2024, 10, 3, 11, 11),
+    datetime(2024, 10, 3, 11, 11),
+    datetime(2024, 10, 3, 11, 11),
+    datetime(2024, 10, 3, 11, 11),
+    datetime(2024, 10, 3, 11, 11)]
 
-meta_df = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
-print(meta_df)
+times = [0]
+for i in range(1, len(datetime_array)):
+    time_diff = datetime_array[i] - datetime_array[0]  # Subtract previous from current
+    times.append(time_diff.total_seconds() / 3600)
+
+print(times)

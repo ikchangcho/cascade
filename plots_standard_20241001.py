@@ -12,7 +12,6 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-date = '20240914'
 filepath = 'data_20240914'
 
 # Set figure size and font size for standard curves
@@ -25,7 +24,7 @@ params = {'legend.fontsize': 'xx-large',
 pylab.rcParams.update(params)
 
 # Load file names
-std_meta_fn = f'{filepath}/standards_metadata.csv'
+std_meta_fn = f'{filepath}/standard_metadata.csv'
 std_no2_540_fn = glob.glob(f"{filepath}/*_Ik_NO2_standard_540*")[0]
 std_no2_900_fn = glob.glob(f"{filepath}/*_Ik_NO2_standard_900*")[0]
 std_no2no3_540_fn = glob.glob(f"{filepath}/*_Ik_NO2NO3_standard_540*")[0]
