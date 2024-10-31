@@ -30,3 +30,4 @@ for i in range(1, len(datetime_array)):
     times.append(time_diff.total_seconds() / 3600)
 
 print(times)
+
