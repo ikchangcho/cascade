@@ -16,10 +16,6 @@ import math
 # set filepath for data
 filepath = 'data_20240914'
 
-# Create a new folder to save the PNG files
-output_folder = f'{filepath}plots'
-os.makedirs(output_folder, exist_ok=True)
-
 # create x axis from time points
 datetime_array = [
     datetime(2024, 1, 1, 21, 50),       # T0
@@ -95,6 +91,10 @@ no3_correction_factor = 1 / no3_average_normalized
 
 no2_time_series_evap = no2_time_series.apply(lambda row: row * no2_correction_factor, axis=1)
 no3_time_series_evap = no3_time_series.apply(lambda row: row * no3_correction_factor, axis=1)
+
+# Create a new folder to save the PNG files
+output_folder = f'{filepath}plots'
+os.makedirs(output_folder, exist_ok=True)
 
 # Loop through each row of the DataFrames
 for row in no2_time_series_evap.index:
