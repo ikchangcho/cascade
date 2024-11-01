@@ -926,6 +926,22 @@ def plot_nitrate_standard_predict_no2no3(meta_fn, no2_fn, no2_540_fn=None, no2_9
 
 def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
                no2no3_900_fn=None):
+    """
+    Fits a quadratic model to the nitrite and nitrate concentrations using the provided metadata and data files.
+
+    Parameters:
+    meta_fn (str): Path to the metadata file.
+    no2_fn (str, optional): Path to the NO2 data file.
+    no2_540_fn (str, optional): Path to the 540 nm well scan data file for NO2.
+    no2_900_fn (str, optional): Path to the 900 nm well scan data file for NO2.
+    no2no3_fn (str, optional): Path to the NO2NO3 data file.
+    no2no3_540_fn (str, optional): Path to the 540 nm well scan data file for NO2NO3.
+    no2no3_900_fn (str, optional): Path to the 900 nm well scan data file for NO2NO3.
+
+    Returns:
+    list: A list containing the fit parameters for NO2, NO2NO3, and NO3.
+    """
+    
     meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
     meta = meta[['NO2', 'NO3']]  # keep only the NO2/NO3 concentration columns
     # no2 = read_griess(meta_fn,no2_fn)
