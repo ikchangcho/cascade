@@ -11,12 +11,13 @@ import importlib
 import griess as gr
 import bmgdata as bd
 import denitfit as dn
+import math
 
 # set filepath for data
 filepath = 'data_20240914'
 
 # Create a new folder to save the PNG files
-output_folder = f'{filepath}/plots'
+output_folder = f'{filepath}plots'
 os.makedirs(output_folder, exist_ok=True)
 
 # create x axis from time points
@@ -119,36 +120,46 @@ print(f'Plots saved in folder: {output_folder}')
 
 # List of row names in the order you want to display them
 rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
-                'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12']
+                'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
+                'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12',
+                'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
 
 # Number of rows and columns for the subplots grid
 nrows = 4
 ncols = 6
+plots_per_figure = nrows * ncols
 
-# Create a figure and a grid of subplots
-fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 15))
-axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
+# Function to create a figure for a chunk of rows
+def create_figure(rows_chunk, figure_index):
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 15))
+    axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
 
-# Loop through the list of row names and plot each one in the corresponding subplot
-for i, row in enumerate(rows_to_plot):
-    if i < len(axes):  # Ensure we don't exceed the number of subplots
-        ax = axes[i]
-        ax.plot(times, no2_time_series_evap.loc[row], 'r.-', label='NO2')
-        ax.plot(times, no3_time_series_evap.loc[row], 'b.-', label='NO3')
-        ax.set_title(f'{row}')
-        ax.legend().set_visible(False)  # Hide individual legends
+    for i, row in enumerate(rows_chunk):
+        if i < len(axes):  # Ensure we don't exceed the number of subplots
+            ax = axes[i]
+            ax.plot(times, no2_time_series_evap.loc[row], 'r.-', label='NO2')
+            ax.plot(times, no3_time_series_evap.loc[row], 'b.-', label='NO3')
+            ax.set_title(f'{row}')
+            ax.legend().set_visible(False)  # Hide individual legends
 
-# Add a single legend for the entire figure
-handles, labels = ax.get_legend_handles_labels()
-fig.legend(handles, labels, loc='upper right', fontsize=14)
+    # Add a single legend for the entire figure
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper right', fontsize=14)
 
-# Add a single set of x and y labels for the entire figure
-fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=16)
-fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=16)
+    # Add a single set of x and y labels for the entire figure
+    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=16)
+    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=16)
 
-# Adjust layout to prevent overlap and set custom spacing
-plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
-plt.savefig(f'{output_folder}/time_series.png')
+    # Adjust layout to prevent overlap and set custom spacing
+    plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
-# Show the figure
-plt.show()
+    # Save the figure
+    plt.savefig(f'{output_folder}/time_series_{figure_index}.png')
+    plt.close()
+
+# Split the rows into chunks and create figures for each chunk
+for i in range(0, len(rows_to_plot), plots_per_figure):
+    rows_chunk = rows_to_plot[i:i + plots_per_figure]
+    create_figure(rows_chunk, i // plots_per_figure)
+
+print(f'Plots saved in folder: plots')
