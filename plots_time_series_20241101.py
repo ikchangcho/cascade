@@ -14,7 +14,7 @@ import denitfit as dn
 import math
 
 # set filepath for data
-filepath = 'data_20240914'
+filepath = '20241103'
 
 # create x axis from time points
 datetime_array = [
@@ -25,7 +25,8 @@ datetime_array = [
     datetime(2024, 1, 2, 19, 55),       # T4
     datetime(2024, 1, 3, 10, 30),       # T5
     datetime(2024, 1, 3, 15, 20),       # T6
-    datetime(2024, 1, 3, 20, 19)]
+    datetime(2024, 1, 3, 20, 19),       # T7
+    datetime(2024, 1, 4, 10, 30)]       
 
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -40,10 +41,10 @@ std_no2no3_540_fn = glob.glob(f"{filepath}/*_Ik_NO2NO3_standard_540*")[0]
 std_no2no3_900_fn = glob.glob(f"{filepath}/*_Ik_NO2NO3_standard_900*")[0]
 
 meta_fn = f'{filepath}/sample_metadata.csv'
-no2_540_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2_time*_540*'))
-no2_900_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2_time*_900*'))
-no2no3_540_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2NO3_time*_540*'))
-no2no3_900_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2NO3_time*_900*'))
+no2_540_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2_tp*_540*'))
+no2_900_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2_tp*_900*'))
+no2no3_540_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2NO3_tp*_540*'))
+no2no3_900_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2NO3_tp*_900*'))
 
 # fitted parameters
 [[no2_blank,no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
@@ -93,7 +94,7 @@ no2_time_series_evap = no2_time_series.apply(lambda row: row * no2_correction_fa
 no3_time_series_evap = no3_time_series.apply(lambda row: row * no3_correction_factor, axis=1)
 
 # Create a new folder to save the PNG files
-output_folder = f'{filepath}plots'
+output_folder = f'{filepath}/plots'
 os.makedirs(output_folder, exist_ok=True)
 
 # Loop through each row of the DataFrames
@@ -119,10 +120,14 @@ for row in no2_time_series_evap.index:
 print(f'Plots saved in folder: {output_folder}')
 
 # List of row names in the order you want to display them
-rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
-                'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
-                'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12',
-                'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
+rows_to_plot = ['A01', 'A03', 'A05', 'A02', 'A04', 'A06', 'A07', 'A09', 'A11', 'A08', 'A10', 'A12',
+                'B01', 'B03', 'B05', 'B02', 'B04', 'B06', 'B07', 'B09', 'B11', 'B08', 'B10', 'B12',
+                'C01', 'C03', 'C05', 'C02', 'C04', 'C06', 'C07', 'C09', 'C11', 'C08', 'C10', 'C12',
+                'D01', 'D03', 'D05', 'D02', 'D04', 'D06', 'D07', 'D09', 'D11', 'D08', 'D10', 'D12',
+                'E01', 'E03', 'E05', 'E02', 'E04', 'E06', 'E07', 'E09', 'E11', 'E08', 'E10', 'E12',
+                'F01', 'F03', 'F05', 'F02', 'F04', 'F06', 'F07', 'F09', 'F11', 'F08', 'F10', 'F12',
+                'G01', 'G03', 'G05', 'G02', 'G04', 'G06', 'G07', 'G09', 'G11', 'G08', 'G10', 'G12',
+                'H01', 'H03', 'H05', 'H02', 'H04', 'H06', 'H07', 'H09', 'H11', 'H08', 'H10', 'H12']
 
 # Number of rows and columns for the subplots grid
 nrows = 4

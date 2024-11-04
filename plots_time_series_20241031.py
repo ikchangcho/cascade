@@ -13,7 +13,7 @@ import bmgdata as bd
 import denitfit as dn
 
 # set filepath for data
-filepath = 'data_20240914'
+filepath = '20240914'
 
 # create x axis from time points
 datetime_array = [
@@ -143,8 +143,8 @@ handles, labels = ax.get_legend_handles_labels()
 fig.legend(handles, labels, loc='upper right', fontsize=14)
 
 # Add a single set of x and y labels for the entire figure
-fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=16)
-fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=16)
+fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=25)
+fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=25)
 
 # Adjust layout to prevent overlap and set custom spacing
 plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
