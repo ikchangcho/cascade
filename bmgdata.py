@@ -95,14 +95,6 @@ def read_abs_endpoint(file_name):
     return df
     
 def read_abs_wellscan(file_name):
-    '''
-    load well scan data
-    :param meta_fn:
-    :param data_fn:
-    :param data_540_fn:
-    :param data_900_fn:
-    :return: N x 4 dataframe
-    '''
     #print(file_name)
     with open(file_name,encoding='latin_1') as csv_file:
         data = list(csv.reader(csv_file, delimiter=','))
@@ -113,6 +105,8 @@ def read_abs_wellscan(file_name):
     #print('above the loop')
     for idx in range(start_idx,len(data)-1,5):
         row = data[idx].copy()
+        if len(row) == 0:
+            print(f'{idx}th row of {file_name} is empty')
         row_label.append(row[0][0:3])
         
         #assumes a 2x2 well scan

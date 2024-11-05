@@ -17,15 +17,15 @@ filepath = '20241103'
 
 # create x axis from time points
 datetime_array = [
-    datetime(2024, 1, 1, 21, 50),       # T0
-    datetime(2024, 1, 1, 22, 35),       # T1
-    datetime(2024, 1, 2, 10, 40),       # T2
+    datetime(2024, 1, 1, 17, 35),       # T0
+    datetime(2024, 1, 1, 23, 5),       # T1
+    datetime(2024, 1, 2, 11, 10),       # T2
     datetime(2024, 1, 2, 15, 40),       # T3
-    datetime(2024, 1, 2, 19, 55),       # T4
-    datetime(2024, 1, 3, 10, 30),       # T5
-    datetime(2024, 1, 3, 15, 20),       # T6
-    datetime(2024, 1, 3, 20, 19),       # T7
-    datetime(2024, 1, 4, 10, 30)]
+    datetime(2024, 1, 2, 22, 35),       # T4
+    datetime(2024, 1, 3, 8, 00),       # T5
+    datetime(2024, 1, 3, 16, 15),       # T6
+    datetime(2024, 1, 3, 21, 40),       # T7
+    datetime(2024, 1, 4, 9, 40)]       # T8
 
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -91,38 +91,52 @@ for row in no2_time_series.index:
 
 print(f'Plots saved in folder: {output_folder}')
 
-# # List of row names in the order you want to display them
-# rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
-#                 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12']
+# List of row names in the order you want to display them
+rows_to_plot = ['A01', 'A03', 'A05', 'A02', 'A04', 'A06', 'A07', 'A09', 'A11', 'A08', 'A10', 'A12',
+                'B01', 'B03', 'B05', 'B02', 'B04', 'B06', 'B07', 'B09', 'B11', 'B08', 'B10', 'B12',
+                'C01', 'C03', 'C05', 'C02', 'C04', 'C06', 'C07', 'C09', 'C11', 'C08', 'C10', 'C12',
+                'D01', 'D03', 'D05', 'D02', 'D04', 'D06', 'D07', 'D09', 'D11', 'D08', 'D10', 'D12',
+                'E01', 'E03', 'E05', 'E02', 'E04', 'E06', 'E07', 'E09', 'E11', 'E08', 'E10', 'E12',
+                'F01', 'F03', 'F05', 'F02', 'F04', 'F06', 'F07', 'F09', 'F11', 'F08', 'F10', 'F12',
+                'G01', 'G03', 'G05', 'G02', 'G04', 'G06', 'G07', 'G09', 'G11', 'G08', 'G10', 'G12',
+                'H01', 'H03', 'H05', 'H02', 'H04', 'H06', 'H07', 'H09', 'H11', 'H08', 'H10', 'H12']
 
-# # Number of rows and columns for the subplots grid
-# nrows = 4
-# ncols = 6
+# Number of rows and columns for the subplots grid
+nrows = 4
+ncols = 6
+plots_per_figure = nrows * ncols
 
-# # Create a figure and a grid of subplots
-# fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 15))
-# axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
+# Function to create a figure for a chunk of rows
+def create_figure(rows_chunk, figure_index):
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 15))
+    axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
 
-# # Loop through the list of row names and plot each one in the corresponding subplot
-# for i, row in enumerate(rows_to_plot):
-#     if i < len(axes):  # Ensure we don't exceed the number of subplots
-#         ax = axes[i]
-#         ax.plot(times, no2_time_series.loc[row], 'r.-', label='NO2')
-#         ax.plot(times, no3_time_series.loc[row], 'b.-', label='NO3')
-#         ax.set_title(f'{row}')
-#         ax.legend().set_visible(False)  # Hide individual legends
+    for i, row in enumerate(rows_chunk):
+        if i < len(axes):  # Ensure we don't exceed the number of subplots
+            ax = axes[i]
+            ax.plot(times, no2_time_series.loc[row], 'r.-', label='NO2')
+            ax.plot(times, no3_time_series.loc[row], 'b.-', label='NO3')
+            ax.set_title(f'{row}')
+            ax.legend().set_visible(False)  # Hide individual legends
 
-# # Add a single legend for the entire figure
-# handles, labels = ax.get_legend_handles_labels()
-# fig.legend(handles, labels, loc='upper right', fontsize=14)
+    # Add a single legend for the entire figure
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper right', fontsize=20)
 
-# # Add a single set of x and y labels for the entire figure
-# fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=25)
-# fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=25)
+    # Add a single set of x and y labels for the entire figure
+    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=25)
+    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=25)
 
-# # Adjust layout to prevent overlap and set custom spacing
-# plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
-# plt.savefig(f'{output_folder}/time_series.png')
+    # Adjust layout to prevent overlap and set custom spacing
+    plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
-# # Show the figure
-# plt.show()
+    # Save the figure
+    plt.savefig(f'{output_folder}/time_series_{figure_index}.png')
+    plt.close()
+
+# Split the rows into chunks and create figures for each chunk
+for i in range(0, len(rows_to_plot), plots_per_figure):
+    rows_chunk = rows_to_plot[i:i + plots_per_figure]
+    create_figure(rows_chunk, i // plots_per_figure)
+
+print(f'Plots saved in folder: plots')
