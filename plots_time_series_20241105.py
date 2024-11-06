@@ -109,11 +109,11 @@ def create_figure(rows_chunk, figure_index):
     # Add a single legend for the entire figure
     handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2'),
                plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3')]
-    fig.legend(handles=handles, loc='upper right', fontsize=14)
+    fig.legend(handles=handles, loc='upper right', fontsize=20)
 
     # Add a single set of x and y labels for the entire figure
-    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=16)
-    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=16)
+    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=30)
+    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
 
     # Adjust layout to prevent overlap and set custom spacing
     plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
