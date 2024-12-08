@@ -161,7 +161,7 @@ linear_regression_details = pd.DataFrame(columns=['Row', 'NO3 Slope', 'NO3 Inter
 for idx, row in enumerate(rows_to_plot):
     a, b = table_values[idx // 3]
     reg1, reg2, reg3 = get_linear_regression(row, a, b)
-    linear_regression_details = linear_regression_details.append({
+    new_row = pd.DataFrame([{
         'Row': row,
         'NO3 Slope': reg1['slope'],
         'NO3 Intercept': reg1['intercept'],
@@ -172,5 +172,8 @@ for idx, row in enumerate(rows_to_plot):
         'NO2 Late Slope': reg3['slope'],
         'NO2 Late Intercept': reg3['intercept'],
         'NO2 Late R^2': reg3['r_squared']
-    }, ignore_index=True)
+    }])
+    linear_regression_details = pd.concat([linear_regression_details, new_row], ignore_index=True)
+
+# Save the DataFrame to a CSV file
 linear_regression_details.to_csv(f'{output_folder}/consumption_linear_fit/linear_regression_details.csv', index=False)
