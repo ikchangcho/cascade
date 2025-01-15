@@ -12,7 +12,7 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-filepath = '20250113'
+filepath = '20250114'
 
 # Create a new folder to save the PNG files
 output_folder = f'{filepath}/plots'

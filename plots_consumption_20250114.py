@@ -12,33 +12,32 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-# # set filepath for data
-# filepath = '20250113'
-# datetime_array = [
-#     datetime(2024, 12, 24, 23, 30),       # T0
-#     datetime(2024, 12, 25, 8, 0),       # T1
-#     datetime(2024, 12, 25, 17, 38),       # T2
-#     datetime(2024, 12, 26, 17, 43),       # T3
-#     datetime(2024, 12, 27, 17, 50),       # T4
-#     datetime(2024, 12, 28, 18, 10),       # T5
-#     datetime(2024, 12, 29, 17, 30),       # T6
-#     datetime(2024, 12, 30, 17, 16),       # T7
-#     datetime(2024, 12, 31, 17, 30)]       # T8
-
 # set filepath for data
-filepath = '20250114'
+filepath = '20250113'
 datetime_array = [
-    datetime(2025, 1, 1, 14, 30),       # T0
-    datetime(2025, 1, 1, 15, 35),       # T1
-    datetime(2025, 1, 1, 16, 55),       # T2
-    datetime(2025, 1, 1, 20, 00),       # T3
-    datetime(2025, 1, 1, 22, 58),       # T4
-    datetime(2025, 1, 2, 8, 9),       # T5
-    datetime(2025, 1, 2, 13, 10),       # T6
-    datetime(2025, 1, 2, 17, 56),       # T7
-    datetime(2025, 1, 2, 22, 57),       # T8
-    datetime(2025, 1, 3, 8, 5)]       # T9
+    datetime(2024, 12, 24, 23, 30),       # T0
+    datetime(2024, 12, 25, 8, 0),       # T1
+    datetime(2024, 12, 25, 17, 38),       # T2
+    datetime(2024, 12, 26, 17, 43),       # T3
+    datetime(2024, 12, 27, 17, 50),       # T4
+    datetime(2024, 12, 28, 18, 10),       # T5
+    datetime(2024, 12, 29, 17, 30),       # T6
+    datetime(2024, 12, 30, 17, 16),       # T7
+    datetime(2024, 12, 31, 17, 30)]       # T8
 
+# # set filepath for data
+# filepath = '20250114'
+# datetime_array = [
+#     datetime(2025, 1, 1, 14, 30),       # T0
+#     datetime(2025, 1, 1, 15, 35),       # T1
+#     datetime(2025, 1, 1, 16, 55),       # T2
+#     datetime(2025, 1, 1, 20, 00),       # T3
+#     datetime(2025, 1, 1, 22, 58),       # T4
+#     datetime(2025, 1, 2, 8, 9),       # T5
+#     datetime(2025, 1, 2, 13, 10),       # T6
+#     datetime(2025, 1, 2, 17, 56),       # T7
+#     datetime(2025, 1, 2, 22, 57),       # T8
+#     datetime(2025, 1, 3, 8, 5)]       # T9
 
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -78,7 +77,7 @@ no3_time_series = pd.DataFrame(no3_time_series_dic)
 meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
 meta.index.name = None  # Remove the name of the index
 
-# Create a new folder to save the PNG files
+# Create the output folder if it doesn't exist
 output_folder = f'{filepath}/plots'
 os.makedirs(output_folder, exist_ok=True)
 
@@ -97,8 +96,10 @@ nrows = 4
 ncols = 5
 plots_per_figure = nrows * ncols
 
-# Determine the global y-axis limits
-all_values = pd.concat([no2_time_series, no3_time_series])
+# Determine the global y-axis limits for consumption values
+no3_consumption = no3_time_series.iloc[:, 0].values.reshape(-1, 1) - no3_time_series
+no2_consumption = no2_time_series.iloc[:, 0].values.reshape(-1, 1) - no2_time_series + no3_consumption
+all_values = pd.concat([no2_consumption, no3_consumption])
 y_min = all_values.min().min()
 y_max = all_values.max().max()
 
@@ -113,26 +114,26 @@ def create_figure(rows_chunk, figure_index):
             for j in range(3):
                 if i + j < len(rows_chunk):
                     row = rows_chunk[i + j]
-                    ax.plot(times, no2_time_series.loc[row], 'r.-', label='NO2')
-                    ax.plot(times, no3_time_series.loc[row], 'b.-', label='NO3')
+                    ax.plot(times, no2_consumption.loc[row], 'r.-', label='NO2' if j == 0 else "")
+                    ax.plot(times, no3_consumption.loc[row], 'b.-', label='NO3' if j == 0 else "")
             ax.set_title(f'{rows_chunk[i:i+3]}')
             ax.set_ylim(y_min, y_max)
             ax.legend().set_visible(False)  # Hide individual legends
 
     # Add a single legend for the entire figure
-    handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2'),
-               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3')]
+    handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2 Consumption'),
+               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3 Consumption')]
     fig.legend(handles=handles, loc='upper right', fontsize=20)
 
     # Add a single set of x and y labels for the entire figure
     fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=30)
-    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
+    fig.text(0.04, 0.5, 'Concentration Change (mM)', va='center', rotation='vertical', fontsize=30)
 
     # Adjust layout to prevent overlap and set custom spacing
     plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
     # Save the figure
-    plt.savefig(f'{output_folder}/time_series_{figure_index}.png')
+    plt.savefig(f'{output_folder}/consumption_{figure_index}.png')
     plt.close()
 
 # Split the rows into chunks and create figures for each chunk
