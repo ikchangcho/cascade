@@ -12,6 +12,74 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
+def no2_evap_correction(rows):
+    # Extract the rows from no2_time_series using .loc
+    selected_rows = no2_time_series.loc[rows]
+    
+    # Calculate the average of the selected rows
+    avg_array = selected_rows.mean(axis=0)
+    
+    # Normalize the array by dividing by the first value
+    normalization_factors = avg_array / avg_array.iloc[0]
+    
+    # Apply the normalization factors to each column of no2_time_series
+    no2_time_series_evap = no2_time_series / normalization_factors
+    
+    return no2_time_series_evap
+
+def no3_evap_correction(rows):
+    # Extract the rows from no3_time_series using .loc
+    selected_rows = no3_time_series.loc[rows]
+    
+    # Calculate the average of the selected rows
+    avg_array = selected_rows.mean(axis=0)
+    
+    # Normalize the array by dividing by the first value
+    normalization_factors = avg_array / avg_array.iloc[0]
+    
+    # Apply the normalization factors to each column of no3_time_series
+    no3_time_series_evap = no3_time_series / normalization_factors
+    
+    return no3_time_series_evap
+
+# Function to create a figure for a chunk of rows
+def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
+    # Determine the global y-axis limits
+    all_values = pd.concat([no2_data, no3_data])
+    y_min = all_values.min().min()
+    y_max = all_values.max().max()
+
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(4*ncols, 4*nrows))
+    axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
+
+    for i in range(0, len(rows_chunk), 3):
+        if i // 3 < len(axes):  # Ensure we don't exceed the number of subplots
+            ax = axes[i // 3]
+            for j in range(3):
+                if i + j < len(rows_chunk):
+                    row = rows_chunk[i + j]
+                    ax.plot(times, no2_data.loc[row], 'r.-', label='NO2')
+                    ax.plot(times, no3_data.loc[row], 'b.-', label='NO3')
+            ax.set_title(f'{rows_chunk[i:i+3]}')
+            ax.set_ylim(y_min, y_max)
+            ax.legend().set_visible(False)  # Hide individual legends
+
+    # Add a single legend for the entire figure
+    handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2'),
+               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3')]
+    fig.legend(handles=handles, loc='upper right', fontsize=20)
+
+    # Add a single set of x and y labels for the entire figure
+    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=30)
+    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
+
+    # Adjust layout to prevent overlap and set custom spacing
+    plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
+
+    # Save the figure
+    plt.savefig(f'{output_folder}/{filename}_{figure_index}.png')
+    plt.close()
+
 # set filepath for data
 filepath = '20250113'
 datetime_array = [
@@ -38,7 +106,6 @@ datetime_array = [
 #     datetime(2025, 1, 2, 17, 56),       # T7
 #     datetime(2025, 1, 2, 22, 57),       # T8
 #     datetime(2025, 1, 3, 8, 5)]       # T9
-
 
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -81,79 +148,15 @@ meta.index.name = None  # Remove the name of the index
 no2_time_series.to_csv(f'{filepath}/no2_time_series.csv')
 no3_time_series.to_csv(f'{filepath}/no3_time_series.csv')
 
-def no2_evap_correction(rows):
-    # Extract the rows from no2_time_series using .loc
-    selected_rows = no2_time_series.loc[rows]
-    
-    # Calculate the average of the selected rows
-    avg_array = selected_rows.mean(axis=0)
-    
-    # Normalize the array by dividing by the first value
-    normalization_factors = avg_array / avg_array.iloc[0]
-    
-    # Apply the normalization factors to each column of no2_time_series
-    no2_time_series_evap = no2_time_series / normalization_factors
-    
-    return no2_time_series_evap
-
-def no3_evap_correction(rows):
-    # Extract the rows from no3_time_series using .loc
-    selected_rows = no3_time_series.loc[rows]
-    
-    # Calculate the average of the selected rows
-    avg_array = selected_rows.mean(axis=0)
-    
-    # Normalize the array by dividing by the first value
-    normalization_factors = avg_array / avg_array.iloc[0]
-    
-    # Apply the normalization factors to each column of no3_time_series
-    no3_time_series_evap = no3_time_series / normalization_factors
-    
-    return no3_time_series_evap
-
-# Function to create a figure for a chunk of rows
-def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
-    # Determine the global y-axis limits
-    all_values = pd.concat([no2_data, no3_data])
-    y_min = all_values.min().min()
-    y_max = all_values.max().max()
-
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 15))
-    axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
-
-    for i in range(0, len(rows_chunk), 3):
-        if i // 3 < len(axes):  # Ensure we don't exceed the number of subplots
-            ax = axes[i // 3]
-            for j in range(3):
-                if i + j < len(rows_chunk):
-                    row = rows_chunk[i + j]
-                    ax.plot(times, no2_data.loc[row], 'r.-', label='NO2')
-                    ax.plot(times, no3_data.loc[row], 'b.-', label='NO3')
-            ax.set_title(f'{rows_chunk[i:i+3]}')
-            ax.set_ylim(y_min, y_max)
-            ax.legend().set_visible(False)  # Hide individual legends
-
-    # Add a single legend for the entire figure
-    handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2'),
-               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3')]
-    fig.legend(handles=handles, loc='upper right', fontsize=20)
-
-    # Add a single set of x and y labels for the entire figure
-    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=30)
-    fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
-
-    # Adjust layout to prevent overlap and set custom spacing
-    plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
-
-    # Save the figure
-    plt.savefig(f'{output_folder}/{filename}_{figure_index}.png')
-    plt.close()
-
 no2_time_series_evap = no2_evap_correction(['H10', 'H11'])
 no3_time_series_evap = no3_evap_correction(['H07', 'H08', 'H09'])
-
 no2_time_series_evap.to_csv(f'{filepath}/no2_time_series_evap.csv')
 no3_time_series_evap.to_csv(f'{filepath}/no3_time_series_evap.csv')
+
+no3_consumption = no3_time_series_evap.iloc[:, 0].values.reshape(-1, 1) - no3_time_series
+no2_consumption = no2_time_series_evap.iloc[:, 0].values.reshape(-1, 1) - no2_time_series + no3_consumption
+no3_consumption.to_csv(f'{filepath}/no3_consumption.csv')
+no2_consumption.to_csv(f'{filepath}/no2_consumption.csv')
 
 # Create a new folder to save the PNG files
 output_folder = f'{filepath}/plots'
@@ -170,12 +173,12 @@ rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', '
                 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'D10', 'D11', 'D12', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
 
 # Number of rows and columns for the subplots grid
-nrows = 7
+nrows = 4
 ncols = 5
 plots_per_figure = nrows * ncols
 
 for i in range(0, len(rows_to_plot), plots_per_figure * 3):
     rows_chunk = rows_to_plot[i:i + plots_per_figure * 3]
-    create_figure(no2_data=no2_time_series_evap, no3_data=no3_time_series_evap, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='time_series_evap')
+    create_figure(no2_data=no2_consumption, no3_data=no3_consumption, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='consumption')
 
 print(f'Plots saved in folder: {output_folder}')
