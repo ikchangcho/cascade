@@ -173,12 +173,12 @@ rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', '
                 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'D10', 'D11', 'D12', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
 
 # Number of rows and columns for the subplots grid
-nrows = 4
+nrows = 7
 ncols = 5
 plots_per_figure = nrows * ncols
 
 for i in range(0, len(rows_to_plot), plots_per_figure * 3):
     rows_chunk = rows_to_plot[i:i + plots_per_figure * 3]
-    create_figure(no2_data=no2_consumption, no3_data=no3_consumption, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='consumption')
+    create_figure(no2_data=no2_time_series, no3_data=no3_time_series, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='time_series')
 
 print(f'Plots saved in folder: {output_folder}')
