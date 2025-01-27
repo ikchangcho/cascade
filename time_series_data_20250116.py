@@ -80,32 +80,32 @@ def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
     plt.savefig(f'{output_folder}/{filename}_{figure_index}.png')
     plt.close()
 
-# # set filepath for data
-# filepath = '20250113'
-# datetime_array = [
-#     datetime(2024, 12, 24, 23, 30),       # T0
-#     datetime(2024, 12, 25, 8, 0),       # T1
-#     datetime(2024, 12, 25, 17, 38),       # T2
-#     datetime(2024, 12, 26, 17, 43),       # T3
-#     datetime(2024, 12, 27, 17, 50),       # T4
-#     datetime(2024, 12, 28, 18, 10),       # T5
-#     datetime(2024, 12, 29, 17, 30),       # T6
-#     datetime(2024, 12, 30, 17, 16),       # T7
-#     datetime(2024, 12, 31, 17, 30)]       # T8
-
 # set filepath for data
-filepath = '20250114'
+filepath = '20250113'
 datetime_array = [
-    datetime(2025, 1, 1, 14, 30),       # T0
-    datetime(2025, 1, 1, 15, 35),       # T1
-    datetime(2025, 1, 1, 16, 55),       # T2
-    datetime(2025, 1, 1, 20, 00),       # T3
-    datetime(2025, 1, 1, 22, 58),       # T4
-    datetime(2025, 1, 2, 8, 9),       # T5
-    datetime(2025, 1, 2, 13, 10),       # T6
-    datetime(2025, 1, 2, 17, 56),       # T7
-    datetime(2025, 1, 2, 22, 57),       # T8
-    datetime(2025, 1, 3, 8, 5)]       # T9
+    datetime(2024, 12, 24, 23, 30),       # T0
+    datetime(2024, 12, 25, 8, 0),       # T1
+    datetime(2024, 12, 25, 17, 38),       # T2
+    datetime(2024, 12, 26, 17, 43),       # T3
+    datetime(2024, 12, 27, 17, 50),       # T4
+    datetime(2024, 12, 28, 18, 10),       # T5
+    datetime(2024, 12, 29, 17, 30),       # T6
+    datetime(2024, 12, 30, 17, 16),       # T7
+    datetime(2024, 12, 31, 17, 30)]       # T8
+
+# # set filepath for data
+# filepath = '20250114'
+# datetime_array = [
+#     datetime(2025, 1, 1, 14, 30),       # T0
+#     datetime(2025, 1, 1, 15, 35),       # T1
+#     datetime(2025, 1, 1, 16, 55),       # T2
+#     datetime(2025, 1, 1, 20, 00),       # T3
+#     datetime(2025, 1, 1, 22, 58),       # T4
+#     datetime(2025, 1, 2, 8, 9),       # T5
+#     datetime(2025, 1, 2, 13, 10),       # T6
+#     datetime(2025, 1, 2, 17, 56),       # T7
+#     datetime(2025, 1, 2, 22, 57),       # T8
+#     datetime(2025, 1, 3, 8, 5)]       # T9
 
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -144,6 +144,9 @@ no2_time_series = pd.DataFrame(no2_time_series_dic)
 no3_time_series = pd.DataFrame(no3_time_series_dic)
 meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
 meta.index.name = None  # Remove the name of the index
+# Rename the columns of no2_time_series and no3_time_series to the times array
+no2_time_series.columns = times
+no3_time_series.columns = times
 
 no2_time_series.to_csv(f'{filepath}/no2_time_series.csv')
 no3_time_series.to_csv(f'{filepath}/no3_time_series.csv')
