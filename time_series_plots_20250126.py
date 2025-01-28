@@ -13,7 +13,7 @@ import bmgdata as bd
 import denitfit as dn
 
 # Function to create a figure for a chunk of rows
-def time_series_plot(no2_data, no3_data, filename, num_of_replicates=3):
+def time_series_plot(meta_data, no2_data, no3_data, title, filename, num_of_replicates=3):
     # Determine the global y-axis limits
     all_values = pd.concat([no2_data, no3_data])
     y_min = all_values.min().min()
@@ -40,28 +40,32 @@ def time_series_plot(no2_data, no3_data, filename, num_of_replicates=3):
 
     for ii in range(0, len(rows_to_plot), num_of_replicates):
         rows_chunk = rows_to_plot[ii:ii + num_of_replicates]
-        ax = axes[ii // num_of_replicates]
-        ax.set_title(f'{rows_chunk}')
+        ax = axes[ii // 3]
+        initial_no2 = meta_data.loc[rows_chunk[0], 'Nitrite_input']
+        initial_no3 = meta_data.loc[rows_chunk[0], 'Nitrate_input']
+        initial_carbon = meta_data.loc[rows_chunk[0], 'Carbon_input']
+        if initial_carbon > 0:
+            ax.set_title(f'I={initial_no2}, A={initial_no3}, C={initial_carbon}', fontsize=20)
+        else:
+            ax.set_title(f'I={initial_no2}, A={initial_no3}', fontsize=20)
+
         ax.set_ylim(y_min, y_max)
         for row in rows_chunk:
-            ax.plot(times, no2_data.loc[row], 'r.-', label='NO2')
-            ax.plot(times, no3_data.loc[row], 'b.-', label='NO3')
+            ax.plot(times, no2_data.loc[row], 'r.-', label='NO2 (I)')
+            ax.plot(times, no3_data.loc[row], 'b.-', label='NO3 (A)')
 
-    # # Add a single legend for the entire figure
-    # handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2'),
-    #            plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3')]
-    # fig.legend(handles=handles, loc='upper right', fontsize=20)
-
-    # Add a single set of x and y labels for the entire figure
-    fig.text(0.5, 0.04, 'Time (hours)', ha='center', fontsize=30)
+    fig.text(0.5, 0.05, 'Time (hours)', ha='center', fontsize=30)
     fig.text(0.04, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
-
-    # Adjust layout to prevent overlap and set custom spacing
-    plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
+    fig.suptitle(title, fontsize=40, y=0.95)
+    handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2 (I)'),
+               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3 (A)')]
+    fig.legend(handles=handles, loc='upper center', bbox_to_anchor=(0.85, 0.95), fontsize=20)
+    plt.subplots_adjust(hspace=0.3, bottom=0.1, left=0.1)
 
     # Save the figure
     plt.savefig(f'{output_folder}/{filename}.png')
     plt.close()
+    print(f'Plots saved in folder: {output_folder}')
 
 
 def create_phase_diagram(no2_data, no3_data, title, filename):
@@ -84,13 +88,13 @@ filepath = '20250114'
 output_folder = f'{filepath}/plots'
 os.makedirs(output_folder, exist_ok=True)
 
+# Load the data
+meta_data = pd.read_csv(f'{filepath}/sample_metadata.csv', index_col=0).dropna(how='all')
 no2_data = pd.read_csv(f'{filepath}/no2_time_series_evap.csv', index_col=0)
 no3_data = pd.read_csv(f'{filepath}/no3_time_series_evap.csv', index_col=0)
 times = no2_data.columns.astype(float).tolist()
-title = 'CHL-'
+title = '2025-01-14 CHL-'
 filename = 'test'
 
 # create_phase_diagram(no2_data, no3_data, title, filename)
-time_series_plot(no2_data, no3_data, filename, num_of_replicates=3)
-
-print(f'Plots saved in folder: {output_folder}')
+time_series_plot(meta_data, no2_data, no3_data, title, filename)
