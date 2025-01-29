@@ -103,7 +103,7 @@ def create_phase_diagram(no2_data, no3_data, title, filename):
 
 
 # Create a new folder to save the PNG files
-date = '20250113'
+date = '20250114'
 output_folder = f'{date}/plots'
 os.makedirs(output_folder, exist_ok=True)
 
@@ -112,7 +112,7 @@ meta_data = pd.read_csv(f'{date}/sample_metadata.csv', index_col=0).dropna(how='
 no2_data = pd.read_csv(f'{date}/no2_consumption.csv', index_col=0)
 no3_data = pd.read_csv(f'{date}/no3_consumption.csv', index_col=0)
 times = no2_data.columns.astype(float).tolist()
-title = '2025-01-13 CHL+'
+title = '2025-01-14 CHL- \n NO2 and NO3 Concentration'
 filename = 'no2_no3_consumption'
 
 # create_phase_diagram(no2_data, no3_data, title, filename)
