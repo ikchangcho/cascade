@@ -70,7 +70,7 @@ def time_series_plot(meta_data, no2_data, no3_data, title, filename, num_of_repl
 def overlap_five_plots(data, title, filename, colors, labels, num_of_replicates=3):
     fig, ax = plt.subplots(figsize=(10, 8))
     for ii, row in enumerate(data.index):
-        ax.plot(times, no3_data.loc[row], '.-', label=labels[ii//num_of_replicates], color=colors[ii//num_of_replicates])
+        ax.plot(times, data.loc[row], '.-', label=labels[ii//num_of_replicates], color=colors[ii//num_of_replicates])
     handles = [plt.Line2D([0], [0], color=colors[0], marker='.', linestyle='-', label=labels[0]),
             plt.Line2D([0], [0], color=colors[1], marker='.', linestyle='-', label=labels[1]),
             plt.Line2D([0], [0], color=colors[2], marker='.', linestyle='-', label=labels[2]),
@@ -101,50 +101,89 @@ def create_phase_diagram(no2_data, no3_data, title, filename):
     plt.close()
     print(f'Plots saved in folder: {output_folder}')
 
+# Input parameters
+date, chl = '20250113', 'CHL+'
+key = 'cons' # '' or 'evap' or 'consumption'
 
 # Create a new folder to save the PNG files
-date = '20250114'
 output_folder = f'{date}/plots'
 os.makedirs(output_folder, exist_ok=True)
 
 # Load the data
 meta_data = pd.read_csv(f'{date}/sample_metadata.csv', index_col=0).dropna(how='all')
-no2_data = pd.read_csv(f'{date}/no2_consumption.csv', index_col=0)
-no3_data = pd.read_csv(f'{date}/no3_consumption.csv', index_col=0)
+no2_data = pd.read_csv(f'{date}/no2_{key}.csv', index_col=0)
+no3_data = pd.read_csv(f'{date}/no3_{key}.csv', index_col=0)
 times = no2_data.columns.astype(float).tolist()
-title = '2025-01-14 CHL- \n NO2 and NO3 Concentration'
-filename = 'no2_no3_consumption'
+
 
 # create_phase_diagram(no2_data, no3_data, title, filename)
-time_series_plot(meta_data, no2_data, no3_data, title, filename)
 
-# data = no3_data.loc[['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03']]
-# title = '2025-01-14 CHL- \n NO3 Concentration'
-# filename = f'{date}_chl-_A(0)=2.0'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+# title = f'NO2 and NO3 Concentration\n({chl}, {key}, {date})'
+# filename = f'no2_no3_{chl}_{key}'
+# time_series_plot(meta_data, no2_data, no3_data, title, filename)
 
-# data = no3_data.loc[['B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06']]
-# title = '2025-01-14 CHL- \n NO3 Concentration'
-# filename = f'{date}_chl-_A(0)=1.5'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+data = no3_data.loc[['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03']]
+title = f'NO3 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_A(0)=2.0'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
 
-# data = no3_data.loc[['C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']]
-# title = '2025-01-14 CHL- \n NO3 Concentration'
-# filename = f'{date}_chl-_A(0)=1.0'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+data = no3_data.loc[['B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06']]
+title = f'NO3 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_A(0)=1.5'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
 
-# data = no3_data.loc[['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12','F01', 'F02', 'F03']]
-# title = '2025-01-14 CHL- \n NO3 Concentration'
-# filename = f'{date}_chl-_A(0)=0.5'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+data = no3_data.loc[['C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']]
+title = f'NO3 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_A(0)=1.0'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
+
+data = no3_data.loc[['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12','F01', 'F02', 'F03']]
+title = f'NO3 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_A(0)=0.5'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
+
+data = no2_data.loc[['A01', 'A02', 'A03', 'B04', 'B05', 'B06', 'C07', 'C08', 'C09', 'E01', 'E02', 'E03', 'F04', 'F05', 'F06']]
+title = f'NO2 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_I(0)=2.0'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
+
+data = no2_data.loc[['A04', 'A05', 'A06', 'B07', 'B08', 'B09', 'C10', 'C11', 'C12', 'E04', 'E05', 'E06', 'F07', 'F08', 'F09']]
+title = f'NO2 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_I(0)=1.5'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
+
+data = no2_data.loc[['A07', 'A08', 'A09', 'B10', 'B11', 'B12', 'D01', 'D02', 'D03', 'E07', 'E08', 'E09', 'F10', 'F11', 'F12']]
+title = f'NO2 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_I(0)=1.0'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
+
+data = no2_data.loc[['A10', 'A11', 'A12', 'C01', 'C02', 'C03', 'D04', 'D05', 'D06', 'E10', 'E11', 'E12', 'G01', 'G02', 'G03']]
+title = f'NO2 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_I(0)=0.5'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
+
+data = no2_data.loc[['B01', 'B02', 'B03', 'C04', 'C05', 'C06', 'D07', 'D08', 'D09', 'F01', 'F02', 'F03', 'G04', 'G05', 'G06']]
+title = f'NO2 Concentration\n({chl}, {key}, {date})'
+filename = f'{chl}_{key}_I(0)=0.0'
+colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
+labels = ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0']
+overlap_five_plots(data, title, filename, colors, labels)
 
 # rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
 #                 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
