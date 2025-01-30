@@ -12,8 +12,9 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-# Function to create a figure for a chunk of rows
+# Plot all the data of no2 and no3 with a given order
 def plot_all(meta_data, no2_data, no3_data, title, labels, filename, num_of_replicates=3):
+    times = no2_data.columns.astype(float).tolist()
     # Determine the global y-axis limits
     all_values = pd.concat([no2_data, no3_data])
     y_min = all_values.min().min()
@@ -67,11 +68,15 @@ def plot_all(meta_data, no2_data, no3_data, title, labels, filename, num_of_repl
     plt.close()
     print(f'{filename}.png saved')
 
+# Plot a given data within one figure
 def overlap_plots(data, title, filename, colors, labels, num_of_replicates=3):
+    times = data.columns.astype(float).tolist()
     num_of_conditions = len(data) // num_of_replicates
     fig, ax = plt.subplots(figsize=(10, 8))
-    for ii, row in enumerate(data.index):
-        ax.plot(times, data.loc[row], '.-', label=labels[ii//num_of_replicates], color=colors[ii//num_of_replicates])
+    for ii in range(len(data)):
+        ax.plot(times, data.iloc[ii], '.-', label=labels[ii//3], color=colors[ii//3])
+    # for ii, row in enumerate(data.index):
+    #     ax.plot(times, data.loc[row], '.-', label=labels[ii//num_of_replicates], color=colors[ii//num_of_replicates])
     handles = [plt.Line2D([0], [0], color=colors[i], marker='.', linestyle='-', label=labels[i]) for i in range(num_of_conditions)]
     ax.legend(handles=handles, fontsize=15)
     ax.set_xlabel('Time (hours)', fontsize=20)
@@ -109,58 +114,61 @@ no2_chl0_evap = pd.read_csv(f'20250114/no2_chl-_evap.csv', index_col=0)
 no3_chl0_evap = pd.read_csv(f'20250114/no3_chl-_evap.csv', index_col=0)
 no2_chl0_cons = pd.read_csv(f'20250114/no2_chl-_cons.csv', index_col=0)
 no3_chl0_cons = pd.read_csv(f'20250114/no3_chl-_cons.csv', index_col=0)
-times = no2_chl1_evap.columns.astype(float).tolist()
 
-# plot_all(meta_chl1, no2_chl1_evap, no3_chl1_evap, f'NO2 (I), NO3 (A) Concentration (CHL+))', ['I', 'A'], '20250113/plots/no2_no3_chl+_evap')
+# plot_all(meta_chl1, no2_chl1_evap, no3_chl1_evap, f'NO2 (I), NO3 (A) Concentration (CHL+)', ['I', 'A'], '20250113/plots/no2_no3_chl+_evap')
 # plot_all(meta_chl1, no2_chl1_cons, no3_chl1_cons, f'NO2 (I), NO3 (A) Consumption (CHL+)', [f'$—\Delta I(t) -\Delta A(t)$', f'$-\Delta A(t)$'], '20250113/plots/no2_no3_chl+_cons')
-# plot_all(meta_chl0, no2_chl0_evap, no3_chl0_evap, f'NO2 (I), NO3 (A) Concentration (CHL-))', ['I', 'A'], '20250114/plots/no2_no3_chl-_evap')
+# plot_all(meta_chl0, no2_chl0_evap, no3_chl0_evap, f'NO2 (I), NO3 (A) Concentration (CHL-)', ['I', 'A'], '20250114/plots/no2_no3_chl-_evap')
 # plot_all(meta_chl0, no2_chl0_cons, no3_chl0_cons, f'NO2 (I), NO3 (A) Consumption (CHL-)', [f'$—\Delta I(t) -\Delta A(t)$', f'$-\Delta A(t)$'], '20250114/plots/no2_no3_chl-_cons')
 
-overlap_plots(no2_chl1_evap.loc[['A01', 'A02', 'A03', 'B04', 'B05', 'B06', 'C07', 'C08', 'C09', 'E01', 'E02', 'E03', 'F04', 'F05', 'F06']], 'NO2 (I) Concentration (CHL+)',
-              '20250113/plots/no2_chl+_evap_2.0', ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"], ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0'])
-overlap_plots(no2_chl1_evap.loc[['A04', 'A05', 'A06', 'B07', 'B08', 'B09', 'C10', 'C11', 'C12', 'E04', 'E05', 'E06', 'F07', 'F08', 'F09']], 'NO2 (I) Concentration (CHL+)',
-              '20250113/plots/no2_chl+_evap_1.5', ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"], ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0'])
-overlap_plots(no2_chl1_evap.loc[['A07', 'A08', 'A09', 'B10', 'B11', 'B12', 'D01', 'D02', 'D03', 'E07', 'E08', 'E09', 'F10', 'F11', 'F12']], 'NO2 (I) Concentration (CHL+)',
-                '20250113/plots/no2_chl+_evap_1.0', ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"], ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0'])
-overlap_plots(no2_chl1_evap.loc[['A10', 'A11', 'A12', 'C01', 'C02', 'C03', 'D04', 'D05', 'D06', 'E10', 'E11', 'E12', 'G01', 'G02', 'G03']], 'NO2 (I) Concentration (CHL+)',
-                '20250113/plots/no2_chl+_evap_0.5', ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"], ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0'])
-overlap_plots(no2_chl1_evap.loc[['B01', 'B02', 'B03', 'C04', 'C05', 'C06', 'D07', 'D08', 'D09', 'F01', 'F02', 'F03', 'G04', 'G05', 'G06']], 'NO2 (I) Concentration (CHL+)',
-                '20250113/plots/no2_chl+_evap_0.0', ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"], ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0'])
-
-# Create five overlapped plots
-data = no3_data.loc[['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03']]
-title = f'NO3 Concentration\n({chl}, {key}, {date})'
-filename = f'{chl}_{key}_A(0)=2.0'
+no2_conditions = [
+    (['A01', 'A02', 'A03', 'B04', 'B05', 'B06', 'C07', 'C08', 'C09', 'E01', 'E02', 'E03', 'F04', 'F05', 'F06'], '2.0'),
+    (['A04', 'A05', 'A06', 'B07', 'B08', 'B09', 'C10', 'C11', 'C12', 'E04', 'E05', 'E06', 'F07', 'F08', 'F09'], '1.5'),
+    (['A07', 'A08', 'A09', 'B10', 'B11', 'B12', 'D01', 'D02', 'D03', 'E07', 'E08', 'E09', 'F10', 'F11', 'F12'], '1.0'),
+    (['A10', 'A11', 'A12', 'C01', 'C02', 'C03', 'D04', 'D05', 'D06', 'E10', 'E11', 'E12', 'G01', 'G02', 'G03'], '0.5'),
+    (['B01', 'B02', 'B03', 'C04', 'C05', 'C06', 'D07', 'D08', 'D09', 'F01', 'F02', 'F03', 'G04', 'G05', 'G06'], '0.0')
+]
+no3_conditions = [
+    (['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03'], '2.0'),
+    (['B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06'], '1.5'),
+    (['C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09'], '1.0'),
+    (['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12','F01', 'F02', 'F03'], '0.5')
+]
 colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-overlap_plots(data, title, filename, colors, labels)
+no2_legends = ['A(0)=2.0', 'A(0)=1.5', 'A(0)=1.0', 'A(0)=0.5', 'A(0)=0.0']
+no3_legends = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
 
-# data = no3_data.loc[['B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06']]
-# title = f'NO3 Concentration\n({chl}, {key}, {date})'
-# filename = f'{chl}_{key}_A(0)=1.5'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+# for rows, no2 in no2_conditions:
+#     overlap_plots(no2_chl1_evap.loc[rows], f'NO2 (I) Concentration from I(0) = {no2} (CHL+)', f'20250113/plots/no2_{no2}_chl+_evap', colors, no2_legends)
+#     overlap_plots(no2_chl1_cons.loc[rows], f'NO2 (I) Consumption from I(0) = {no2} (CHL+)', f'20250113/plots/no2_{no2}_chl+_cons', colors, no2_legends)
+#     overlap_plots(no2_chl0_evap.loc[rows], f'NO2 (I) Concentration from I(0) = {no2} (CHL-)', f'20250114/plots/no2_{no2}_chl-_evap', colors, no2_legends)
+#     overlap_plots(no2_chl0_cons.loc[rows], f'NO2 (I) Consumption from I(0) = {no2} (CHL-)', f'20250114/plots/no2_{no2}_chl-_cons', colors, no2_legends)
 
-# data = no3_data.loc[['C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']]
-# title = f'NO3 Concentration\n({chl}, {key}, {date})'
-# filename = f'{chl}_{key}_A(0)=1.0'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+# for rows, no3 in no3_conditions:
+#     overlap_plots(no3_chl1_evap.loc[rows], f'NO3 (A) Concentration from A(0) = {no3} (CHL+)', f'20250113/plots/no3_{no3}_chl+_evap', colors, no3_legends)
+#     overlap_plots(no3_chl1_cons.loc[rows], f'NO3 (A) Consumption from A(0) = {no3} (CHL+)', f'20250113/plots/no3_{no3}_chl+_cons', colors, no3_legends)
+#     overlap_plots(no3_chl0_evap.loc[rows], f'NO3 (A) from A(0) = {no3} Concentration (CHL-)', f'20250114/plots/no3_{no3}_chl-_evap', colors, no3_legends)
+#     overlap_plots(no3_chl0_cons.loc[rows], f'NO3 (A) from A(0) = {no3} Consumption (CHL-)', f'20250114/plots/no3_{no3}_chl-_cons', colors, no3_legends)
 
-# data = no3_data.loc[['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12','F01', 'F02', 'F03']]
-# title = f'NO3 Concentration\n({chl}, {key}, {date})'
-# filename = f'{chl}_{key}_A(0)=0.5'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_five_plots(data, title, filename, colors, labels)
+carbon_conditions = [
+    (['A01', 'A02', 'A03', 'G07', 'G08', 'G09'], 2.0, 2.0),
+    (['F04', 'F05', 'F06', 'H01', 'H02', 'H03'], 2.0, 0.0),
+    (['B01', 'B02', 'B03', 'G10', 'G11', 'G12'], 0.0, 2.0),
+    (['F10', 'F11', 'F12', 'H04', 'H05', 'H06'], 1.0, 0.0),
+    (['G04', 'G05', 'G06', 'D10', 'D11', 'D12'], 0.0, 0.0),
+]
+colors = ['r', 'orange', 'b', 'g']
+legends = ['I', f'$I_C$' , 'A', f'$A_C$']
 
-
-# # Create two overlapped plots
-# data = no3_data.loc[['A01', 'A02', 'A03', 'G07', 'G08', 'G09']]
-# title = f'NO3 Concentration\n({chl}, {key}, {date})'
-# filename = f'{chl}_{key}_A(0)=2.0'
-# colors = ["#b30000", "#4421af", "#0d88e6", "#5ad45a", "#ebdc78"]
-# labels = ['I(0)=2.0', 'I(0)=1.5', 'I(0)=1.0', 'I(0)=0.5', 'I(0)=0.0']
-# overlap_plots(data, title, filename, colors, labels)
+for rows, no2, no3 in carbon_conditions:
+    overlap_plots(pd.concat([no2_chl1_evap.loc[rows], no3_chl1_evap.loc[rows]]), 
+                  f'NO2 (I), NO3 (A) Concentration from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL+)', 
+                  f'20250113/plots/no2_{no2}_no3_{no3}_chl+_evap_carbon', colors, legends)
+    overlap_plots(pd.concat([no2_chl1_cons.loc[rows], no3_chl1_cons.loc[rows]]),
+                    f'NO2 (I), NO3 (A) Consumption from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL+)', 
+                    f'20250113/plots/no2_{no2}_no3_{no3}_chl+_cons_carbon', colors, legends)
+    overlap_plots(pd.concat([no2_chl0_evap.loc[rows], no3_chl0_evap.loc[rows]]),
+                    f'NO2 (I), NO3 (A) Concentration from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL-)', 
+                    f'20250114/plots/no2_{no2}_no3_{no3}_chl-_evap_carbon', colors, legends)
+    overlap_plots(pd.concat([no2_chl0_cons.loc[rows], no3_chl0_cons.loc[rows]]),
+                    f'NO2 (I), NO3 (A) Consumption from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL-)', 
+                    f'20250114/plots/no2_{no2}_no3_{no3}_chl-_cons_carbon', colors, legends)
