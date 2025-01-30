@@ -182,6 +182,6 @@ plots_per_figure = nrows * ncols
 
 for i in range(0, len(rows_to_plot), plots_per_figure * 3):
     rows_chunk = rows_to_plot[i:i + plots_per_figure * 3]
-    create_figure(no2_data=no2_time_series, no3_data=no3_time_series, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='raw plot')
+    create_figure(no2_data=no2_time_series, no3_data=no3_time_series, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='raw_plot')
 
 print(f'Plots saved in folder: {output_folder}')
