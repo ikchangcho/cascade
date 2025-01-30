@@ -159,16 +159,17 @@ carbon_conditions = [
 colors = ['r', 'orange', 'b', 'g']
 legends = ['I', f'$I_C$' , 'A', f'$A_C$']
 
-for rows, no2, no3 in carbon_conditions:
-    overlap_plots(pd.concat([no2_chl1_evap.loc[rows], no3_chl1_evap.loc[rows]]), 
-                  f'NO2 (I), NO3 (A) Concentration from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL+)', 
-                  f'20250113/plots/no2_{no2}_no3_{no3}_chl+_evap_carbon', colors, legends)
-    overlap_plots(pd.concat([no2_chl1_cons.loc[rows], no3_chl1_cons.loc[rows]]),
-                    f'NO2 (I), NO3 (A) Consumption from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL+)', 
-                    f'20250113/plots/no2_{no2}_no3_{no3}_chl+_cons_carbon', colors, legends)
-    overlap_plots(pd.concat([no2_chl0_evap.loc[rows], no3_chl0_evap.loc[rows]]),
-                    f'NO2 (I), NO3 (A) Concentration from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL-)', 
-                    f'20250114/plots/no2_{no2}_no3_{no3}_chl-_evap_carbon', colors, legends)
-    overlap_plots(pd.concat([no2_chl0_cons.loc[rows], no3_chl0_cons.loc[rows]]),
-                    f'NO2 (I), NO3 (A) Consumption from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL-)', 
-                    f'20250114/plots/no2_{no2}_no3_{no3}_chl-_cons_carbon', colors, legends)
+# for rows, no2, no3 in carbon_conditions:
+#     overlap_plots(pd.concat([no2_chl1_evap.loc[rows], no3_chl1_evap.loc[rows]]), 
+#                   f'NO2 (I), NO3 (A) Concentration from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL+)', 
+#                   f'20250113/plots/no2_{no2}_no3_{no3}_chl+_evap_carbon', colors, legends)
+#     overlap_plots(pd.concat([no2_chl1_cons.loc[rows], no3_chl1_cons.loc[rows]]),
+#                     f'NO2 (I), NO3 (A) Consumption from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL+)', 
+#                     f'20250113/plots/no2_{no2}_no3_{no3}_chl+_cons_carbon', colors, legends)
+#     overlap_plots(pd.concat([no2_chl0_evap.loc[rows], no3_chl0_evap.loc[rows]]),
+#                     f'NO2 (I), NO3 (A) Concentration from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL-)', 
+#                     f'20250114/plots/no2_{no2}_no3_{no3}_chl-_evap_carbon', colors, legends)
+#     overlap_plots(pd.concat([no2_chl0_cons.loc[rows], no3_chl0_cons.loc[rows]]),
+#                     f'NO2 (I), NO3 (A) Consumption from I(0) = {no2} and A(0) = {no3}\nwith and without 1 C-mM Succinate (CHL-)', 
+#                     f'20250114/plots/no2_{no2}_no3_{no3}_chl-_cons_carbon', colors, legends)
+
