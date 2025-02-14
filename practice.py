@@ -12,7 +12,21 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 
-filepath = '20250114'
-meta_data = pd.read_csv(f'{filepath}/sample_metadata.csv', index_col=0).dropna(how='all')
-print(10 % 3)
-print(10 // 3)
+# Load the pickle file
+monocultures = pickle.load(open( "monocultures.pkl", "rb" ))
+
+# Display the type of the loaded data
+print(f'Type of data: {type(monocultures)}')
+
+# Access the first object in the first sublist
+first_experiment = monocultures[0][0]
+
+# Get a list of all attributes and methods of the object
+attributes = dir(first_experiment)
+print("Attributes and methods of the first experiment object:")
+for attribute in attributes:
+    print(attribute)
+
+# Get detailed information about the object
+print("\nDetailed information about the first experiment object:")
+help(first_experiment)
