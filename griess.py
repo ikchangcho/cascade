@@ -9,6 +9,137 @@ import matplotlib.pyplot as plt
 from scipy import stats
 import statsmodels.api as sm
 
+def plot_griess_fit_mixed(meta_fn,no2_fn=None,no2_540_fn=None,no2_900_fn=None,no2no3_fn=None,no2no3_540_fn=None,no2no3_900_fn=None):  #KC added 08/06/2021 Ik edited 02/17/2025
+    meta = pd.read_csv(meta_fn,index_col=0).dropna(how='all')
+    meta = meta[['NO2','NO3']] #keep only the NO2/NO3 concentration columns
+    no2 = read_griess(meta_fn,data_fn = no2_fn,data_540_fn=no2_540_fn,data_900_fn=no2_900_fn)
+    no2no3 = read_griess(meta_fn,data_fn = no2no3_fn,data_540_fn=no2no3_540_fn,data_900_fn=no2no3_900_fn)
+    
+    #remove nan values
+    nan_idx = meta['NO2'].index[meta['NO2'].apply(np.isnan)].union(meta['NO3'].index[meta['NO3'].apply(np.isnan)])
+    meta = meta.drop(nan_idx)
+    no2 = no2.drop(nan_idx)
+    no2no3 = no2no3.drop(nan_idx)
+    
+    #subtract blank values
+    blank_idx = meta.index[(meta['NO2']==0) & (meta['NO3']==0)].tolist()
+    ###print(blank_idx)
+    no2_blank = no2.loc[blank_idx].median()
+    no2no3_blank = no2no3.loc[blank_idx].median()
+    no2 = no2 - no2_blank
+    no2no3 = no2no3 - no2no3_blank
+
+    #identify pure no2 and pure no3 samples
+    no2_std_idx = meta.index[(meta['NO2']>0)].tolist() #& (meta['NO3']==0)].tolist()
+    no3_std_idx = meta.index[(meta['NO2']==0) & (meta['NO3']>0)].tolist()
+
+    #no2 standard curve, griess measurement
+    y = no2.loc[no2_std_idx].values.reshape(-1, 1)
+    x = meta['NO2'].loc[no2_std_idx].values.reshape(-1, 1)
+    plt.scatter(x,y,label = 'Griess measurement')
+    x_vals = x
+   
+    #Fit a quadratic model to the nitrite concentration
+    x = np.append(x, x**2,axis=1) #make x and x^2 the independent variables
+    reg = LinearRegression().fit(x, y)
+    g_fit = [reg.intercept_[0], reg.coef_[0][0], reg.coef_[0][1]]
+    ###print(x_vals)
+    x_vals_smooth = np.linspace(min(x_vals), max(x_vals), num = 50)
+    plt.plot(x_vals_smooth, reg.intercept_[0] + x_vals_smooth*reg.coef_[0][0] + x_vals_smooth*x_vals_smooth*reg.coef_[0][1], label =  'griess fit')
+    plt.xlabel('NO2 [mM]')
+    plt.ylabel('Griess measurement')
+    plt.title('Griess standard curve, y='+str(round(reg.intercept_[0],2))+ '+'+str(round(reg.coef_[0][0],2))+'x+'+str(round(reg.coef_[0][1],2))+'x^2')
+    plt.legend()
+    #plt.show()
+   
+    #no2 and no3 standard curves, vcl3 measurement
+    y1 = no2no3.loc[no2_std_idx].values
+    y2 = no2no3.loc[no3_std_idx].values
+    x1 = meta.loc[no2_std_idx].values
+    x2 = meta.loc[no3_std_idx].values
+    #plt.plot(x1,y1,label = 'vcl3 no2 measurement')
+    #plt.plot(x2,y2,label = 'vcl3 no3 measurement')
+    #x1_vals = x1
+    #x2_vals = x2
+
+    
+    #Fit a quadratic model to the sum of nitrate and nitrite concentrations
+    x = np.append(np.sum(x1,axis=1),np.sum(x2,axis=1)).reshape(-1,1)
+    x = np.append(x, x**2,axis=1) #make x and x^2 the independent variables
+    y = np.append(y1,y2).reshape(-1,1)
+    reg = LinearRegression().fit(x, y)
+    v_fit = [reg.intercept_[0], reg.coef_[0][0], reg.coef_[0][1]]
+    #plt.plot(x1_vals, reg.intercept_[0] + x_vals*reg.coef_[0][0] + x_vals*x_vals*reg.coef_[0][1], label = 'vcl3 fit')
+    #plt.show()
+    #fit = [[no2_blank,no2no3_blank], g_fit, v_fit]
+    return
+
+def fit_griess_mixed(meta_fn,no2_fn=None,no2_540_fn=None,no2_900_fn=None,no2no3_fn=None,no2no3_540_fn=None,no2no3_900_fn=None):  # KC added 08/06/2021 Ik edited 02/17/2025
+    meta = pd.read_csv(meta_fn,index_col=0).dropna(how='all')
+    meta = meta[['NO2','NO3']] #keep only the NO2/NO3 concentration columns
+    no2 = read_griess(meta_fn,data_fn = no2_fn,data_540_fn=no2_540_fn,data_900_fn=no2_900_fn)
+    no2no3 = read_griess(meta_fn,data_fn = no2no3_fn,data_540_fn=no2no3_540_fn,data_900_fn=no2no3_900_fn)
+    
+    #remove nan values
+    nan_idx = meta['NO2'].index[meta['NO2'].apply(np.isnan)].union(meta['NO3'].index[meta['NO3'].apply(np.isnan)])
+    meta = meta.drop(nan_idx)
+    no2 = no2.drop(nan_idx)
+    no2no3 = no2no3.drop(nan_idx)
+    
+    #subtract blank values
+    blank_idx = meta.index[(meta['NO2']==0) & (meta['NO3']==0)].tolist()
+    no2_blank = no2.loc[blank_idx].median()
+    no2no3_blank = no2no3.loc[blank_idx].median()
+    no2 = no2 - no2_blank
+    no2no3 = no2no3 - no2no3_blank
+
+    #identify pure no2 and pure no3 samples
+    no2_std_idx = meta.index[(meta['NO2']>0)].tolist() #& (meta['NO3']==1.75)].tolist()
+    no3_std_idx = meta.index[(meta['NO2']==0) & (meta['NO3']>0)].tolist()
+    #no3_2_std_idx =  meta.index[(meta['NO2']==0) & (meta['NO3']==1.75)].tolist()
+    #no2 standard curve, griess measurement
+    y = no2.loc[no2_std_idx].values.reshape(-1, 1)
+    x = meta['NO2'].loc[no2_std_idx].values.reshape(-1, 1)
+    #plt.scatter(x,y,label = 'griess measurement')
+    #x_vals = x
+   
+    #Fit a quadratic model to the nitrite concentration
+    x = np.append(x, x**2,axis=1) #make x and x^2 the independent variables
+    reg = LinearRegression().fit(x, y)
+    g_fit = [reg.intercept_[0], reg.coef_[0][0], reg.coef_[0][1]]
+    ###print(x_vals)
+    #plt.plot(x_vals, reg.intercept_[0] + x_vals*reg.coef_[0][0] + x_vals*x_vals*reg.coef_[0][1], label =  'griess fit')
+    
+   
+    #no2 and no3 standard curves, vcl3 measurement
+    ###print(no2no3.loc[no3_2_std_idx].values)
+    y1 = no2no3.loc[no2_std_idx].values #- np.mean(no2no3.loc[no3_2_std_idx].values)
+    y2 = no2no3.loc[no3_std_idx].values
+    ###print('Warning, hardcoded below')
+    x1 = meta.loc[no2_std_idx].values#.T#[0] #- 1.75/2.0 #hard coded, careful of this
+    x2 = meta.loc[no3_std_idx].values
+    #x1 = x1.T[0]
+    ###print(y1)
+    ###print(x1)
+    
+    #Fit a quadratic model to the sum of nitrate and nitrite concentrations
+    x = np.append(np.sum(x1,axis=1),np.sum(x2,axis=1)).reshape(-1,1)
+    ##print(x1)
+    ##print(x2)
+    #error
+    x_vals1 = np.sum(x1,axis=1)
+    ##print(x_vals1)
+    x_vals2 = np.sum(x2,axis=1)
+    ##print(x_vals2)
+    x_vals = x
+    x = np.append(x, x**2,axis=1) #make x and x^2 the independent variables
+    y = np.append(y1,y2).reshape(-1,1)
+    #plt.scatter(x_vals,y,label = 'VCl3 measurement')
+    reg = LinearRegression().fit(x, y)
+    v_fit = [reg.intercept_[0], reg.coef_[0][0], reg.coef_[0][1]]
+    x_vals_smooth = np.linspace(min(x_vals), max(x_vals), num = 50)
+    fit = [[no2_blank,no2no3_blank], g_fit, v_fit]
+    return fit
 
 def find_outliers(data):  # Modified by Kiseok Lee 230622
     val_above = 1.5
@@ -1072,8 +1203,9 @@ def invert_griess(no2, fit, no2no3=None):
         NO3 = NO2.copy().rename("NO3")
         NO3[NO3 != 0] = 0.0
 
-    data_out = pd.DataFrame()
-    data_out = data_out.append([NO2, NO3]).transpose()
+    #data_out = pd.DataFrame()
+    #data_out = data_out.append([NO2, NO3]).transpose()
+    data_out = pd.concat([NO2, NO3], axis=1) # Ik added 02/17/2025
     return data_out
 
 

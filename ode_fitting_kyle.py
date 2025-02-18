@@ -14,7 +14,6 @@ def fitRates(params,experiments,n=1):
     return best_result
 # The Minimizer class from the lmfit library is used to perform optimization on a given objective function. 
 # The output of the Minimizer's minimize method is an OptimizeResult object. This object contains several attributes that provide information about the optimization process and its results. Key attributes include:
-
 # params: The optimized parameters.
 # chisqr: The chi-square value of the fit.
 # redchi: The reduced chi-square value.
