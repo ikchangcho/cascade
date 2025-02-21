@@ -21,15 +21,23 @@ print(f'Type of data: {type(monocultures)}')
 # Access the first object in the first sublist
 first_experiment = monocultures[0][0]
 
-# Get a list of all attributes and methods of the object
-attributes = dir(first_experiment)
-print("Attributes and methods of the first experiment object:")
-for attribute in attributes:
-    print(attribute)
+if hasattr(first_experiment, 'A0'):
+	print(first_experiment.A0)
+else:
+	print("Attribute 'A0' does not exist in first_experiment")
+print(first_experiment.A)
+print(first_experiment.t)
 
-# Get detailed information about the object
-print("\nDetailed information about the first experiment object:")
-help(first_experiment)
+
+# # Get a list of all attributes and methods of the object
+# attributes = dir(first_experiment)
+# print("Attributes and methods of the first experiment object:")
+# for attribute in attributes:
+#     print(attribute)
+
+# # Get detailed information about the object
+# print("\nDetailed information about the first experiment object:")
+# help(first_experiment)
 
 # # Define the range for A
 # A = np.linspace(0, 100, 500)
