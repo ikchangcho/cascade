@@ -17,7 +17,7 @@ def ode_system(t, y, K_A, K_I, r_A, r_I, gamma):
     return [dA_dt, dI_dt, dX_dt]
 
 def simulate(K_A, K_I, r_A, r_I, gamma, t_span, initial, t_eval):
-    sol = solve_ivp(ode_system, t_span, initial, t_eval=t_eval, args=(K_A, K_I, r_A, r_I, gamma))
+    sol = solve_ivp(ode_system, t_span, initial, t_eval=t_eval, args=(K_A, K_I, r_A, r_I, gamma), rtol=1e-6, method='LSODA')
     return sol.y[0], sol.y[1]  # Returns A(t) and I(t)
 
 def residual(params, t_eval, A_data, I_data):
@@ -66,8 +66,7 @@ params.add('r_I', value=1, min=1e-3, max=10)
 params.add('gamma', value=1, min=1e-3, max=10)
 
 # Create Minimizer object
-fitter = Minimizer(residual, params,
-                   fcn_args=(t_eval, A_data, I_data))
+fitter = Minimizer(residual, params, fcn_args=(t_eval, A_data, I_data))
 
 # Perform the minimization (Levenberg-Marquardt by default)
 result = fitter.minimize(method='leastsq')
@@ -93,7 +92,7 @@ plt.plot(A_data.index.astype(float), A_data, 'bo', label='A Data')
 plt.plot(t_eval, A_fit, 'b-', label='A Fit')
 plt.xlabel('Time')
 plt.ylabel('Concentration')
-plt.title(f'Row {row} Fit:\nK_A={K_A_best:.2f}, K_I={K_I_best:.2f}, gamma={gamma_best:.2f}')
+plt.title(f'Row {row} Fit:\nK_A={K_A_best:.2f}, K_I={K_I_best:.2f}, r_A={r_A_best:.2f}, r_I={r_I_best:.2f}, gamma={gamma_best:.2f}')
 plt.legend()
 plt.show()
 
