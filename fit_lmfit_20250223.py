@@ -4,6 +4,8 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from lmfit import Minimizer, Parameters
 from scipy.interpolate import interp1d
+import json
+import pickle
 
 # Load your data
 no2 = pd.read_csv('20250114/no2_chl-_evap.csv', index_col=0)
@@ -74,8 +76,14 @@ fitter = Minimizer(residual, params, fcn_args=(t_eval, A_data, I_data))
 
 # Perform the minimization and print the result
 result = fitter.minimize(method='leastsq')
+with open('fitting_result.pkl', 'wb') as f:
+    pickle.dump(result, f)
+
+# Print the fitting result
 for param_name, param in result.params.items():
     print(f'{param_name}: {param.value} ± {param.stderr}')
+print(f'{param_name}: {param.value} ± {param.stderr}')
+
 
 # Extract best-fit values (including the new X0)
 K_A_best = result.params['K_A'].value
@@ -106,4 +114,5 @@ plt.title(f'Row {row}: '
           f'gamA={gamA_best:.3f}, gamI={gamI_best:.3f}, X0={X0_best:.3f}')
 plt.legend()
 plt.show()
+
 
