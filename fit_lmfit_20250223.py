@@ -101,9 +101,9 @@ plt.plot(t_eval, A_fit, 'b-', label='A Fit')
 plt.xlabel('Time')
 plt.ylabel('Concentration')
 plt.title(f'Row {row}: '
-          f'K_A={K_A_best:.2f}, K_I={K_I_best:.2f}, '
-          f'r_A={r_A_best:.2f}, r_I={r_I_best:.2f}, \n'
-          f'gamA={gamA_best:.2f}, gamI={gamI_best:.2f}, X0={X0_best:.3f}')
+          f'K_A={K_A_best:.3f}, K_I={K_I_best:.3f}, '
+          f'r_A={r_A_best:.3f}, r_I={r_I_best:.3f}, \n'
+          f'gamA={gamA_best:.3f}, gamI={gamI_best:.3f}, X0={X0_best:.3f}')
 plt.legend()
 plt.show()
 
