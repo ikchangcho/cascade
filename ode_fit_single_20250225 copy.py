@@ -7,11 +7,12 @@ from scipy.interpolate import interp1d
 import json
 import pickle
 import copy
-from odefit import *
+from model1 import *
 
 # Load your data
-no2 = pd.read_csv('20250114/no2_chl-_evap.csv', index_col=0)
-no3 = pd.read_csv('20250114/no3_chl-_evap.csv', index_col=0)
+filepath = '20250114/'
+no2 = pd.read_csv(f'{filepath}no2_chl-_evap.csv', index_col=0)
+no3 = pd.read_csv(f'{filepath}/no3_chl-_evap.csv', index_col=0)
 
 # Example usage
 row = no3.index[0]  # Just as an example, fitting one row
@@ -21,14 +22,14 @@ t_eval = np.linspace(0, float(no3.columns[-1]) + 1, 100)
 
 # Create lmfit Parameters with optional constraints
 params = Parameters()
-params.add('K_A',  value=0.001, min=1e-3, max=1)
-params.add('K_I',  value=0.001, min=1e-3, max=1)
-params.add('r_A',  value=1.0, min=0, max=10)
-params.add('r_I',  value=1.0, min=0, max=10)
-params.add('gamA', value=1.0, min=0, max=10)
-params.add('gamI', value=1.0, min=0, max=10)
-params.add('X0',   value=1.0, min=0, max=10)
-
+params.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
+params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
+params.add('r_A',  value=1.0, min=1e-3, max=10)
+params.add('r_I',  value=1.0, min=1e-3, max=10)
+params.add('gamA', value=1.0, min=1e-3, max=10)
+params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
+params.add('X0',   value=1.0, min=1e-3, max=10)
+filename_str = '_fixed_K_single_gam'
 
 fitter = Minimizer(residual, params, fcn_args=(t_eval, A_data, I_data))
 result_brute = fitter.minimize(method='brute', Ns=3)
@@ -78,9 +79,7 @@ plt.title(f'Row {row}\n'
           fontsize=15)
 plt.legend()
 plt.tight_layout()
-plt.savefig('20250114/plots_fitting/A01.png')
-with open('20250114/fitting_result_A01.pkl', 'wb') as f:
+plt.savefig(f'{filepath}plots_fitting/{row}{filename_str}.png')
+with open(f'{filepath}fitting_result_{row}{filename_str}.pkl', 'wb') as f:
     pickle.dump(result, f)
 plt.show()
-
-

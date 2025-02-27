@@ -8,7 +8,7 @@ import json
 import pickle
 import copy
 import lmfit
-from odefit import *
+from model1 import *
 
 # Load your data
 no2 = pd.read_csv('20250114/no2_chl-_evap.csv', index_col=0)
