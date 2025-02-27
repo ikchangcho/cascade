@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 import json
 import pickle
 import copy
-from model1 import *
+from model2 import *
 
 # Load your data
 filepath = '20250114/'
@@ -22,6 +22,7 @@ t_eval = np.linspace(0, float(no3.columns[-1]) + 1, 100)
 
 # Create lmfit Parameters with optional constraints
 params = Parameters()
+params.add('eps',  value=0.1, min=1e-3, max=1)
 params.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
 params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
 params.add('r_A',  value=1.0, min=1e-3, max=10)
@@ -29,9 +30,10 @@ params.add('r_I',  value=1.0, min=1e-3, max=10)
 params.add('gamA', value=1.0, min=1e-3, max=10)
 params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
 params.add('X0',   value=1.0, min=1e-3, max=10)
-filename_str = '_fixed_K_single_gam'
+filename_str = '_model2_fixed_K_single_gam'
 
 fitter = Minimizer(residual, params, fcn_args=(t_eval, A_data, I_data))
+print('=====Brute fitting started=====')
 result_brute = fitter.minimize(method='brute', Ns=3)
 print('=====Brute fitting completed=====')
 best_result = copy.deepcopy(result_brute)
@@ -49,7 +51,8 @@ print('=====Best-fit values=====')
 for param_name, param in result.params.items():
     print(f'{param_name}: {param.value} ± {param.stderr}')
 
-# Extract best-fit values (including the new X0)
+# Extract best-fit values
+eps_best = result.params['eps'].value
 K_A_best = result.params['K_A'].value
 K_I_best = result.params['K_I'].value
 r_A_best = result.params['r_A'].value
@@ -73,9 +76,9 @@ plt.plot(t_eval, A_fit, 'b-', label='A Fit')
 plt.xlabel('Time (hours)', fontsize=15)
 plt.ylabel('Concentration (mM)', fontsize=15)
 plt.tick_params(axis='both', which='major', labelsize=15)
-plt.title(f'Row {row}\n'
+plt.title(f'Row {row}{filename_str}\n'
           f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $r_A$={r_A_best:.3f}, $r_I$={r_I_best:.3f},\n'
-          f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}',
+          f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}, $\epsilon$={eps_best:.3f}',
           fontsize=15)
 plt.legend()
 plt.tight_layout()
