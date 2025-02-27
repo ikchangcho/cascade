@@ -28,7 +28,8 @@ params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
 params.add('r_A',  value=1.0, min=1e-3, max=10)
 params.add('r_I',  value=1.0, min=1e-3, max=10)
 params.add('gamA', value=1.0, min=1e-3, max=10)
-params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
+params.add('gamI', value=1.0, min=1e-3, max=10)
+#params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
 params.add('X0',   value=1.0, min=1e-3, max=10)
 filename_str = '_model2_fixed_K_single_gam'
 

@@ -18,16 +18,16 @@ def ode_system(t, y, params):
     r_I = params['r_I'].value
     gamA = params['gamA'].value
     gamI = params['gamI'].value
-    dA_dt = -A/(A + eps * I + 1e-2) * A/(K_A + A) * r_A * X
-    dI_dt = -dA_dt - eps * I/(A + eps * I + 1e-2) * I/(K_I + I) * r_I * X
-    dX_dt = (A/(K_A + A) * r_A * gamA + I/(K_I + I) * r_I * gamI) * X
+    dA_dt = -A/(A + eps * I + 1e-5) * A/(K_A + A) * r_A * X
+    dI_dt = -dA_dt - eps * I/(A + eps * I + 1e-5) * I/(K_I + I) * r_I * X
+    dX_dt = (A/(A + eps * I + 1e-5) * A/(K_A + A) * r_A * gamA + eps * I/(A + eps * I + 1e-5) * I/(K_I + I) * r_I * gamI) * X
     return [dA_dt, dI_dt, dX_dt]
 
 def simulate(params, t_span, initial, t_eval):
     sol = solve_ivp(ode_system, t_span, initial, t_eval=t_eval,
                     args=(params,),
                     method='BDF', 
-                    rtol=1e-3)      # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
+                    rtol=1e-6)      # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
     print(sol.message)
     return sol.y[0], sol.y[1]  # Returns A(t) and I(t)
 
