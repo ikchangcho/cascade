@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./functions')
 import pandas as pd
 import numpy as np
 from scipy.integrate import solve_ivp
