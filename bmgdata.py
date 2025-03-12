@@ -200,3 +200,15 @@ def check_540_heatmap_wellscan(df, title="NO2"):
     # Show the plot
     plt.show()
     
+def check_650_heatmap_wellscan(df, title="NO2"):
+    # Set up the figure and axes
+    fig, axes = plt.subplots(figsize=(26, 4))
+
+    # Generate the heatmap using seaborn - Before removing bubble
+    vmin = np.nanmin(df.values)
+    vmax = np.nanmax(df.values)
+    heatmap = sns.heatmap(df.transpose(), cmap='RdYlGn_r', annot=True, linewidths=0.5, ax=axes, annot_kws={"rotation": 90},
+                          vmin=vmin, vmax=vmax)
+    axes.set_title('[650nm values in '+title+"] Heatmap of wellscan") # Set the title
+    # Show the plot
+    plt.show()

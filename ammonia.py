@@ -377,7 +377,7 @@ def get_concentration_xlsx(excel_output, ammonia_blank, fit, meta_fn, wavelength
 
     # combine it into a dataframe
     df_read = pd.DataFrame()
-    df_read = df_read.append([Ammonia_OD650, Ammonia_mM]).T
+    df_read = pd.concat([Ammonia_OD650, Ammonia_mM], axis=1)
 
     df_meta = pd.read_csv(meta_fn,index_col=0).dropna()
     print(df_meta)
