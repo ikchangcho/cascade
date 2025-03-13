@@ -384,3 +384,40 @@ def get_concentration_xlsx(excel_output, ammonia_blank, fit, meta_fn, wavelength
     df_out = pd.concat([df_meta, df_read], axis=1)
     df_out.to_excel(excel_output) 
     return
+
+def get_concentration(ammonia_blank, fit, meta_fn, wavelength, data_fn=None, data_absorb_fn=None, data_900_fn=None):
+    # Check for wellscan outlier removal
+    print("Check wellscan for outlier removal in Ammonia")
+    df_check_am = bd.read_abs_wellscan(data_900_fn)
+    bd.plot_heatmap_wellscan(df_check_am, title = "Ammonia")
+    df_check_am_650 = bd.read_abs_wellscan(data_absorb_fn)  # For 650nm
+    bd.check_650_heatmap_wellscan(df_check_am_650, title="Ammonia") # For 540nm
+    
+    # read ammonia
+    print(meta_fn)
+    print("Currently using this fit: ",fit)
+    print("Before subtracting blank value")
+    Ammonia_OD650_plus_blank = read_ammonia(meta_fn, wavelength, data_fn, data_absorb_fn, data_900_fn).rename("Ammonia_OD650")
+    print(Ammonia_OD650_plus_blank)
+
+    # subtract blanks
+    print("Subtracted blank value")
+    Ammonia_OD650 = Ammonia_OD650_plus_blank - ammonia_blank
+    print(Ammonia_OD650)
+    # turn negative values to 0
+    Ammonia_OD650[Ammonia_OD650<0] = 0.0
+
+    #Returns inferred concentrations
+    print("Use the fit to infer Ammonia mM")
+    Ammonia_mM = ((-fit[1] + np.sqrt(fit[1]**2 - 4*(fit[0]- Ammonia_OD650 )*fit[2]))/2/fit[2]).rename("Ammonia_mM") ## solve quadratic formula
+    Ammonia_mM[Ammonia_mM<0] = 0.0 # make it zero if it is negative
+    print(Ammonia_mM)
+
+    # combine it into a dataframe
+    df_read = pd.DataFrame()
+    df_read = pd.concat([Ammonia_OD650, Ammonia_mM], axis=1)
+
+    df_meta = pd.read_csv(meta_fn,index_col=0).dropna()
+    print(df_meta)
+    df_out = pd.concat([df_meta, df_read], axis=1)
+    return df_out
