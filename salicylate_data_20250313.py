@@ -86,6 +86,7 @@ def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
 
 # set filepath for data
 date = '20250304'
+chl = 'chl+'
 datetime_array = [
     datetime(2024, 12, 24, 23, 30),       # T0
     datetime(2024, 12, 25, 8, 0),       # T1
@@ -116,42 +117,35 @@ for i in range(1, len(datetime_array)):
     time_diff = datetime_array[i] - datetime_array[0]
     times.append(time_diff.total_seconds() / 3600)
 
+
+# load file names
+
+
+
 std_meta_fn = f"data/{date}_standards_metadata.csv"
 std_am_absorb_fn = glob.glob(f"data/{date}_NH4_STD*650*")[0]
 std_am_900_fn = glob.glob(f"data/{date}_NH4_STD*900*")[0]
 
+meta_fn = f"data/{date}_samples_metadata.csv"
+nh4_650_fns = sorted(glob.glob(f"data/{date}_NH4_chl*650*"))
+nh4_900_fns = sorted(glob.glob(f"data/{date}_NH4_chl*900*"))
+
 fit_list = am.fit_ammonia(meta_fn = std_meta_fn, wavelength="650", data_absorb_fn = std_am_absorb_fn, data_900_fn = std_am_900_fn)
 [[ammonia_blank], fit, b_fit] = fit_list 
 
-meta_fn = f"data/{date}_samples_metadata.csv"
-plate1_am_absorb_fn = glob.glob(f"data/{date}_NH4_chl*650*")[0]
-plate1_am_900_fn = glob.glob(f"data/{date}_NH4_chl*900*")[0]
-
-nh4_conc = am.get_concentration(ammonia_blank = ammonia_blank, fit = b_fit, meta_fn = meta_fn, wavelength = "650", data_absorb_fn=plate1_am_absorb_fn, data_900_fn=plate1_am_900_fn)
-
 
 # create times series dataframe
-no2_time_series_dic = {}
-no3_time_series_dic = {}
+nh4_time_series_dic = {}
 col_num = 0
-for no2_540_fn, no2_900_fn, no2no3_540_fn, no2no3_900_fn in zip(no2_540_fns, no2_900_fns, no2no3_540_fns, no2no3_900_fns):
-    df = gr.get_concentration(no2_blank=no2_blank, no2no3_blank=no2no3_blank, g_fit=g_fit, v_fit=no3_fit,
-                          meta_fn=meta_fn, no2_fn=None, no2_540_fn=no2_540_fn, no2_900_fn=no2_900_fn,
-                          no2no3_fn=None, no2no3_540_fn=no2no3_540_fn, no2no3_900_fn=no2no3_900_fn)
-    no2_time_series_dic[col_num] = df['NO2_mM'].copy()
-    no3_time_series_dic[col_num] = df['NO3_mM'].copy()
+for nh4_650_fn, nh4_900_fn in zip(nh4_650_fns, nh4_900_fns):
+    df = am.get_concentration(ammonia_blank = ammonia_blank, fit = b_fit, meta_fn = meta_fn, wavelength = "650", data_absorb_fn=nh4_650_fn, data_900_fn=nh4_900_fn)
+    nh4_time_series_dic[col_num] = df['Ammonia_mM'].copy()
     col_num += 1
 
-no2_time_series = pd.DataFrame(no2_time_series_dic)
-no3_time_series = pd.DataFrame(no3_time_series_dic)
-meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
-meta.index.name = None  # Remove the name of the index
-# Rename the columns of no2_time_series and no3_time_series to the times array
-no2_time_series.columns = times
-no3_time_series.columns = times
 
-no2_time_series.to_csv(f'{filepath}/no2_chl-.csv')
-no3_time_series.to_csv(f'{filepath}/no3_chl-.csv')
+nh4_time_series = pd.DataFrame(nh4_time_series_dic)
+nh4_time_series.columns = times
+nh4_time_series.to_csv(f'data/{date}_nh4_{chl}.csv')
 
 no2_time_series_evap = no2_evap_correction(['H10', 'H11', 'H12'])
 no3_time_series_evap = no3_evap_correction(['H07', 'H08', 'H09'])
@@ -166,6 +160,9 @@ no2_consumption.to_csv(f'{filepath}/no2_chl-_cons.csv')
 # Create a new folder to save the PNG files
 output_folder = f'{filepath}/plots'
 os.makedirs(output_folder, exist_ok=True)
+
+meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
+meta.index.name = None  # Remove the name of the index
 
 # List of row names in the order you want to display them
 rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
