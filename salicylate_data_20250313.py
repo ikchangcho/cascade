@@ -123,11 +123,11 @@ std_am_900_fn = glob.glob(f"data/{date}_NH4_STD*900*")[0]
 fit_list = am.fit_ammonia(meta_fn = std_meta_fn, wavelength="650", data_absorb_fn = std_am_absorb_fn, data_900_fn = std_am_900_fn)
 [[ammonia_blank], fit, b_fit] = fit_list 
 
-plate1_meta_fn = f"data/{date}_samples_metadata.csv"
+meta_fn = f"data/{date}_samples_metadata.csv"
 plate1_am_absorb_fn = glob.glob(f"data/{date}_NH4_chl*650*")[0]
 plate1_am_900_fn = glob.glob(f"data/{date}_NH4_chl*900*")[0]
 
-nh4_conc = am.get_concentration(ammonia_blank = ammonia_blank, fit = b_fit, meta_fn = plate1_meta_fn, wavelength = "650", data_absorb_fn=plate1_am_absorb_fn, data_900_fn=plate1_am_900_fn)
+nh4_conc = am.get_concentration(ammonia_blank = ammonia_blank, fit = b_fit, meta_fn = meta_fn, wavelength = "650", data_absorb_fn=plate1_am_absorb_fn, data_900_fn=plate1_am_900_fn)
 
 
 # create times series dataframe

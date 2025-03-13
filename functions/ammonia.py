@@ -75,7 +75,7 @@ def read_ammonia(meta_fn, wavelength, data_fn=None, data_absorb_fn=None, data_90
         bub_900 = find_outliers(data_900)
         for row in data_absorb.index:
             if sum(np.isnan(bub_900.loc[row])) < 4:
-                data_absorb.loc[row][bub_900.loc[row]] = np.NaN #Set bubbles to NaN
+                data_absorb.loc[row][bub_900.loc[row]] = np.nan #Set bubbles to NaN
             else:
                 data_absorb.loc[row] = data_absorb.loc[row] - data_900.loc[row]
         data_out = data_absorb.median(axis=1)
@@ -386,13 +386,6 @@ def get_concentration_xlsx(excel_output, ammonia_blank, fit, meta_fn, wavelength
     return
 
 def get_concentration(ammonia_blank, fit, meta_fn, wavelength, data_fn=None, data_absorb_fn=None, data_900_fn=None):
-    # Check for wellscan outlier removal
-    print("Check wellscan for outlier removal in Ammonia")
-    df_check_am = bd.read_abs_wellscan(data_900_fn)
-    bd.plot_heatmap_wellscan(df_check_am, title = "Ammonia")
-    df_check_am_650 = bd.read_abs_wellscan(data_absorb_fn)  # For 650nm
-    bd.check_650_heatmap_wellscan(df_check_am_650, title="Ammonia") # For 540nm
-    
     # read ammonia
     print(meta_fn)
     print("Currently using this fit: ",fit)
@@ -417,7 +410,4 @@ def get_concentration(ammonia_blank, fit, meta_fn, wavelength, data_fn=None, dat
     df_read = pd.DataFrame()
     df_read = pd.concat([Ammonia_OD650, Ammonia_mM], axis=1)
 
-    df_meta = pd.read_csv(meta_fn,index_col=0).dropna()
-    print(df_meta)
-    df_out = pd.concat([df_meta, df_read], axis=1)
-    return df_out
+    return df_read
