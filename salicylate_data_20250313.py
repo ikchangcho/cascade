@@ -16,7 +16,7 @@ import bmgdata as bd
 import denitfit as dn
 import ammonia as am
 
-def no2_evap_correction(rows):
+def no2_evap_correction(df, rows):
     # Extract the rows from no2_time_series using .loc
     selected_rows = no2_time_series.loc[rows]
     
@@ -27,11 +27,11 @@ def no2_evap_correction(rows):
     normalization_factors = avg_array / avg_array.iloc[0]
     
     # Apply the normalization factors to each column of no2_time_series
-    no2_time_series_evap = no2_time_series / normalization_factors
+    df_evap = df.div(normalization_factors.values, axis=1)
     
-    return no2_time_series_evap
+    return df_evap
 
-def no3_evap_correction(rows):
+def no3_evap_correction(df, rows):
     # Extract the rows from no3_time_series using .loc
     selected_rows = no3_time_series.loc[rows]
     
@@ -42,14 +42,14 @@ def no3_evap_correction(rows):
     normalization_factors = avg_array / avg_array.iloc[0]
     
     # Apply the normalization factors to each column of no3_time_series
-    no3_time_series_evap = no3_time_series / normalization_factors
+    df_evap = df / normalization_factors
     
-    return no3_time_series_evap
+    return df_evap
 
 # Function to create a figure for a chunk of rows
-def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
+def create_figure(no2_data, no3_data, nh4_data, rows_chunk, figure_index, filename):
     # Determine the global y-axis limits
-    all_values = pd.concat([no2_data, no3_data])
+    all_values = pd.concat([no2_data, no3_data, nh4_data])
     y_min = all_values.min().min()
     y_max = all_values.max().max()
 
@@ -64,13 +64,15 @@ def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
                     row = rows_chunk[i + j]
                     ax.plot(times, no2_data.loc[row], 'r.-', label='NO2')
                     ax.plot(times, no3_data.loc[row], 'b.-', label='NO3')
+                    ax.plot(times, nh4_data.loc[row], 'g.-', label='NH4')
             ax.set_title(f'{rows_chunk[i:i+3]}')
             ax.set_ylim(y_min, y_max)
             ax.legend().set_visible(False)  # Hide individual legends
 
     # Add a single legend for the entire figure
     handles = [plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label='NO2'),
-               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3')]
+               plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label='NO3'),
+               plt.Line2D([0], [0], color='g', marker='.', linestyle='-', label='NH4')]
     fig.legend(handles=handles, loc='upper right', fontsize=20)
 
     # Add a single set of x and y labels for the entire figure
@@ -81,12 +83,14 @@ def create_figure(no2_data, no3_data, rows_chunk, figure_index, filename):
     plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
     # Save the figure
-    plt.savefig(f'{output_folder}/{filename}_{figure_index}.png')
+    plt.savefig(f'{filename}_{figure_index}.png')
     plt.close()
 
 # set filepath for data
 date = '20250304'
 chl = 'chl+'
+filepath = '20250113'
+filename = f'plots/{date}_raw_plots_{chl}'
 datetime_array = [
     datetime(2024, 12, 24, 23, 30),       # T0
     datetime(2024, 12, 25, 8, 0),       # T1
@@ -117,12 +121,39 @@ for i in range(1, len(datetime_array)):
     time_diff = datetime_array[i] - datetime_array[0]
     times.append(time_diff.total_seconds() / 3600)
 
+# NO2 and NO3 Concentration for Evaporation Correction
+std_meta_fn = glob.glob(f'{filepath}/*standard_metadata.csv')[0]
+std_no2_540_fn = glob.glob(f"{filepath}/*_Ik_STD_NO2_*540*")[0]
+std_no2_900_fn = glob.glob(f"{filepath}/*_Ik_STD_NO2_*900*")[0]
+std_no2no3_540_fn = glob.glob(f"{filepath}/*_Ik_STD_NO2NO3_*540*")[0]
+std_no2no3_900_fn = glob.glob(f"{filepath}/*_Ik_STD_NO2NO3_*900*")[0]
 
-# load file names
+meta_fn = glob.glob(f'{filepath}/*sample_metadata.csv')[0]
+no2_540_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2_*_tp*_540*'))
+no2_900_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2_*_tp*_900*'))
+no2no3_540_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2NO3_*_tp*_540*'))
+no2no3_900_fns = sorted(glob.glob(f'{filepath}/*_Ik_NO2NO3_*_tp*_900*'))
+
+# fitted parameters
+[[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
+
+# create times series dataframe
+no2_time_series_dic = {}
+no3_time_series_dic = {}
+col_num = 0
+for no2_540_fn, no2_900_fn, no2no3_540_fn, no2no3_900_fn in zip(no2_540_fns, no2_900_fns, no2no3_540_fns, no2no3_900_fns):
+    df = gr.get_concentration(no2_blank=no2_blank, no2no3_blank=no2no3_blank, g_fit=g_fit, v_fit=no3_fit,
+                          meta_fn=meta_fn, no2_fn=None, no2_540_fn=no2_540_fn, no2_900_fn=no2_900_fn,
+                          no2no3_fn=None, no2no3_540_fn=no2no3_540_fn, no2no3_900_fn=no2no3_900_fn)
+    no2_time_series_dic[col_num] = df['NO2_mM'].copy()
+    no3_time_series_dic[col_num] = df['NO3_mM'].copy()
+    col_num += 1
+no2_time_series = pd.DataFrame(no2_time_series_dic)
+no3_time_series = pd.DataFrame(no3_time_series_dic)
 
 
-
-std_meta_fn = f"data/{date}_standards_metadata.csv"
+# NH4 Concentration
+std_am_meta_fn = f"data/{date}_standards_metadata.csv"
 std_am_absorb_fn = glob.glob(f"data/{date}_NH4_STD*650*")[0]
 std_am_900_fn = glob.glob(f"data/{date}_NH4_STD*900*")[0]
 
@@ -130,36 +161,29 @@ meta_fn = f"data/{date}_samples_metadata.csv"
 nh4_650_fns = sorted(glob.glob(f"data/{date}_NH4_chl*650*"))
 nh4_900_fns = sorted(glob.glob(f"data/{date}_NH4_chl*900*"))
 
-fit_list = am.fit_ammonia(meta_fn = std_meta_fn, wavelength="650", data_absorb_fn = std_am_absorb_fn, data_900_fn = std_am_900_fn)
+fit_list = am.fit_ammonia(meta_fn = std_am_meta_fn, wavelength="650", data_absorb_fn = std_am_absorb_fn, data_900_fn = std_am_900_fn)
 [[ammonia_blank], fit, b_fit] = fit_list 
 
 
 # create times series dataframe
-nh4_time_series_dic = {}
+nh4_dic = {}
 col_num = 0
 for nh4_650_fn, nh4_900_fn in zip(nh4_650_fns, nh4_900_fns):
     df = am.get_concentration(ammonia_blank = ammonia_blank, fit = b_fit, meta_fn = meta_fn, wavelength = "650", data_absorb_fn=nh4_650_fn, data_900_fn=nh4_900_fn)
-    nh4_time_series_dic[col_num] = df['Ammonia_mM'].copy()
+    nh4_dic[col_num] = df['Ammonia_mM'].copy()
     col_num += 1
 
 
-nh4_time_series = pd.DataFrame(nh4_time_series_dic)
-nh4_time_series.columns = times
-nh4_time_series.to_csv(f'data/{date}_nh4_{chl}.csv')
+nh4_conc = pd.DataFrame(nh4_dic)
+nh4_conc.columns = times
+nh4_conc.to_csv(f'data/{date}_nh4_conc_{chl}.csv')
 
-no2_time_series_evap = no2_evap_correction(['H10', 'H11', 'H12'])
-no3_time_series_evap = no3_evap_correction(['H07', 'H08', 'H09'])
-no2_time_series_evap.to_csv(f'{filepath}/no2_chl-_evap.csv')
-no3_time_series_evap.to_csv(f'{filepath}/no3_chl-_evap.csv')
-
-no3_consumption = no3_time_series_evap.iloc[:, 0].values.reshape(-1, 1) - no3_time_series_evap
-no2_consumption = no2_time_series_evap.iloc[:, 0].values.reshape(-1, 1) - no2_time_series_evap + no3_consumption
-no3_consumption.to_csv(f'{filepath}/no3_chl-_cons.csv')
-no2_consumption.to_csv(f'{filepath}/no2_chl-_cons.csv')
+nh4_conc_evap = no2_evap_correction(nh4_conc, ['H10', 'H11', 'H12'])
+nh4_conc_evap.to_csv(f'data/{date}_nh4_conc_{chl}_evap.csv')
 
 # Create a new folder to save the PNG files
-output_folder = f'{filepath}/plots'
-os.makedirs(output_folder, exist_ok=True)
+#output_folder = f'{filepath}/plots'
+#os.makedirs(output_folder, exist_ok=True)
 
 meta = pd.read_csv(meta_fn, index_col=0).dropna(how='all')
 meta.index.name = None  # Remove the name of the index
@@ -181,6 +205,6 @@ plots_per_figure = nrows * ncols
 
 for i in range(0, len(rows_to_plot), plots_per_figure * 3):
     rows_chunk = rows_to_plot[i:i + plots_per_figure * 3]
-    create_figure(no2_data=no2_time_series, no3_data=no3_time_series, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename='raw_plot')
+    create_figure(no2_data=no2_time_series, no3_data=no3_time_series, nh4_data=nh4_conc, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename=filename)
 
-print(f'Plots saved in folder: {output_folder}')
+print(f'{filename} saved')
