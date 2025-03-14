@@ -18,15 +18,13 @@ import ammonia as am
 import os
 import re
 
-for filename in os.listdir("raw_data"):
-    match = re.match(r"^tp(\d+)", filename)
-    if match:
-        idx = int(match.group(1))
-        if idx < 11:
-            new_idx = idx + 1
-            new_filename = f"tp{new_idx:02d}" + filename[match.end():]
-            os.rename(os.path.join("raw_data", filename),
-                      os.path.join("raw_data", new_filename))
+# directory = "raw_data"
+# pattern = re.compile(r"tp(\d)(?!\d)")
+
+# for fname in os.listdir(directory):
+#     new_name = pattern.sub(lambda m: "tp0" + m.group(1), fname)
+#     if new_name != fname:
+#         os.rename(os.path.join(directory, fname), os.path.join(directory, new_name))
 
 def no2_no3_abs_to_conc(date, chl):
     std_meta_fn = glob.glob(f'raw_data/{date}_standards_metadata.csv')[0]
