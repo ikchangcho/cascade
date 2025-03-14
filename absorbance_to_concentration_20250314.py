@@ -15,6 +15,18 @@ import griess as gr
 import bmgdata as bd
 import denitfit as dn
 import ammonia as am
+import os
+import re
+
+for filename in os.listdir("raw_data"):
+    match = re.match(r"^tp(\d+)", filename)
+    if match:
+        idx = int(match.group(1))
+        if idx < 11:
+            new_idx = idx + 1
+            new_filename = f"tp{new_idx:02d}" + filename[match.end():]
+            os.rename(os.path.join("raw_data", filename),
+                      os.path.join("raw_data", new_filename))
 
 def no2_no3_abs_to_conc(date, chl):
     std_meta_fn = glob.glob(f'raw_data/{date}_standards_metadata.csv')[0]
