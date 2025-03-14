@@ -73,11 +73,14 @@ def nh4_abs_to_conc(date, chl):
 
     return nh4_conc
 
+###################################Input Parameters###################################
+# Convert absorbance to concentration and save as dataframes
 [no2_chl0_conc, no3_chl0_conc] = no2_no3_abs_to_conc("20250114", "chl-")
 [no2_chl1_conc, no3_chl1_conc] = no2_no3_abs_to_conc("20250113", "chl+")
-nh4_chl0_conc = pd.concat([nh4_abs_to_conc("20250305", "chl-"), nh4_abs_to_conc("20250308", "chl-")], axis=1).iloc[:, :10]
+nh4_chl0_conc = pd.concat([nh4_abs_to_conc("20250305", "chl-"), nh4_abs_to_conc("20250308", "chl-")], axis=1)
 nh4_chl1_conc = nh4_abs_to_conc("20250304", "chl+")
 
+# Time arrays
 chl0_datetime_array = [
     datetime(2025, 1, 1, 14, 30),       # T0
     datetime(2025, 1, 1, 15, 35),       # T1
@@ -88,8 +91,10 @@ chl0_datetime_array = [
     datetime(2025, 1, 2, 13, 10),       # T6
     datetime(2025, 1, 2, 17, 56),       # T7
     datetime(2025, 1, 2, 22, 57),       # T8
-    datetime(2025, 1, 3, 8, 5)]       # T9]
-
+    datetime(2025, 1, 3, 8, 5),       # T9
+    datetime(2025, 1, 3, 13, 3),       # T10
+    datetime(2025, 1, 3, 18, 11),       # T11
+    datetime(2025, 1, 3, 23, 45)]       # T12       
 chl1_datetime_array = [
     datetime(2024, 12, 24, 23, 30),       # T0
     datetime(2024, 12, 25, 8, 0),       # T1
@@ -101,18 +106,21 @@ chl1_datetime_array = [
     datetime(2024, 12, 30, 17, 16),       # T7
     datetime(2024, 12, 31, 17, 30)]       # T8
 
-# Evaporation Correction
+# Rows for evaporation correction
 no2_rows = ['H10', 'H11', 'H12']
 no3_rows = ['H07', 'H08', 'H09']
 
-norm_no2_chl1 = no2_chl1_conc.loc[no2_rows].mean(axis=0) / no2_chl1_conc.loc[no2_rows].mean(axis=0).iloc[0]
-norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
-norm_no3_chl1 = no3_chl1_conc.loc[no3_rows].mean(axis=0) / no3_chl1_conc.loc[no3_rows].mean(axis=0).iloc[0]
-norm_no3_chl0 = no3_chl0_conc.loc[no3_rows].mean(axis=0) / no3_chl0_conc.loc[no3_rows].mean(axis=0).iloc[0]
+#######################################################################################
 
-no2_chl1_conc = no2_chl1_conc / norm_no2_chl1
+# Concentration
+chl0_times = [0]
+for i in range(1, len(chl0_datetime_array)):
+    time_diff = chl0_datetime_array[i] - chl0_datetime_array[0]
+    chl0_times.append(time_diff.total_seconds() / 3600)
 
-
+no2_chl0_conc.columns = chl0_times
+no3_chl0_conc.columns = chl0_times
+nh4_chl0_conc.columns = chl0_times
 
 chl1_times = [0]
 for i in range(1, len(chl1_datetime_array)):
@@ -123,11 +131,43 @@ no2_chl1_conc.columns = chl1_times
 no3_chl1_conc.columns = chl1_times
 nh4_chl1_conc.columns = chl1_times
 
-chl0_times = [0]
-for i in range(1, len(chl0_datetime_array)):
-    time_diff = chl0_datetime_array[i] - chl0_datetime_array[0]
-    chl0_times.append(time_diff.total_seconds() / 3600)
+no2_chl0_conc.to_csv("concentration/no2_chl0_conc.csv")
+no3_chl0_conc.to_csv("concentration/no3_chl0_conc.csv")
+nh4_chl0_conc.to_csv("concentration/nh4_chl0_conc.csv")
+no2_chl1_conc.to_csv("concentration/no2_chl1_conc.csv")
+no3_chl1_conc.to_csv("concentration/no3_chl1_conc.csv")
+nh4_chl1_conc.to_csv("concentration/nh4_chl1_conc.csv")
 
-no2_chl0_conc.columns = chl0_times
-no3_chl0_conc.columns = chl0_times
-nh4_chl0_conc.columns = chl0_times
+
+# Evaporation Correction
+norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
+norm_no2_chl1 = no2_chl1_conc.loc[no2_rows].mean(axis=0) / no2_chl1_conc.loc[no2_rows].mean(axis=0).iloc[0]
+norm_no3_chl0 = no3_chl0_conc.loc[no3_rows].mean(axis=0) / no3_chl0_conc.loc[no3_rows].mean(axis=0).iloc[0]
+norm_no3_chl1 = no3_chl1_conc.loc[no3_rows].mean(axis=0) / no3_chl1_conc.loc[no3_rows].mean(axis=0).iloc[0]
+norm_nh4_chl0 = (norm_no2_chl0 + norm_no3_chl0) / 2
+norm_nh4_chl1 = (norm_no2_chl1 + norm_no3_chl1) / 2
+
+no2_chl0_evap = no2_chl0_conc.div(norm_no2_chl0.values, axis=1)
+no2_chl1_evap = no2_chl1_conc.div(norm_no2_chl1.values, axis=1)
+no3_chl0_evap = no3_chl0_conc.div(norm_no3_chl0.values, axis=1)
+no3_chl1_evap = no3_chl1_conc.div(norm_no3_chl1.values, axis=1)
+nh4_chl0_evap = nh4_chl0_conc.div(norm_nh4_chl0.values, axis=1)
+nh4_chl1_evap = nh4_chl1_conc.div(norm_nh4_chl1.values, axis=1)
+
+no2_chl0_evap.to_csv("concentration/no2_chl0_evap.csv")
+no2_chl1_evap.to_csv("concentration/no2_chl1_evap.csv")
+no3_chl0_evap.to_csv("concentration/no3_chl0_evap.csv")
+no3_chl1_evap.to_csv("concentration/no3_chl1_evap.csv")
+nh4_chl0_evap.to_csv("concentration/nh4_chl0_evap.csv")
+nh4_chl1_evap.to_csv("concentration/nh4_chl1_evap.csv")
+
+# NO3 and NO2 consumptions
+no3_chl0_cons = no3_chl0_evap.iloc[:, 0].values.reshape(-1, 1) - no3_chl0_evap
+no2_chl0_cons = no2_chl0_evap.iloc[:, 0].values.reshape(-1, 1) - no2_chl0_evap + no3_chl0_cons
+no3_chl1_cons = no3_chl1_evap.iloc[:, 0].values.reshape(-1, 1) - no3_chl1_evap
+no2_chl1_cons = no2_chl1_evap.iloc[:, 0].values.reshape(-1, 1) - no2_chl1_evap + no3_chl1_cons
+
+no3_chl0_cons.to_csv("concentration/no3_chl0_cons.csv")
+no2_chl0_cons.to_csv("concentration/no2_chl0_cons.csv")
+no3_chl1_cons.to_csv("concentration/no3_chl1_cons.csv")
+no2_chl1_cons.to_csv("concentration/no2_chl1_cons.csv")
