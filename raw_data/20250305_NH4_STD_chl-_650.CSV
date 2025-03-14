@@ -1,0 +1,128 @@
+User: USER,Path: C:\Program Files (x86)\BMG\CLARIOstar\User\Data,Test run no.: 1145
+Test name: KL_NH4_SCAN_standard,Date: 3/5/2025,Time: 6:26:03 PM
+
+ID1: chl-,ID3: 1607,
+Absorbance
+
+
+A01
+S1 Raw Data (Well scan) 650
+2.2393,2.2493
+2.256,2.2514
+
+A02
+S1 Raw Data (Well scan) 650
+2.2218,2.2256
+2.208,2.2172
+
+A03
+S1 Raw Data (Well scan) 650
+2.1002,2.0931
+2.1058,2.1076
+
+B01
+S2 Raw Data (Well scan) 650
+1.2494,1.2721
+1.2518,1.2542
+
+B02
+S2 Raw Data (Well scan) 650
+1.2369,1.239
+1.2395,1.2356
+
+B03
+S2 Raw Data (Well scan) 650
+1.2454,1.2433
+1.2438,1.2489
+
+C01
+S3 Raw Data (Well scan) 650
+0.7317,0.7327
+0.7332,0.7347
+
+C02
+S3 Raw Data (Well scan) 650
+0.7413,0.7382
+0.7383,0.7425
+
+C03
+S3 Raw Data (Well scan) 650
+0.7523,0.7485
+0.749,0.7504
+
+D01
+S4 Raw Data (Well scan) 650
+0.4638,0.4645
+0.4655,0.463
+
+D02
+S4 Raw Data (Well scan) 650
+0.4759,0.4794
+0.4783,0.4801
+
+D03
+S4 Raw Data (Well scan) 650
+0.477,0.4736
+0.4765,0.4766
+
+E01
+S5 Raw Data (Well scan) 650
+0.3213,0.3224
+0.3212,0.3231
+
+E02
+S5 Raw Data (Well scan) 650
+0.3322,0.3319
+0.3345,0.3316
+
+E03
+S5 Raw Data (Well scan) 650
+0.2833,0.284
+0.2855,0.2825
+
+F01
+S6 Raw Data (Well scan) 650
+0.256,0.2549
+0.2649,0.257
+
+F02
+S6 Raw Data (Well scan) 650
+0.258,0.261
+0.2613,0.2589
+
+F03
+S6 Raw Data (Well scan) 650
+0.2574,0.2568
+0.257,0.2544
+
+G01
+S7 Raw Data (Well scan) 650
+0.2221,0.2246
+0.2255,0.221
+
+G02
+S7 Raw Data (Well scan) 650
+0.2279,0.2279
+0.2268,0.2263
+
+G03
+S7 Raw Data (Well scan) 650
+0.228,0.2262
+0.2341,0.2304
+
+H01
+S8 Raw Data (Well scan) 650
+0.1835,0.1833
+0.1862,0.1876
+
+H02
+S8 Raw Data (Well scan) 650
+0.1892,0.1919
+0.1905,0.1915
+
+H03
+S8 Raw Data (Well scan) 650
+0.1886,0.1865
+0.1909,0.1835
+
+
