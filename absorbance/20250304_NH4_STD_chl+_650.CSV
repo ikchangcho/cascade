@@ -1,0 +1,167 @@
+User: USER,Path: C:\Program Files (x86)\BMG\CLARIOstar\User\Data,Test run no.: 1125
+Test name: KL_NH4_SCAN_standard,Date: 3/4/2025,Time: 5:58:12 PM
+
+Absorbance
+
+
+A01
+S1 Raw Data (Well scan) 650
+2.1569,2.1698
+2.1517,2.1696
+
+A02
+S1 Raw Data (Well scan) 650
+2.3242,2.3236
+2.3254,2.3141
+
+A03
+S1 Raw Data (Well scan) 650
+2.3231,2.3275
+2.321,2.3533
+
+A04
+S1 Raw Data (Well scan) 650
+2.2349,2.2518
+2.2315,2.2596
+
+B01
+S2 Raw Data (Well scan) 650
+1.216,1.2154
+1.1998,1.2095
+
+B02
+S2 Raw Data (Well scan) 650
+1.2994,1.2951
+1.2923,1.3001
+
+B03
+S2 Raw Data (Well scan) 650
+1.3467,1.3375
+1.3357,1.3377
+
+B04
+S2 Raw Data (Well scan) 650
+1.2251,1.229
+1.2154,1.222
+
+C01
+S3 Raw Data (Well scan) 650
+0.7249,0.7279
+0.7116,0.7246
+
+C02
+S3 Raw Data (Well scan) 650
+0.7645,0.7609
+0.7633,0.7625
+
+C03
+S3 Raw Data (Well scan) 650
+0.7871,0.7853
+0.7901,0.7814
+
+C04
+S3 Raw Data (Well scan) 650
+0.7031,0.7099
+0.702,0.7121
+
+D01
+S4 Raw Data (Well scan) 650
+0.4583,0.464
+0.4545,0.4594
+
+D02
+S4 Raw Data (Well scan) 650
+0.4998,0.5014
+0.5006,0.4988
+
+D03
+S4 Raw Data (Well scan) 650
+0.5035,0.5029
+0.5041,0.4991
+
+D04
+S4 Raw Data (Well scan) 650
+0.4735,0.4734
+0.4788,0.4741
+
+E01
+S5 Raw Data (Well scan) 650
+0.3154,0.3221
+0.3176,0.3203
+
+E02
+S5 Raw Data (Well scan) 650
+0.3531,0.3501
+0.353,0.3513
+
+E03
+S5 Raw Data (Well scan) 650
+0.3504,0.3514
+0.3488,0.3504
+
+E04
+S5 Raw Data (Well scan) 650
+0.3326,0.3368
+0.335,0.3384
+
+F01
+S6 Raw Data (Well scan) 650
+0.2582,0.2607
+0.2586,0.2617
+
+F02
+S6 Raw Data (Well scan) 650
+0.2753,0.2725
+0.2779,0.2705
+
+F03
+S6 Raw Data (Well scan) 650
+0.2893,0.2754
+0.2801,0.2735
+
+F04
+S6 Raw Data (Well scan) 650
+0.2591,0.266
+0.2592,0.2633
+
+G01
+S7 Raw Data (Well scan) 650
+0.2237,0.2283
+0.2258,0.2281
+
+G02
+S7 Raw Data (Well scan) 650
+0.2379,0.2404
+0.2405,0.2336
+
+G03
+S7 Raw Data (Well scan) 650
+0.2387,0.2392
+0.2346,0.2368
+
+G04
+S7 Raw Data (Well scan) 650
+0.2234,0.2311
+0.2254,0.2277
+
+H01
+S8 Raw Data (Well scan) 650
+0.1888,0.1956
+0.1918,0.1958
+
+H02
+S8 Raw Data (Well scan) 650
+0.1984,0.2018
+0.201,0.1977
+
+H03
+S8 Raw Data (Well scan) 650
+0.2006,0.1983
+0.1988,0.1975
+
+H04
+S8 Raw Data (Well scan) 650
+0.1879,0.1935
+0.1916,0.1924
+
+

@@ -18,7 +18,7 @@ import ammonia as am
 import os
 import re
 
-# directory = "raw_data"
+# directory = "absorbance"
 # pattern = re.compile(r"tp(\d)(?!\d)")
 
 # for fname in os.listdir(directory):
@@ -27,17 +27,17 @@ import re
 #         os.rename(os.path.join(directory, fname), os.path.join(directory, new_name))
 
 def no2_no3_abs_to_conc(date, chl):
-    std_meta_fn = glob.glob(f'raw_data/{date}_standards_metadata.csv')[0]
-    std_no2_540_fn = glob.glob(f"raw_data/{date}_Ik_STD_NO2_540.CSV")[0]
-    std_no2_900_fn = glob.glob(f"raw_data/{date}_Ik_STD_NO2_900.CSV")[0]
-    std_no2no3_540_fn = glob.glob(f"raw_data/{date}_Ik_STD_NO2NO3_540.CSV")[0]
-    std_no2no3_900_fn = glob.glob(f"raw_data/{date}_Ik_STD_NO2NO3_900.CSV")[0]
+    std_meta_fn = glob.glob(f'absorbance/{date}_standards_metadata.csv')[0]
+    std_no2_540_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2_540.CSV")[0]
+    std_no2_900_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2_900.CSV")[0]
+    std_no2no3_540_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2NO3_540.CSV")[0]
+    std_no2no3_900_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2NO3_900.CSV")[0]
 
-    meta_fn = glob.glob(f'raw_data/{date}_samples_metadata.csv')[0]
-    no2_540_fns = sorted(glob.glob(f'raw_data/{date}_Ik_NO2_{chl}*540*'))
-    no2_900_fns = sorted(glob.glob(f'raw_data/{date}_Ik_NO2_{chl}*900*'))
-    no2no3_540_fns = sorted(glob.glob(f'raw_data/{date}_Ik_NO2NO3_{chl}*540*'))
-    no2no3_900_fns = sorted(glob.glob(f'raw_data/{date}_Ik_NO2NO3_{chl}*900*'))
+    meta_fn = glob.glob(f'absorbance/{date}_samples_metadata.csv')[0]
+    no2_540_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2_{chl}*540*'))
+    no2_900_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2_{chl}*900*'))
+    no2no3_540_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2NO3_{chl}*540*'))
+    no2no3_900_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2NO3_{chl}*900*'))
 
     # fitted parameters
     [[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
@@ -184,12 +184,12 @@ no2_chl1_conc.columns = chl1_times
 no3_chl1_conc.columns = chl1_times
 nh4_chl1_conc.columns = chl1_times
 
-no2_chl0_conc.to_csv("concentration/no2_chl0_conc.csv")
-no3_chl0_conc.to_csv("concentration/no3_chl0_conc.csv")
-nh4_chl0_conc.to_csv("concentration/nh4_chl0_conc.csv")
-no2_chl1_conc.to_csv("concentration/no2_chl1_conc.csv")
-no3_chl1_conc.to_csv("concentration/no3_chl1_conc.csv")
-nh4_chl1_conc.to_csv("concentration/nh4_chl1_conc.csv")
+no2_chl0_conc.to_csv("concentration/no2_chl0.csv")
+no3_chl0_conc.to_csv("concentration/no3_chl0.csv")
+nh4_chl0_conc.to_csv("concentration/nh4_chl0.csv")
+no2_chl1_conc.to_csv("concentration/no2_chl1.csv")
+no3_chl1_conc.to_csv("concentration/no3_chl1.csv")
+nh4_chl1_conc.to_csv("concentration/nh4_chl1.csv")
 
 
 # Evaporation Correction
