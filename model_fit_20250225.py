@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./functions')
+sys.path.append('./_functions')
 import pandas as pd
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -16,7 +16,7 @@ no2 = pd.read_csv(f'concentration/no2_chl1_evap.csv', index_col=0)
 no3 = pd.read_csv(f'concentration/no3_chl1_evap.csv', index_col=0)
 #nh4 = pd.read_csv(f'concentration/nh4_chl1_evap.csv', index_col=0)
 
-for row in no3.index[0]:
+for row in no3.index[0:1]:
     A_data = no3.loc[row]
     I_data = no2.loc[row]
     t_eval = np.linspace(0, float(no3.columns[-1]) + 1, 100)
@@ -56,7 +56,7 @@ for row in no3.index[0]:
         print(f'{param_name}: {param.value} ± {param.stderr}')
 
     # Extract best-fit values
-    eps_best = result.params['eps'].value
+    #eps_best = result.params['eps'].value
     K_A_best = result.params['K_A'].value
     K_I_best = result.params['K_I'].value
     r_A_best = result.params['r_A'].value
