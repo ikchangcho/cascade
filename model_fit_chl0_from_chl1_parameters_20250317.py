@@ -16,26 +16,26 @@ from model1 import *
 no2 = pd.read_csv('concentrations/no2_chl0_evap.csv', index_col=0)
 no3 = pd.read_csv('concentrations/no3_chl0_evap.csv', index_col=0)
 
-# Import lmfit parameters from fitting_result_A01.pkl
-with open('fitting_results/no2_no3_chl1_model1_rA_rI_X0_A01.pkl', 'rb') as f:
-    fitting_result = pickle.load(f)
+for row in no3.index[0:31:6]:
+    # Import lmfit parameters from fitting_result_A01.pkl
+    with open(f'fitting_results/no2_no3_chl1_model1_rA_rI_X0_{row}.pkl', 'rb') as f:
+        fitting_result = pickle.load(f)
 
-# Print imported parameters
-print('=====Imported parameters=====')
-for param_name, param in fitting_result.params.items():
-    print(f'{param_name}: {param.value} ± {param.stderr}')
+    # Print imported parameters
+    print('=====Imported parameters=====')
+    for param_name, param in fitting_result.params.items():
+        print(f'{param_name}: {param.value} ± {param.stderr}')
 
-# Save imported parameters
-params = fitting_result.params
-K_A = params['K_A'].value
-K_I = params['K_I'].value
-r_A = params['r_A'].value
-r_I = params['r_I'].value
-gamA = params['gamA'].value
-gamI = params['gamI'].value
-X0 = params['X0'].value
-
-for row in no3.index[0:1]:
+    # Save imported parameters
+    params = fitting_result.params
+    K_A = params['K_A'].value
+    K_I = params['K_I'].value
+    r_A = params['r_A'].value
+    r_I = params['r_I'].value
+    gamA = params['gamA'].value
+    gamI = params['gamI'].value
+    X0 = params['X0'].value
+    
     A_data = no3.loc[row]
     I_data = no2.loc[row]
     t_eval = np.linspace(0, float(no3.columns[-1]) + 1, 100)
@@ -45,8 +45,8 @@ for row in no3.index[0:1]:
     params.add('K_I',  value=K_I, min=1e-3, max=1, vary=False)
     params.add('r_A',  value=r_A, min=1e-3, max=10, vary=False)
     params.add('r_I',  value=r_I, min=1e-3, max=10, vary=False)
-    params.add('gamA', value=1.0, min=0, max=10)
-    params.add('gamI', value=1.0, min=0, max=10)
+    params.add('gamA', value=1.0, min=1e-2, max=100)
+    params.add('gamI', value=1.0, min=1e-2, max=100)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
     params.add('X0',   value=X0, min=1e-3, max=10, vary=False)
     filename_str = 'no2_no3_chl0_model1_gamA_gamI'
@@ -106,5 +106,5 @@ for row in no3.index[0:1]:
     plt.savefig(f'plots/model_fit_{filename_str}_{row}.png')
     with open(f'fitting_results/{filename_str}_{row}.pkl', 'wb') as f:
         pickle.dump(result, f)
-    plt.show()
+    #plt.show()
     plt.close()

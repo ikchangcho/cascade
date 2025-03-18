@@ -16,7 +16,7 @@ no2 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
 no3 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
 #nh4 = pd.read_csv(f'concentrations/nh4_chl1_evap.csv', index_col=0)
 
-for row in no3.index[0:1]:
+for row in no3.index[0:31:6]:
     A_data = no3.loc[row]
     I_data = no2.loc[row]
     t_eval = np.linspace(0, float(no3.columns[-1]) + 1, 100)
@@ -26,12 +26,12 @@ for row in no3.index[0:1]:
     #params.add('eps',  value=0.1, min=1e-3, max=1)
     params.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
     params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
-    params.add('r_A',  value=0.001, min=1e-1, max=10)
-    params.add('r_I',  value=0.001, min=1e-1, max=10)
+    params.add('r_A',  value=1.0, min=1e-2, max=100)
+    params.add('r_I',  value=1.0, min=1e-2, max=100)
     params.add('gamA', value=0.0, min=0, max=10, vary=False)
     params.add('gamI', value=0.0, min=0, max=10, vary=False)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    params.add('X0',   value=1.0, min=1e-3, max=10)
+    params.add('X0',   value=1.0, min=1e-2, max=100)
     filename_str = 'no2_no3_chl1_model1_rA_rI_X0'
 
 ###################################################################################################################################################
@@ -89,5 +89,5 @@ for row in no3.index[0:1]:
     plt.savefig(f'plots/model_fit_{filename_str}_{row}.png')
     with open(f'fitting_results/{filename_str}_{row}.pkl', 'wb') as f:
         pickle.dump(result, f)
-    plt.show()
+    #plt.show()
     plt.close()
