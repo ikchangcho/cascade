@@ -12,9 +12,9 @@ import copy
 from model1 import *
 
 # Load your data
-no2 = pd.read_csv(f'concentration/no2_chl1_evap.csv', index_col=0)
-no3 = pd.read_csv(f'concentration/no3_chl1_evap.csv', index_col=0)
-#nh4 = pd.read_csv(f'concentration/nh4_chl1_evap.csv', index_col=0)
+no2 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
+no3 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
+#nh4 = pd.read_csv(f'concentrations/nh4_chl1_evap.csv', index_col=0)
 
 for row in no3.index[0:1]:
     A_data = no3.loc[row]
@@ -26,13 +26,13 @@ for row in no3.index[0:1]:
     #params.add('eps',  value=0.1, min=1e-3, max=1)
     params.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
     params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
-    params.add('r_A',  value=1.0, min=1e-3, max=10)
-    params.add('r_I',  value=1.0, min=1e-3, max=10)
+    params.add('r_A',  value=0.001, min=1e-1, max=10)
+    params.add('r_I',  value=0.001, min=1e-1, max=10)
     params.add('gamA', value=0.0, min=0, max=10, vary=False)
     params.add('gamI', value=0.0, min=0, max=10, vary=False)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
     params.add('X0',   value=1.0, min=1e-3, max=10)
-    filename_str = 'no2_no3_model1_chl1'
+    filename_str = 'no2_no3_chl1_model1_rA_rI_X0'
 
 ###################################################################################################################################################
 
@@ -80,7 +80,7 @@ for row in no3.index[0:1]:
     plt.xlabel('Time (hours)', fontsize=15)
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
-    plt.title(f'Row {row}{filename_str}\n'
+    plt.title(f'{filename_str} ({row})\n'
             f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $r_A$={r_A_best:.3f}, $r_I$={r_I_best:.3f},\n'
             f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}',
             fontsize=15)
@@ -89,4 +89,5 @@ for row in no3.index[0:1]:
     plt.savefig(f'plots/model_fit_{filename_str}_{row}.png')
     with open(f'fitting_results/{filename_str}_{row}.pkl', 'wb') as f:
         pickle.dump(result, f)
+    plt.show()
     plt.close()

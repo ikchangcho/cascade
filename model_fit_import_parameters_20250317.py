@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./functions')
+sys.path.append('./_functions')
 import pandas as pd
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -17,26 +17,63 @@ no2 = pd.read_csv('concentrations/no2_chl0_evap.csv', index_col=0)
 no3 = pd.read_csv('concentrations/no3_chl0_evap.csv', index_col=0)
 
 # Import lmfit parameters from fitting_result_A01.pkl
-with open('fitting_results/no2_no3_model1_chl1_A01.pkl', 'rb') as f:
-    result = pickle.load(f)
-params = result.params
-for param_name, param in result.params.items():
-    print(f'{param_name}: {param.value} ± {param.stderr}')
-print(f'{param_name}: {param.value} ± {param.stderr}')
+with open('fitting_results/no2_no3_chl1_model1_rA_rI_X0_A01.pkl', 'rb') as f:
+    fitting_result = pickle.load(f)
 
-for row in no3.index[1:-1:10]:
-    print(f'=====Fitting row {row}=====')
+# Print imported parameters
+print('=====Imported parameters=====')
+for param_name, param in fitting_result.params.items():
+    print(f'{param_name}: {param.value} ± {param.stderr}')
+
+# Save imported parameters
+params = fitting_result.params
+K_A = params['K_A'].value
+K_I = params['K_I'].value
+r_A = params['r_A'].value
+r_I = params['r_I'].value
+gamA = params['gamA'].value
+gamI = params['gamI'].value
+X0 = params['X0'].value
+
+for row in no3.index[0:1]:
     A_data = no3.loc[row]
     I_data = no2.loc[row]
     t_eval = np.linspace(0, float(no3.columns[-1]) + 1, 100)
 
-    # fitter = Minimizer(residual, params, fcn_args=(t_eval, A_data, I_data))
-    # result = fitter.minimize(method='leastsq', params=params)
+    #params.add('eps',  value=0.1, min=1e-3, max=1)
+    params.add('K_A',  value=K_A, min=1e-3, max=1, vary=False)
+    params.add('K_I',  value=K_I, min=1e-3, max=1, vary=False)
+    params.add('r_A',  value=r_A, min=1e-3, max=10, vary=False)
+    params.add('r_I',  value=r_I, min=1e-3, max=10, vary=False)
+    params.add('gamA', value=1.0, min=0, max=10)
+    params.add('gamI', value=1.0, min=0, max=10)
+    #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
+    params.add('X0',   value=X0, min=1e-3, max=10, vary=False)
+    filename_str = 'no2_no3_chl0_model1_gamA_gamI'
 
-    # print('Final parameters:')
-    # for param_name, param in result.params.items():
-    #     print(f'{param_name}: {param.value} ± {param.stderr}')
+###################################################################################################################################################
 
+    fitter = Minimizer(residual, params, fcn_args=(t_eval, A_data, I_data))
+    print(f'=====Brute fitting for row {row} started=====')
+    result_brute = fitter.minimize(method='brute', Ns=5)
+    print(f'=====Brute fitting for row {row} completed=====')
+    best_result = copy.deepcopy(result_brute)
+    num_iterations = 1
+    for candidate in result_brute.candidates:
+        print(f'=====Searching candidates {num_iterations}=====')
+        trial = fitter.minimize(method='leastsq', params=candidate.params)
+        if trial.chisqr < best_result.chisqr:
+            best_result = trial
+        num_iterations += 1
+
+    result = best_result
+    params = result.params
+    print('=====Best-fit values=====')
+    for param_name, param in result.params.items():
+        print(f'{param_name}: {param.value} ± {param.stderr}')
+
+    # Extract best-fit values
+    #eps_best = result.params['eps'].value
     K_A_best = result.params['K_A'].value
     K_I_best = result.params['K_I'].value
     r_A_best = result.params['r_A'].value
@@ -60,14 +97,14 @@ for row in no3.index[1:-1:10]:
     plt.xlabel('Time (hours)', fontsize=15)
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
-    plt.title(f'Row {row} with A01 parameters\n'
-          f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $r_A$={r_A_best:.3f}, $r_I$={r_I_best:.3f},\n'
-          f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}',
-          fontsize=15)
+    plt.title(f'{filename_str} ({row})\n'
+            f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $r_A$={r_A_best:.3f}, $r_I$={r_I_best:.3f},\n'
+            f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}',
+            fontsize=15)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f'20250114/plots_fitting/{row}_A01params.png')
-    print(f'=====Saved plot {row}_A01params.png=====')
-    #plt.show()
-
-
+    plt.savefig(f'plots/model_fit_{filename_str}_{row}.png')
+    with open(f'fitting_results/{filename_str}_{row}.pkl', 'wb') as f:
+        pickle.dump(result, f)
+    plt.show()
+    plt.close()
