@@ -18,7 +18,7 @@ no3_chl1 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
 no2_chl1 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
 data_str = 'no3_no2'
 
-for row in no3_chl0.index[0:1]:
+for row in ['B01', 'C04', 'D07', 'F01']:
     A_chl0 = no3_chl0.loc[row]
     I_chl0 = no2_chl0.loc[row]
     A_chl1 = no3_chl1.loc[row]
