@@ -12,10 +12,10 @@ import copy
 from model1 import *
 
 # Load your data
-no3 = pd.read_csv(f'concentrations/no3_chl0_evap.csv', index_col=0)
-no2 = pd.read_csv(f'concentrations/no2_chl0_evap.csv', index_col=0)
+no3 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
+no2 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
 #nh4 = pd.read_csv(f'concentrations/nh4_chl1_evap.csv', index_col=0)
-data_str = 'no3_no2_chl0'
+data_str = 'no3_no2_chl1'
 
 for row in no3.index[0:1]:
     A_data = no3.loc[row]
@@ -29,11 +29,11 @@ for row in no3.index[0:1]:
     params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
     params.add('r_A',  value=1.0, min=1e-3, max=1e3)
     params.add('r_I',  value=1.0, min=1e-3, max=1e3)
-    params.add('gamA', value=1.0, min=1e-3, max=1e3)
-    params.add('gamI', value=1.0, min=1e-3, max=1e3)
+    params.add('gamA', value=0.0, min=1e-3, max=1e3, vary=False)
+    params.add('gamI', value=0.0, min=1e-3, max=1e3, vary=False)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
     params.add('X0',   value=1.0, min=0, max=100, vary=False)
-    fit_str = 'model1_rA_rI_gamA_gamI'
+    fit_str = 'model1_rA_rI'
 
 ###################################################################################################################################################
 

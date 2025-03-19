@@ -28,23 +28,10 @@ def simulate(params, t_span, initial, t_eval):
     return sol.y[0], sol.y[1]  # Returns A(t) and I(t)
 
 def residual(params, t_eval, A_data, I_data):
-    """
-    Returns residuals (Not squared) for A(t) and I(t).
-    lmfit expects an array of residuals for least-squares fitting.
-    """
-    # Extract parameters
-    K_A = params['K_A'].value
-    K_I = params['K_I'].value
-    r_A = params['r_A'].value
-    r_I = params['r_I'].value
-    gamA = params['gamA'].value
-    gamI = params['gamI'].value
-    X0   = params['X0'].value
-
     # Simulate
     A_model, I_model = simulate(params,
                                 (t_eval[0], t_eval[-1]),
-                                [A_data.iloc[0], I_data.iloc[0], X0],
+                                [A_data.iloc[0], I_data.iloc[0], params['X0'].value],
                                 t_eval)
 
     # Interpolate model output at the measurement times
@@ -58,3 +45,36 @@ def residual(params, t_eval, A_data, I_data):
     # Return a 1D array of residuals
     return np.concatenate((delta_A.values, delta_I.values))
 
+def residual_chl01(params, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1):
+    
+    params_chl1 = params.copy()
+    params_chl1['gamA'].value = 0.0
+    params_chl1['gamI'].value = 0.0
+
+    # Simulate
+    A_model_chl0, I_model_chl0 = simulate(params,
+                                (t_eval_chl0[0], t_eval_chl0[-1]),
+                                [A_chl0.iloc[0], I_chl0.iloc[0], params['X0'].value],
+                                t_eval_chl0)
+    
+    A_model_chl1, I_model_chl1 = simulate(params_chl1,
+                                (t_eval_chl1[0], t_eval_chl1[-1]),
+                                [A_chl1.iloc[0], I_chl1.iloc[0], params_chl1['X0'].value],
+                                t_eval_chl1)
+
+    # Interpolate model output at the measurement times
+    A_interp_chl0 = interp1d(t_eval_chl0, A_model_chl0, kind='linear', fill_value='extrapolate')
+    I_interp_chl0 = interp1d(t_eval_chl0, I_model_chl0, kind='linear', fill_value='extrapolate')
+    
+    A_interp_chl1 = interp1d(t_eval_chl1, A_model_chl1, kind='linear', fill_value='extrapolate')
+    I_interp_chl1 = interp1d(t_eval_chl1, I_model_chl1, kind='linear', fill_value='extrapolate')
+
+    # Compute residuals: difference between model and data
+    delta_A_chl0 = A_interp_chl0(A_chl0.index.astype(float)) - A_chl0
+    delta_I_chl0 = I_interp_chl0(I_chl0.index.astype(float)) - I_chl0
+    
+    delta_A_chl1 = A_interp_chl1(A_chl1.index.astype(float)) - A_chl1
+    delta_I_chl1 = I_interp_chl1(I_chl1.index.astype(float)) - I_chl1
+
+    # Return a 1D array of residual
+    return np.concatenate((delta_A_chl0.values, delta_I_chl0.values, delta_A_chl1.values, delta_I_chl1.values))

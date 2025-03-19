@@ -12,7 +12,117 @@ import copy
 from model1 import *
 
 # Load your data
-no2 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
-no3 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
-#nh4 = pd.read_csv(f'concentrations/nh4_chl1_evap.csv', index_col=0)
+no3_chl0 = pd.read_csv(f'concentrations/no3_chl0_evap.csv', index_col=0)
+no2_chl0 = pd.read_csv(f'concentrations/no2_chl0_evap.csv', index_col=0)
+no3_chl1 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
+no2_chl1 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
+data_str = 'no3_no2'
+
+for row in no3_chl0.index[0:1]:
+    A_chl0 = no3_chl0.loc[row]
+    I_chl0 = no2_chl0.loc[row]
+    A_chl1 = no3_chl1.loc[row]
+    I_chl1 = no2_chl1.loc[row]
+    t_eval_chl0 = np.linspace(0, float(no3_chl0.columns[-1]) + 1, 100)
+    t_eval_chl1 = np.linspace(0, float(no3_chl1.columns[-1]) + 1, 100)
+
+    # Create lmfit Parameters with optional constraints
+    params = Parameters()
+    #params.add('eps',  value=0.1, min=1e-3, max=1)
+    params.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
+    params.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
+    params.add('r_A',  value=1.0, min=1e-3, max=1e3)
+    params.add('r_I',  value=1.0, min=1e-3, max=1e3)
+    params.add('gamA', value=1.0, min=1e-3, max=1e3)
+    params.add('gamI', value=1.0, min=1e-3, max=1e3)
+    #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
+    params.add('X0',   value=1.0, min=0, max=100, vary=False)
+    fit_str = 'model1_chl01_rA_rI_gamA_gamI'
+
+###################################################################################################################################################
+
+    fitter = Minimizer(residual_chl01, params, fcn_args=(t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1))
+    print(f'=====Brute fitting for row {row} started=====')
+    result_brute = fitter.minimize(method='brute', Ns=3)
+    print(f'=====Brute fitting for row {row} completed=====')
+    best_result = copy.deepcopy(result_brute)
+    num_iterations = 1
+    for candidate in result_brute.candidates:
+        print(f'=====Searching candidates {num_iterations}=====')
+        trial = fitter.minimize(method='leastsq', params=candidate.params)
+        if trial.chisqr < best_result.chisqr:
+            best_result = trial
+        num_iterations += 1
+
+    result = best_result
+    params = result.params
+    print('=====Best-fit values=====')
+    for param_name, param in result.params.items():
+        print(f'{param_name}: {param.value} ± {param.stderr}')
+
+    # Extract best-fit values
+    #eps_best = result.params['eps'].value
+    K_A_best = result.params['K_A'].value
+    K_I_best = result.params['K_I'].value
+    r_A_best = result.params['r_A'].value
+    r_I_best = result.params['r_I'].value
+    gamA_best = result.params['gamA'].value
+    gamI_best = result.params['gamI'].value
+    X0_best   = result.params['X0'].value
+
+    # Simulate with best-fit parameters (including X0)
+    A_chl0_fit, I_chl0_fit = simulate(params,
+                            (t_eval_chl0[0], t_eval_chl0[-1]),
+                            [A_chl0.iloc[0], I_chl0.iloc[0], X0_best],
+                            t_eval_chl0)
+    
+    params_chl1 = params.copy()
+    params_chl1['gamA'].value = 0.0
+    params_chl1['gamI'].value = 0.0
+    A_chl1_fit, I_chl1_fit = simulate(params_chl1,
+                            (t_eval_chl1[0], t_eval_chl1[-1]),
+                            [A_chl1.iloc[0], I_chl1.iloc[0], X0_best],
+                            t_eval_chl1)
+
+    # CHL- plot
+    plt.figure()
+    plt.plot(A_chl0.index.astype(float), I_chl0, 'ro', label='I Data')
+    plt.plot(t_eval_chl0, I_chl0_fit, 'r-', label='I Fit')
+    plt.plot(A_chl0.index.astype(float), A_chl0, 'bo', label='A Data')
+    plt.plot(t_eval_chl0, A_chl0_fit, 'b-', label='A Fit')
+    plt.xlabel('Time (hours)', fontsize=15)
+    plt.ylabel('Concentration (mM)', fontsize=15)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    plt.title(f'{data_str}_chl0_{fit_str} ({row})\n'
+            f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $r_A$={r_A_best:.3f}, $r_I$={r_I_best:.3f},\n'
+            f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}',
+            fontsize=15)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'plots/model_fit_{data_str}_chl0_{fit_str}_{row}.png')
+    with open(f'fitting_results/{data_str}_chl0_{fit_str}_{row}.pkl', 'wb') as f:
+        pickle.dump(result, f)
+    plt.close()
+
+    # CHL+ plot
+    plt.figure()
+    plt.plot(A_chl1.index.astype(float), I_chl1, 'ro', label='I Data')
+    plt.plot(t_eval_chl1, I_chl1_fit, 'r-', label='I Fit')
+    plt.plot(A_chl1.index.astype(float), A_chl1, 'bo', label='A Data')
+    plt.plot(t_eval_chl1, A_chl1_fit, 'b-', label='A Fit')
+    plt.xlabel('Time (hours)', fontsize=15)
+    plt.ylabel('Concentration (mM)', fontsize=15)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    plt.title(f'{data_str}_chl1_{fit_str} ({row})\n'
+            f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $r_A$={r_A_best:.3f}, $r_I$={r_I_best:.3f},\n'
+            f'$\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}, $X_0$={X0_best:.3f}',
+            fontsize=15)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'plots/model_fit_{data_str}_chl1_{fit_str}_{row}.png')
+    with open(f'fitting_results/{data_str}_chl1_{fit_str}_{row}.pkl', 'wb') as f:
+        pickle.dump(result, f)
+    plt.close()
+  
+
 
