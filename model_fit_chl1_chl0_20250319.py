@@ -10,7 +10,7 @@ import json
 import pickle
 import copy
 import lmfit
-from model1 import *
+from models import *
 
 # Load your data
 no3_chl0 = pd.read_csv('concentrations/no3_chl0_evap.csv', index_col=0)

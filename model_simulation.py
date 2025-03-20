@@ -15,18 +15,27 @@ from model1 import *
 
 t_eval = np.linspace(0, 60, 100)
 A0 = 2.0
-I0 = 1.0
+I0 = 0.0
 X0 = 0.1
+X_A0 = 0.1
+X_I0 = 0.1
 
 params = Parameters()
 #params.add('eps',  value=0.1, min=1e-3, max=1)
-params.add('K_A',  value=0.1, min=1e-4, max=10)
-params.add('K_I',  value=0.1, min=1e-4, max=10)
-params.add('r_A',  value=1.0, min=1e-4, max=1e3)
-params.add('r_I',  value=1.0, min=1e-4, max=1e3)
-params.add('gamA', value=1.0, min=1e-4, max=1e3)
-params.add('gamI', value=1.0, min=1e-4, max=1e3)
+params.add('K_A',  value=0.001, min=1e-4, max=10)
+params.add('K_I',  value=0.001, min=1e-4, max=10)
+params.add('r_A',  value=0.03, min=1e-4, max=1e3)
+params.add('r_I',  value=0.002, min=1e-4, max=1e3)
+params.add('gamA', value=10.0, min=1e-4, max=1e3)
+params.add('gamI', value=10.0, min=1e-4, max=1e3)
 params.add('X0',   value=0.1, min=1e-3, max=1e3, vary=False)
 
-A_sim, I_sim = simulate(params, (t_eval[0], t_eval[-1]), [A0, I0, X0], t_eval)
+
+#A_sim, I_sim = simulate(params, (t_eval[0], t_eval[-1]), [A0, I0, X0], t_eval)
+
+plt.figure(figsize=(10, 5))
+plt.plot(t_eval, A_sim, label='A(t)', color='blue')
+plt.plot(t_eval, I_sim, label='I(t)', color='red')
+plt.show()
+
 

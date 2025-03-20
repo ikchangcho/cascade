@@ -29,15 +29,15 @@ for row in ['A01', 'B01']:
     # Create lmfit Parameters with optional constraints
     params = Parameters()
     #params.add('eps',  value=0.1, min=1e-3, max=1)
-    params.add('K_A',  value=0.1, min=1e-4, max=10)
-    params.add('K_I',  value=0.1, min=1e-4, max=10)
-    params.add('r_A',  value=1.0, min=1e-4, max=1e3)
-    params.add('r_I',  value=1.0, min=1e-4, max=1e3)
-    params.add('gamA', value=1.0, min=1e-4, max=1e3)
-    params.add('gamI', value=1.0, min=1e-4, max=1e3)
+    params.add('K_A',  value=0.001, min=1e-4, max=10, vary=False)
+    params.add('K_I',  value=0.001, min=1e-4, max=10, vary=False)
+    params.add('r_A',  value=0.1, min=1e-4, max=1e3)
+    params.add('r_I',  value=0.1, min=1e-4, max=1e3)
+    params.add('gamA', value=10.0, min=1e-4, max=1e3)
+    params.add('gamI', value=10.0, min=1e-4, max=1e3)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
     params.add('X0',   value=0.1, min=1e-3, max=1e3, vary=False)
-    fit_str = 'model1_chl01_rA_rI_gamA_gamI_KA_KI'
+    fit_str = 'model1_chl01_rA_rI_gamA_gamI'
 
 ###################################################################################################################################################
 
