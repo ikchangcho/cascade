@@ -10,18 +10,18 @@ import pickle
 import copy
 
 def ode_system(t, y, params):
-    A, I, X_A, X_I = y
+    A, I, X = y
+    eps = params['eps'].value
     K_A = params['K_A'].value
     K_I = params['K_I'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
     gamA = params['gamA'].value
     gamI = params['gamI'].value
-    dA_dt = - A/(K_A + A) * r_A * X_A
-    dI_dt = -dA_dt - I/(K_I + I) * r_I * X_I
-    dX_A_dt = A/(K_A + A) * r_A * gamA * X_A
-    dX_I_dt = I/(K_I + I) * r_I * gamI * X_I
-    return [dA_dt, dI_dt, dX_A_dt, dX_I_dt]
+    dA_dt = -A/(A + eps * I + 1e-5) * A/(K_A + A) * r_A * X
+    dI_dt = -dA_dt - eps * I/(A + eps * I + 1e-5) * I/(K_I + I) * r_I * X
+    dX_dt = (A/(A + eps * I + 1e-5) * A/(K_A + A) * r_A * gamA + eps * I/(A + eps * I + 1e-5) * I/(K_I + I) * r_I * gamI) * X
+    return [dA_dt, dI_dt, dX_dt]
 
 def simulate(params, t_span, initial, t_eval):
     sol = solve_ivp(ode_system, t_span, initial, t_eval=t_eval,

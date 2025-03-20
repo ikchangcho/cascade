@@ -18,7 +18,7 @@ no3_chl1 = pd.read_csv(f'concentrations/no3_chl1_evap.csv', index_col=0)
 no2_chl1 = pd.read_csv(f'concentrations/no2_chl1_evap.csv', index_col=0)
 data_str = 'no3_no2'
 
-for row in ['B01']:
+for row in ['A01', 'B01']:
     A_chl0 = no3_chl0.loc[row]
     I_chl0 = no2_chl0.loc[row]
     A_chl1 = no3_chl1.loc[row]
@@ -29,15 +29,15 @@ for row in ['B01']:
     # Create lmfit Parameters with optional constraints
     params = Parameters()
     #params.add('eps',  value=0.1, min=1e-3, max=1)
-    params.add('K_A',  value=0.001, min=1e-5, max=1, vary=False)
-    params.add('K_I',  value=0.001, min=1e-5, max=1, vary=False)
-    params.add('r_A',  value=1.0, min=0, max=1e2)
-    params.add('r_I',  value=1.0, min=0, max=1e2)
-    params.add('gamA', value=1.0, min=0, max=1e2)
-    params.add('gamI', value=1.0, min=0, max=1e2)
+    params.add('K_A',  value=0.1, min=1e-4, max=10)
+    params.add('K_I',  value=0.1, min=1e-4, max=10)
+    params.add('r_A',  value=1.0, min=1e-4, max=1e3)
+    params.add('r_I',  value=1.0, min=1e-4, max=1e3)
+    params.add('gamA', value=1.0, min=1e-4, max=1e3)
+    params.add('gamI', value=1.0, min=1e-4, max=1e3)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    params.add('X0',   value=1.0, min=0, max=100, vary=False)
-    fit_str = 'model1_chl01_rA_rI_gamA_gamI'
+    params.add('X0',   value=0.1, min=1e-3, max=1e3, vary=False)
+    fit_str = 'model1_chl01_rA_rI_gamA_gamI_KA_KI'
 
 ###################################################################################################################################################
 
@@ -96,9 +96,9 @@ for row in ['B01']:
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
     plt.title(f'{data_str}_chl0_{fit_str} ({row})\n'
-            f'$r_A$={r_A_best:.5f}, $r_I$={r_I_best:.5f}, $\gamma_A$={gamA_best:.3f}, $\gamma_I$={gamI_best:.3f}\n'
-            f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $X_0$={X0_best:.1f}',
-            fontsize=15)
+            f'$r_A$={r_A_best:.4f}, $r_I$={r_I_best:.4f}, $\gamma_A$={gamA_best:.4f}, $\gamma_I$={gamI_best:.4f}\n'
+            f'$K_A$={K_A_best:.4f}, $K_I$={K_I_best:.4f}, $X_0$={X0_best:.1f}',
+            fontsize=14)
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'plots/model_fit_{data_str}_chl0_{fit_str}_{row}.png')
@@ -116,9 +116,10 @@ for row in ['B01']:
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
     plt.title(f'{data_str}_chl1_{fit_str} ({row})\n'
-            f'$r_A$={r_A_best:.5f}, $r_I$={r_I_best:.5f}, $\gamma_A$=0.0, $\gamma_I$=0.0\n'
-            f'$K_A$={K_A_best:.3f}, $K_I$={K_I_best:.3f}, $X_0$={X0_best:.1f}',
-            fontsize=15)
+            f'$r_A$={r_A_best:.4f}, $r_I$={r_I_best:.4f}, $\gamma_A$=0.0, $\gamma_I$=0.0\n'
+            f'$K_A$={K_A_best:.4f}, $K_I$={K_I_best:.4f}, $X_0$={X0_best:.1f}',
+            fontsize=14)
+    
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'plots/model_fit_{data_str}_chl1_{fit_str}_{row}.png')
