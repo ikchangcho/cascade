@@ -50,9 +50,7 @@ def residual(params, model, initial, t_eval, A_data, I_data):
     lmfit expects an array of residuals for least-squares fitting.
     """
     # Simulate
-    A_model, I_model = simulate(model, params,
-                                [initial[0], initial[1], initial[2]],
-                                t_eval)
+    A_model, I_model = simulate(model, params, initial[0:3], t_eval)
 
     # Interpolate model output at the measurement times
     A_interp = interp1d(t_eval, A_model, kind='linear', fill_value='extrapolate')
@@ -65,20 +63,16 @@ def residual(params, model, initial, t_eval, A_data, I_data):
     # Return a 1D array of residuals
     return np.concatenate((delta_A.values, delta_I.values))
 
-def residual_chl01(params, model, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1):
+def residual_chl01(params, model, initial, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1):
     
     params_chl1 = params.copy()
     params_chl1['gamA'].value = 0.0
     params_chl1['gamI'].value = 0.0
 
     # Simulate
-    A_model_chl0, I_model_chl0 = simulate(model, params,
-                                [A_chl0.iloc[0], I_chl0.iloc[0], params['X0'].value],
-                                t_eval_chl0)
+    A_model_chl0, I_model_chl0 = simulate(model, params, initial[0:3], t_eval_chl0)
     
-    A_model_chl1, I_model_chl1 = simulate(model, params_chl1,
-                                [A_chl1.iloc[0], I_chl1.iloc[0], params_chl1['X0'].value],
-                                t_eval_chl1)
+    A_model_chl1, I_model_chl1 = simulate(model, params_chl1, initial[3:6], t_eval_chl1)
 
     # Interpolate model output at the measurement times
     A_interp_chl0 = interp1d(t_eval_chl0, A_model_chl0, kind='linear', fill_value='extrapolate')
