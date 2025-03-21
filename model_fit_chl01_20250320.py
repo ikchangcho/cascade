@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 import json
 import pickle
 import copy
-from models import *
+from model1 import *
 
 # Load your data
 no3_chl0 = pd.read_csv(f'concentrations/no3_chl0_evap.csv', index_col=0)
@@ -29,8 +29,6 @@ for row in ['A01', 'B01']:
     data_str = 'no3_no2'
 
     # Create lmfit Parameters with optional constraints
-    model = model1
-    model_str = 'model1'
     params = Parameters()
     #params.add('eps',  value=0.1, min=1e-3, max=1)
     params.add('K_A',  value=0.001, min=1e-4, max=10, vary=False)
@@ -40,8 +38,8 @@ for row in ['A01', 'B01']:
     params.add('gamA', value=10.0, min=1e-4, max=1e3)
     params.add('gamI', value=10.0, min=1e-4, max=1e3)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    fitter = Minimizer(residual_chl01, params, fcn_args=(model, initial, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1))
-    fit_str = f'{model_str}_chl01_rA_rI_gamA_gamI'
+    fitter = Minimizer(residual_chl01, params, fcn_args=(initial, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1))
+    fit_str = f'model1_chl01_rA_rI_gamA_gamI'
 ###################################################################################################################################################
     print(f'=====Brute fitting for row {row} started=====')
     result_brute = fitter.minimize(method='brute', Ns=3)
@@ -72,12 +70,12 @@ for row in ['A01', 'B01']:
     gamI_best = result.params['gamI'].value
 
     # Simulate with best-fit parameters (including X0)
-    A_chl0_fit, I_chl0_fit = simulate(model, params, initial[0:3], t_eval_chl0)
+    A_chl0_fit, I_chl0_fit = simulate(params, initial[0:3], t_eval_chl0)
     
     params_chl1 = params.copy()
     params_chl1['gamA'].value = 0.0
     params_chl1['gamI'].value = 0.0
-    A_chl1_fit, I_chl1_fit = simulate(model, params_chl1, initial[3:6], t_eval_chl1)
+    A_chl1_fit, I_chl1_fit = simulate(params_chl1, initial[3:6], t_eval_chl1)
 
     # CHL- plot
     plt.figure()

@@ -10,7 +10,7 @@ import json
 import pickle
 import copy
 import lmfit
-from models import *
+from model2 import *
 
 # Load your data
 no3_chl0 = pd.read_csv('concentrations/no3_chl0_evap.csv', index_col=0)
@@ -26,12 +26,10 @@ for row in ['A01', 'B01']:
     A_chl1 = no3_chl1.loc[row]
     I_chl1 = no2_chl1.loc[row]
     t_eval_chl1 = np.linspace(0, float(no3_chl1.columns[-1]) + 1, 100)
-    initial_chl1 = [A_chl1.iloc[0], I_chl1.iloc[0], X0]
+    initial_chl1 = [A_chl1.iloc[0], I_chl1.iloc[0], X0, X0]
     data_str_chl1 = 'no3_no2_chl1'
 
     # Create lmfit Parameters with optional constraints
-    model = model1
-    model_str = 'model1'
     params_chl1 = Parameters()
     params_chl1.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
     params_chl1.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
@@ -40,11 +38,11 @@ for row in ['A01', 'B01']:
     params_chl1.add('gamA', value=0.0, min=1e-3, max=1e3, vary=False)
     params_chl1.add('gamI', value=0.0, min=1e-3, max=1e3, vary=False)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    fit_str_chl1 = f'{model_str}_rA_rI'
+    fit_str_chl1 = f'model2_rA_rI'
 
 ###################################################################################################################################################
 
-    fitter = Minimizer(residual, params_chl1, fcn_args=(model, initial_chl1, t_eval_chl1, A_chl1, I_chl1))
+    fitter = Minimizer(residual, params_chl1, fcn_args=(initial_chl1, t_eval_chl1, A_chl1, I_chl1))
     print(f'=====Brute fitting for row {row} started=====')
     result_brute = fitter.minimize(method='brute', Ns=3)
     print(f'=====Brute fitting for row {row} completed=====')
@@ -70,7 +68,7 @@ for row in ['A01', 'B01']:
     A_chl0 = no3_chl0.loc[row]
     I_chl0 = no2_chl0.loc[row]
     t_eval_chl0 = np.linspace(0, float(no3_chl0.columns[-1]) + 1, 100)
-    initial_chl0 = [A_chl0.iloc[0], I_chl0.iloc[0], X0]
+    initial_chl0 = [A_chl0.iloc[0], I_chl0.iloc[0], X0, X0]
     data_str_chl0 = 'no3_no2_chl0'
 
     # Use the best-fit parameters from CHL+ data
@@ -89,11 +87,11 @@ for row in ['A01', 'B01']:
     params_chl0.add('gamA', value=10.0, min=1e-4, max=1e3)
     params_chl0.add('gamI', value=10.0, min=1e-4, max=1e3)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    fit_str_chl0 = f'{model_str}_gamA_gamI'
+    fit_str_chl0 = f'model2_gamA_gamI'
 
 ###################################################################################################################################################
 
-    fitter = Minimizer(residual, params_chl0, fcn_args=(model, initial_chl0, t_eval_chl0, A_chl0, I_chl0))
+    fitter = Minimizer(residual, params_chl0, fcn_args=(initial_chl0, t_eval_chl0, A_chl0, I_chl0))
     print(f'=====Brute fitting for CHL- row {row} started=====')
     result_brute = fitter.minimize(method='brute', Ns=5)
     print(f'=====Brute fitting for CHL- row {row} completed=====')
@@ -116,8 +114,8 @@ for row in ['A01', 'B01']:
         print(f'{param_name}: {param.value} ± {param.stderr}')
 
     # Simulate with best-fit parameters (including X0)
-    A_chl0_fit, I_chl0_fit = simulate(model, params_chl0, initial_chl0, t_eval_chl0)
-    A_chl1_fit, I_chl1_fit = simulate(model, params_chl1, initial_chl1, t_eval_chl1)
+    A_chl0_fit, I_chl0_fit = simulate(params_chl0, initial_chl0, t_eval_chl0)
+    A_chl1_fit, I_chl1_fit = simulate(params_chl1, initial_chl1, t_eval_chl1)
     
     # Optimized parameters
     K_A_chl0 = result_chl0.params['K_A'].value
@@ -162,7 +160,7 @@ for row in ['A01', 'B01']:
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
     plt.title(f'{data_str_chl1}_{fit_str_chl1} ({row})\n'
-            f'$r_A$={r_A_chl1:.3f}, $r_I$={r_I_chl1:.3f}, $\gamma_A$={gamA_chl1:.3f}, $\gamma_I$={gamI_chl1:.3f}\n'
+            f'$r_A$={r_A_chl1:.3f}, $r_I$={r_I_chl1:.3f}, $\gamma_A$=0.0, $\gamma_I$=0.0\n'
             f'$K_A$={K_A_chl1:.3f}, $K_I$={K_I_chl1:.3f}, $X_0$={X0:.2f}',
             fontsize=14)
     plt.legend()

@@ -8,19 +8,20 @@ from scipy.interpolate import interp1d
 import json
 import pickle
 import copy
-
+   
 def odes(t, y, params):
-    A, I, X = y
+    A, I, X_A, X_I = y
     K_A = params['K_A'].value
     K_I = params['K_I'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
     gamA = params['gamA'].value
     gamI = params['gamI'].value
-    dA_dt = -A/(K_A + A) * r_A * X
-    dI_dt = -dA_dt - I/(K_I + I) * r_I * X
-    dX_dt = (A/(K_A + A) * r_A * gamA + I/(K_I + I) * r_I * gamI) * X
-    return [dA_dt, dI_dt, dX_dt]    
+    dA_dt = - A/(K_A + A) * r_A * X_A
+    dI_dt = -dA_dt - I/(K_I + I) * r_I * X_I
+    dX_A_dt = A/(K_A + A) * r_A * gamA * X_A
+    dX_I_dt = I/(K_I + I) * r_I * gamI * X_I
+    return [dA_dt, dI_dt, dX_A_dt, dX_I_dt]
 
 def simulate(params, initial, t_eval):
     sol = solve_ivp(odes, (t_eval[0], t_eval[-1]), initial, t_eval=t_eval,
@@ -56,9 +57,8 @@ def residual_chl01(params, initial, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_
     params_chl1['gamI'].value = 0.0
 
     # Simulate
-    A_model_chl0, I_model_chl0 = simulate(params, initial[0:3], t_eval_chl0)
-    
-    A_model_chl1, I_model_chl1 = simulate(params_chl1, initial[3:6], t_eval_chl1)
+    A_model_chl0, I_model_chl0 = simulate(params, initial[0:4], t_eval_chl0)
+    A_model_chl1, I_model_chl1 = simulate(params_chl1, initial[4:8], t_eval_chl1)
 
     # Interpolate model output at the measurement times
     A_interp_chl0 = interp1d(t_eval_chl0, A_model_chl0, kind='linear', fill_value='extrapolate')
