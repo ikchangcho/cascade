@@ -20,7 +20,7 @@ no2_chl1 = pd.read_csv('concentrations/no2_chl1_evap.csv', index_col=0)
 # no2 = no2.iloc[:, :10]
 # no3 = no3.iloc[:, :10]
 
-for row in ['A01', 'B01']:
+for row in ['B01']:
     # Fit CHL+ data
     X0 = 0.01
     A_chl1 = no3_chl1.loc[row]
@@ -33,8 +33,8 @@ for row in ['A01', 'B01']:
     params_chl1 = Parameters()
     params_chl1.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
     params_chl1.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
-    params_chl1.add('r_A',  value=0.1, min=1e-3, max=1e3)
-    params_chl1.add('r_I',  value=0.1, min=1e-3, max=1e3)
+    params_chl1.add('r_A',  value=0.5, min=1e-3, max=1e3)
+    params_chl1.add('r_I',  value=0.5, min=1e-3, max=1e3)
     params_chl1.add('gamA', value=0.0, min=1e-3, max=1e3, vary=False)
     params_chl1.add('gamI', value=0.0, min=1e-3, max=1e3, vary=False)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
@@ -84,8 +84,8 @@ for row in ['A01', 'B01']:
     params_chl0.add('K_I',  value=K_I, min=1e-4, max=10, vary=False)
     params_chl0.add('r_A',  value=r_A, min=1e-4, max=1e3, vary=False)
     params_chl0.add('r_I',  value=r_I, min=1e-4, max=1e3, vary=False)
-    params_chl0.add('gamA', value=10.0, min=1e-4, max=1e3)
-    params_chl0.add('gamI', value=10.0, min=1e-4, max=1e3)
+    params_chl0.add('gamA', value=1.0, min=1e-4, max=10)
+    params_chl0.add('gamI', value=0.5, min=1e-4, max=10)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
     fit_str_chl0 = f'model2_gamA_gamI'
 
@@ -93,7 +93,7 @@ for row in ['A01', 'B01']:
 
     fitter = Minimizer(residual, params_chl0, fcn_args=(initial_chl0, t_eval_chl0, A_chl0, I_chl0))
     print(f'=====Brute fitting for CHL- row {row} started=====')
-    result_brute = fitter.minimize(method='brute', Ns=5)
+    result_brute = fitter.minimize(method='brute', Ns=3)
     print(f'=====Brute fitting for CHL- row {row} completed=====')
     best_result = copy.deepcopy(result_brute)
     num_iterations = 1
