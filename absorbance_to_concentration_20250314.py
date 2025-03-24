@@ -191,7 +191,6 @@ no2_chl1_conc.to_csv("concentration/no2_chl1.csv")
 no3_chl1_conc.to_csv("concentration/no3_chl1.csv")
 nh4_chl1_conc.to_csv("concentration/nh4_chl1.csv")
 
-
 # Evaporation Correction
 norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
 norm_no2_chl1 = no2_chl1_conc.loc[no2_rows].mean(axis=0) / no2_chl1_conc.loc[no2_rows].mean(axis=0).iloc[0]
