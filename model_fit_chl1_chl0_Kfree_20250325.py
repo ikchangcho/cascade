@@ -20,7 +20,7 @@ no2_chl1 = pd.read_csv('concentrations/no2_chl1_evap.csv', index_col=0)
 # no2 = no2.iloc[:, :10]
 # no3 = no3.iloc[:, :10]
 
-for row in ['B01']:
+for row in ['A01','B01']:
     # Fit CHL+ data
     X0 = 0.01
     A_chl1 = no3_chl1.loc[row]
@@ -38,7 +38,7 @@ for row in ['B01']:
     params_chl1.add('gamA', value=0.0, min=1e-3, max=1e3, vary=False)
     params_chl1.add('gamI', value=0.0, min=1e-3, max=1e3, vary=False)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    fit_str_chl1 = f'model1_rA_rI'  ###############################################################################################################
+    fit_str_chl1 = f'model1_rA_rI_KA_KI'  ###############################################################################################################
 
     fitter = Minimizer(residual, params_chl1, fcn_args=(initial_chl1, t_eval_chl1, A_chl1, I_chl1))
     print(f'=====Brute fitting for row {row} started=====')
@@ -78,14 +78,14 @@ for row in ['B01']:
     gamI = params_chl1['gamI'].value
 
     params_chl0 = Parameters()
-    params_chl0.add('K_A',  value=K_A, min=1e-4, max=10, vary=False)
-    params_chl0.add('K_I',  value=K_I, min=1e-4, max=10, vary=False)
+    params_chl0.add('K_A',  value=K_A, min=1e-4, max=10)
+    params_chl0.add('K_I',  value=K_I, min=1e-4, max=10)
     params_chl0.add('r_A',  value=r_A, min=1e-4, max=1e3, vary=False)
     params_chl0.add('r_I',  value=r_I, min=1e-4, max=1e3, vary=False)
     params_chl0.add('gamA', value=1.0, min=1e-4, max=10)
     params_chl0.add('gamI', value=0.5, min=1e-4, max=10)
     #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    fit_str_chl0 = f'model1_gamA_gamI'  ###############################################################################################################
+    fit_str_chl0 = f'model1_gamA_gamI_KA_KI'  ###############################################################################################################
 
     fitter = Minimizer(residual, params_chl0, fcn_args=(initial_chl0, t_eval_chl0, A_chl0, I_chl0))
     print(f'=====Brute fitting for CHL- row {row} started=====')
@@ -108,6 +108,9 @@ for row in ['B01']:
     print(f'=====Best-fit values for CHL- {row}=====')
     for param_name, param in result_chl0.params.items():
         print(f'{param_name}: {param.value} ± {param.stderr}')
+
+    params_chl1.add('K_A', value=params_chl0['K_A'].value)
+    params_chl1.add('K_I', value=params_chl0['K_I'].value)
 
     # Simulate with best-fit parameters (including X0)
     A_chl0_fit, I_chl0_fit = simulate(params_chl0, initial_chl0, t_eval_chl0)
