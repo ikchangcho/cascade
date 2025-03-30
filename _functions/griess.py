@@ -1088,7 +1088,7 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
     no2 = no2.drop(nan_idx)
     no2no3 = no2no3.drop(nan_idx)
 
-    # subtract blank values
+    # subtract blank values 
     blank_idx = meta.index[(meta['NO2'] == 0) & (meta['NO3'] == 0)].tolist()
     no2_blank = no2.loc[blank_idx].median()
     no2no3_blank = no2no3.loc[blank_idx].median()
@@ -1141,8 +1141,7 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
     myDF3["Coefficients"], myDF3["Standard Errors"], myDF3["t values"], myDF3["P-Values"] = [params, sd_b, ts_b,
                                                                                              p_values]
 
-    print(
-        "\n\n (From sklearn LinearRegression) Manual calculation of p-value. Here we use sklearn LinearRegression package")
+    print("\n\n (From sklearn LinearRegression) Manual calculation of p-value. Here we use sklearn LinearRegression package")
     print(myDF3)
 
     # Getting summary from statsmodel package
@@ -1276,7 +1275,7 @@ def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, 
 
 
 def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=None, no2_540_fn=None,
-                           no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None, extract_factor = 2.5): # Editted by Ikchang
+                           no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None, extract_factor = 2.5): # Edited by Ik
     # read NO2
     print(meta_fn)
     print("Before subtracting blank value")

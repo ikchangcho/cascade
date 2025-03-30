@@ -1,5 +1,5 @@
 import sys
-sys.path.append('functions')
+sys.path.append('_functions')
 print("Python path: ", sys.executable)
 import os
 #print("Current working directory:", os.getcwd())
@@ -18,7 +18,7 @@ import ammonia as am
 import os
 import re
 
-# directory = "absorbance"
+# directory = "absorbances"
 # pattern = re.compile(r"tp(\d)(?!\d)")
 
 # for fname in os.listdir(directory):
@@ -27,19 +27,19 @@ import re
 #         os.rename(os.path.join(directory, fname), os.path.join(directory, new_name))
 
 def no2_no3_abs_to_conc(date, chl):
-    std_meta_fn = glob.glob(f'absorbance/{date}_standards_metadata.csv')[0]
-    std_no2_540_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2_540.CSV")[0]
-    std_no2_900_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2_900.CSV")[0]
-    std_no2no3_540_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2NO3_540.CSV")[0]
-    std_no2no3_900_fn = glob.glob(f"absorbance/{date}_Ik_STD_NO2NO3_900.CSV")[0]
+    std_meta_fn = glob.glob(f'absorbances/{date}_standards_metadata.csv')[0]
+    std_no2_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_540.CSV")[0]
+    std_no2_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_900.CSV")[0]
+    std_no2no3_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_540.CSV")[0]
+    std_no2no3_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_900.CSV")[0]
 
-    meta_fn = glob.glob(f'absorbance/{date}_samples_metadata.csv')[0]
-    no2_540_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2_{chl}*540*'))
-    no2_900_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2_{chl}*900*'))
-    no2no3_540_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2NO3_{chl}*540*'))
-    no2no3_900_fns = sorted(glob.glob(f'absorbance/{date}_Ik_NO2NO3_{chl}*900*'))
+    meta_fn = glob.glob(f'absorbances/{date}_samples_metadata.csv')[0]
+    no2_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{chl}*540*'))
+    no2_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{chl}*900*'))
+    no2no3_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{chl}*540*'))
+    no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{chl}*900*'))
 
-    # fitted parameters
+    # fitted parameters from standards
     [[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
 
     # create times series dataframe
@@ -127,7 +127,7 @@ def create_figure(times, no2_data, no3_data, nh4_data, rows_chunk, figure_index,
     plt.close()
 
 ###################################Input Parameters###################################
-# Convert absorbance to concentration and save as dataframes
+# Convert absorbances to concentration and save as dataframes
 [no2_chl0_conc, no3_chl0_conc] = no2_no3_abs_to_conc("20250114", "chl-")
 [no2_chl1_conc, no3_chl1_conc] = no2_no3_abs_to_conc("20250113", "chl+")
 nh4_chl0_conc = pd.concat([nh4_abs_to_conc("20250305", "chl-"), nh4_abs_to_conc("20250308", "chl-")], axis=1)
