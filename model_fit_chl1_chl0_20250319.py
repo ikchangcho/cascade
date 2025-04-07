@@ -20,7 +20,7 @@ no2_chl1 = pd.read_csv('concentrations/no2_chl1_evap.csv', index_col=0)
 # no2 = no2.iloc[:, :10]
 # no3 = no3.iloc[:, :10]
 
-for row in no3_chl0.index[:15]:
+for row in no3_chl0.index[15:]:
     # Fit CHL+ data
     X0 = 0.01
     A_chl1 = no3_chl1.loc[row]
