@@ -129,18 +129,18 @@ no3_conc = pd.concat([no3_conc1, no3_conc2], axis=1)
 
 # Time arrays
 datetime_array = [
-    datetime(2025, 1, 1, 13, 0),       # T0
-    datetime(2025, 1, 1, 14, 0),       # T1
-    datetime(2025, 1, 1, 16, 0),       # T2
-    datetime(2025, 1, 1, 19, 0),       # T3
-    datetime(2025, 1, 1, 23, 0),       # T4
-    datetime(2025, 1, 2, 8, 0),       # T5
-    datetime(2025, 1, 2, 15, 30),       # T6
-    datetime(2025, 1, 2, 23, 0),       # T7
-    datetime(2025, 1, 3, 8, 0),       # T8
-    datetime(2025, 1, 3, 15, 30),       # T9
-    datetime(2025, 1, 3, 23, 0),       # T10
-    datetime(2025, 1, 4, 8, 0)]       # T11       
+    datetime(2025, 1, 1, 14, 19),       # T0
+    datetime(2025, 1, 1, 15, 19),       # T1
+    datetime(2025, 1, 1, 17, 19),       # T2
+    datetime(2025, 1, 1, 20, 9),       # T3
+    datetime(2025, 1, 2, 0, 8),       # T4
+    datetime(2025, 1, 2, 7, 42),       # T5
+    datetime(2025, 1, 2, 15, 4),       # T6
+    datetime(2025, 1, 2, 23, 11),       # T7
+    datetime(2025, 1, 3, 8, 48),       # T8
+    datetime(2025, 1, 3, 16, 4),       # T9
+    datetime(2025, 1, 3, 23, 33),       # T10
+    datetime(2025, 1, 4, 7, 48)]       # T11       
 
 # Rows for evaporation correction
 # no2_rows = ['H10', 'H11', 'H12']
