@@ -1,0 +1,368 @@
+User: USER,Path: C:\Program Files (x86)\BMG\CLARIOstar\User\Data,Test run no.: 1391
+Test name: Ik_STD_NO2NO3,Date: 4/7/2025,Time: 9:16:17 PM
+
+ID1: antibiotics,
+Absorbance
+
+
+A01
+S1 Raw Data (Well scan) 900
+0.0737,0.0765
+0.0725,0.0786
+
+A02
+S1 Raw Data (Well scan) 900
+0.086,0.1623
+0.0902,0.1008
+
+A03
+S1 Raw Data (Well scan) 900
+0.116,0.1519
+0.0793,0.1544
+
+A04
+S9 Raw Data (Well scan) 900
+0.0704,0.1096
+0.0859,0.0909
+
+A05
+S9 Raw Data (Well scan) 900
+0.0737,0.0778
+0.1031,0.0732
+
+A06
+S9 Raw Data (Well scan) 900
+0.0966,0.1302
+0.072,0.0994
+
+A07
+S17 Raw Data (Well scan) 900
+0.0825,0.1505
+0.1027,0.1413
+
+A08
+S17 Raw Data (Well scan) 900
+0.073,0.1002
+0.0753,0.1638
+
+A09
+S17 Raw Data (Well scan) 900
+0.0847,0.1189
+0.1099,0.1348
+
+B01
+S2 Raw Data (Well scan) 900
+0.068,0.0877
+0.0736,0.1719
+
+B02
+S2 Raw Data (Well scan) 900
+0.0672,0.0661
+0.0671,0.0879
+
+B03
+S2 Raw Data (Well scan) 900
+0.0792,0.1267
+0.1273,0.1609
+
+B04
+S10 Raw Data (Well scan) 900
+0.0648,0.0776
+0.0634,0.0636
+
+B05
+S10 Raw Data (Well scan) 900
+0.067,0.0725
+0.066,0.0706
+
+B06
+S10 Raw Data (Well scan) 900
+0.0614,0.0653
+0.068,0.0703
+
+B07
+S18 Raw Data (Well scan) 900
+0.0673,0.1206
+0.0725,0.1635
+
+B08
+S18 Raw Data (Well scan) 900
+0.0658,0.0754
+0.0683,0.0866
+
+B09
+S18 Raw Data (Well scan) 900
+0.07,0.0961
+0.0743,0.0964
+
+C01
+S3 Raw Data (Well scan) 900
+0.068,0.0613
+0.0636,0.0632
+
+C02
+S3 Raw Data (Well scan) 900
+0.0658,0.0667
+0.0641,0.0617
+
+C03
+S3 Raw Data (Well scan) 900
+0.066,0.0645
+0.0652,0.0665
+
+C04
+S11 Raw Data (Well scan) 900
+0.0686,0.0609
+0.0658,0.0598
+
+C05
+S11 Raw Data (Well scan) 900
+0.058,0.0668
+0.0659,0.0654
+
+C06
+S11 Raw Data (Well scan) 900
+0.0655,0.0645
+0.0684,0.0659
+
+C07
+S19 Raw Data (Well scan) 900
+0.0658,0.0786
+0.0638,0.0672
+
+C08
+S19 Raw Data (Well scan) 900
+0.0669,0.0699
+0.068,0.0608
+
+C09
+S19 Raw Data (Well scan) 900
+0.0611,0.07
+0.0611,0.0655
+
+D01
+S4 Raw Data (Well scan) 900
+0.0637,0.061
+0.0622,0.0583
+
+D02
+S4 Raw Data (Well scan) 900
+0.0609,0.0625
+0.0661,0.0647
+
+D03
+S4 Raw Data (Well scan) 900
+0.1139,0.0653
+0.0628,0.0623
+
+D04
+S12 Raw Data (Well scan) 900
+0.0666,0.0627
+0.0656,0.0602
+
+D05
+S12 Raw Data (Well scan) 900
+0.068,0.0669
+0.0613,0.0637
+
+D06
+S12 Raw Data (Well scan) 900
+0.0647,0.0609
+0.0707,0.0637
+
+D07
+S20 Raw Data (Well scan) 900
+0.0642,0.0637
+0.0644,0.0599
+
+D08
+S20 Raw Data (Well scan) 900
+0.0633,0.0681
+0.0641,0.0629
+
+D09
+S20 Raw Data (Well scan) 900
+0.0666,0.0623
+0.0677,0.0687
+
+E01
+S5 Raw Data (Well scan) 900
+0.0654,0.0572
+0.068,0.0645
+
+E02
+S5 Raw Data (Well scan) 900
+0.0668,0.0608
+0.5545,0.0634
+
+E03
+S5 Raw Data (Well scan) 900
+0.0682,0.0723
+0.063,0.0571
+
+E04
+S13 Raw Data (Well scan) 900
+0.0672,0.0597
+0.0647,0.0617
+
+E05
+S13 Raw Data (Well scan) 900
+0.0647,0.0628
+0.0809,0.0663
+
+E06
+S13 Raw Data (Well scan) 900
+0.0691,0.0598
+0.0654,0.0599
+
+E07
+S21 Raw Data (Well scan) 900
+0.0591,0.0638
+0.0641,0.0636
+
+E08
+S21 Raw Data (Well scan) 900
+0.0675,0.0598
+0.0635,0.0635
+
+E09
+S21 Raw Data (Well scan) 900
+0.0644,0.0619
+0.0684,0.0575
+
+F01
+S6 Raw Data (Well scan) 900
+0.0662,0.0601
+0.061,0.0633
+
+F02
+S6 Raw Data (Well scan) 900
+0.0629,0.0603
+0.0593,0.0645
+
+F03
+S6 Raw Data (Well scan) 900
+0.0608,0.0642
+0.0629,0.0604
+
+F04
+S14 Raw Data (Well scan) 900
+0.059,0.0614
+0.0568,0.065
+
+F05
+S14 Raw Data (Well scan) 900
+0.0646,0.0587
+0.0632,0.0614
+
+F06
+S14 Raw Data (Well scan) 900
+0.063,0.0631
+0.0599,0.0647
+
+F07
+S22 Raw Data (Well scan) 900
+0.0613,0.0622
+0.062,0.0639
+
+F08
+S22 Raw Data (Well scan) 900
+0.062,0.0642
+0.0629,0.0626
+
+F09
+S22 Raw Data (Well scan) 900
+0.0645,0.0654
+0.0676,0.0608
+
+G01
+S7 Raw Data (Well scan) 900
+0.0653,0.0631
+0.061,0.0603
+
+G02
+S7 Raw Data (Well scan) 900
+0.0647,0.0626
+0.0621,0.062
+
+G03
+S7 Raw Data (Well scan) 900
+0.0576,0.0658
+0.0641,0.0609
+
+G04
+S15 Raw Data (Well scan) 900
+0.0655,0.059
+0.0622,0.0592
+
+G05
+S15 Raw Data (Well scan) 900
+0.0606,0.063
+0.0594,0.0581
+
+G06
+S15 Raw Data (Well scan) 900
+0.0643,0.0598
+0.0625,0.0612
+
+G07
+S23 Raw Data (Well scan) 900
+0.0658,0.0615
+0.0595,0.0621
+
+G08
+S23 Raw Data (Well scan) 900
+0.0626,0.0592
+0.0603,0.0624
+
+G09
+S23 Raw Data (Well scan) 900
+0.0627,0.0628
+0.0655,0.0581
+
+H01
+S8 Raw Data (Well scan) 900
+0.061,0.0577
+0.0605,0.0573
+
+H02
+S8 Raw Data (Well scan) 900
+0.0631,0.0648
+0.0626,0.059
+
+H03
+S8 Raw Data (Well scan) 900
+0.0631,0.0612
+0.0648,0.062
+
+H04
+S16 Raw Data (Well scan) 900
+0.057,0.0575
+0.0551,0.0596
+
+H05
+S16 Raw Data (Well scan) 900
+0.0612,0.0613
+0.0639,0.0618
+
+H06
+S16 Raw Data (Well scan) 900
+0.0646,0.054
+0.0628,0.0584
+
+H07
+S24 Raw Data (Well scan) 900
+0.0677,0.0609
+0.0606,0.0608
+
+H08
+S24 Raw Data (Well scan) 900
+0.0598,0.0592
+0.0605,0.0615
+
+H09
+S24 Raw Data (Well scan) 900
+0.06,0.0562
+0.0625,0.0562
+
+

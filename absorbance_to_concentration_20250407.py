@@ -18,14 +18,6 @@ import ammonia as am
 import os
 import re
 
-# directory = "absorbances"
-# pattern = re.compile(r"tp(\d)(?!\d)")
-
-# for fname in os.listdir(directory):
-#     new_name = pattern.sub(lambda m: "tp0" + m.group(1), fname)
-#     if new_name != fname:
-#         os.rename(os.path.join(directory, fname), os.path.join(directory, new_name))
-
 def no2_no3_abs_to_conc(date, chl):
     std_meta_fn = glob.glob(f'absorbances/{date}_standards_metadata.csv')[0]
     std_no2_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*_540.CSV")[0]
@@ -83,7 +75,7 @@ def nh4_abs_to_conc(date, chl):
 
     return nh4_conc
 
-def create_figure(times, no2_data, no3_data, nh4_data, rows_chunk, figure_index, filename):
+def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename, num_of_replicates=3, nh4_data=None):
     # Determine the global y-axis limits
     all_values = pd.concat([no2_data, no3_data])
     if nh4_data is not None:
@@ -94,17 +86,17 @@ def create_figure(times, no2_data, no3_data, nh4_data, rows_chunk, figure_index,
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(4*ncols, 4*nrows))
     axes = axes.flatten()  # Flatten the 2D array of axes to 1D for easy iteration
 
-    for i in range(0, len(rows_chunk), 3):
-        if i // 3 < len(axes):  # Ensure we don't exceed the number of subplots
-            ax = axes[i // 3]
-            for j in range(3):
+    for i in range(0, len(rows_chunk), num_of_replicates):
+        if i // num_of_replicates < len(axes):  # Ensure we don't exceed the number of subplots
+            ax = axes[i // num_of_replicates]
+            for j in range(num_of_replicates):
                 if i + j < len(rows_chunk):
                     row = rows_chunk[i + j]
                     ax.plot(times, no2_data.loc[row], 'r.-', label='NO2')
                     ax.plot(times, no3_data.loc[row], 'b.-', label='NO3')
                     if nh4_data is not None:
                         ax.plot(times, nh4_data.loc[row], 'g.-', label='NH4')
-            ax.set_title(f'{rows_chunk[i:i+3]}')
+            ax.set_title(f'{rows_chunk[i:i+num_of_replicates]}')
             ax.set_ylim(y_min, y_max)
             ax.legend().set_visible(False)  # Hide individual legends
 
@@ -125,104 +117,83 @@ def create_figure(times, no2_data, no3_data, nh4_data, rows_chunk, figure_index,
     # Save the figure
     plt.savefig(f'{filename}_{figure_index}.png')
     plt.close()
+    print(f'Saved figure: {filename}_{figure_index}.png')
 
 ###################################Input Parameters###################################
 # Convert absorbances to concentration and save as dataframes
-[no2_chl0_conc, no3_chl0_conc] = no2_no3_abs_to_conc("20250114", "chl-")
-[no2_chl1_conc, no3_chl1_conc] = no2_no3_abs_to_conc("20250113", "chl+")
-nh4_chl0_conc = pd.concat([nh4_abs_to_conc("20250305", "chl-"), nh4_abs_to_conc("20250308", "chl-")], axis=1)
-nh4_chl1_conc = nh4_abs_to_conc("20250304", "chl+")
+[no2_conc1, no3_conc1] = no2_no3_abs_to_conc("20250404", "antibiotics")
+[no2_conc2, no3_conc2] = no2_no3_abs_to_conc("20250407", "antibiotics")
+no2_conc = pd.concat([no2_conc1, no2_conc2], axis=1)
+no3_conc = pd.concat([no3_conc1, no3_conc2], axis=1)
+
 
 # Time arrays
-chl0_datetime_array = [
-    datetime(2025, 1, 1, 14, 30),       # T0
-    datetime(2025, 1, 1, 15, 35),       # T1
-    datetime(2025, 1, 1, 16, 55),       # T2
-    datetime(2025, 1, 1, 20, 00),       # T3
-    datetime(2025, 1, 1, 22, 58),       # T4
-    datetime(2025, 1, 2, 8, 9),       # T5
-    datetime(2025, 1, 2, 13, 10),       # T6
-    datetime(2025, 1, 2, 17, 56),       # T7
-    datetime(2025, 1, 2, 22, 57),       # T8
-    datetime(2025, 1, 3, 8, 5),       # T9
-    datetime(2025, 1, 3, 13, 3),       # T10
-    datetime(2025, 1, 3, 18, 11),       # T11
-    datetime(2025, 1, 3, 23, 45)]       # T12       
-chl1_datetime_array = [
-    datetime(2024, 12, 24, 23, 30),       # T0
-    datetime(2024, 12, 25, 8, 0),       # T1
-    datetime(2024, 12, 25, 17, 38),       # T2
-    datetime(2024, 12, 26, 17, 43),       # T3
-    datetime(2024, 12, 27, 17, 50),       # T4
-    datetime(2024, 12, 28, 18, 10),       # T5
-    datetime(2024, 12, 29, 17, 30),       # T6
-    datetime(2024, 12, 30, 17, 16),       # T7
-    datetime(2024, 12, 31, 17, 30)]       # T8
+datetime_array = [
+    datetime(2025, 1, 1, 13, 0),       # T0
+    datetime(2025, 1, 1, 14, 0),       # T1
+    datetime(2025, 1, 1, 16, 0),       # T2
+    datetime(2025, 1, 1, 19, 0),       # T3
+    datetime(2025, 1, 1, 23, 0),       # T4
+    datetime(2025, 1, 2, 8, 0),       # T5
+    datetime(2025, 1, 2, 15, 30),       # T6
+    datetime(2025, 1, 2, 23, 0),       # T7
+    datetime(2025, 1, 3, 8, 0),       # T8
+    datetime(2025, 1, 3, 15, 30),       # T9
+    datetime(2025, 1, 3, 23, 0),       # T10
+    datetime(2025, 1, 4, 8, 0)]       # T11       
 
 # Rows for evaporation correction
-no2_rows = ['H10', 'H11', 'H12']
-no3_rows = ['H07', 'H08', 'H09']
+# no2_rows = ['H10', 'H11', 'H12']
+# no3_rows = ['H07', 'H08', 'H09']
 
 #######################################################################################
 
 # Concentration
-chl0_times = [0]
-for i in range(1, len(chl0_datetime_array)):
-    time_diff = chl0_datetime_array[i] - chl0_datetime_array[0]
-    chl0_times.append(time_diff.total_seconds() / 3600)
+times = [0]
+for i in range(1, len(datetime_array)):
+    time_diff = datetime_array[i] - datetime_array[0]
+    times.append(time_diff.total_seconds() / 3600)
 
-no2_chl0_conc.columns = chl0_times
-no3_chl0_conc.columns = chl0_times
-nh4_chl0_conc.columns = chl0_times
+no2_conc.columns = times
+no3_conc.columns = times
 
-chl1_times = [0]
-for i in range(1, len(chl1_datetime_array)):
-    time_diff = chl1_datetime_array[i] - chl1_datetime_array[0]
-    chl1_times.append(time_diff.total_seconds() / 3600)
 
-no2_chl1_conc.columns = chl1_times
-no3_chl1_conc.columns = chl1_times
-nh4_chl1_conc.columns = chl1_times
 
-no2_chl0_conc.to_csv("concentration/no2_chl0.csv")
-no3_chl0_conc.to_csv("concentration/no3_chl0.csv")
-nh4_chl0_conc.to_csv("concentration/nh4_chl0.csv")
-no2_chl1_conc.to_csv("concentration/no2_chl1.csv")
-no3_chl1_conc.to_csv("concentration/no3_chl1.csv")
-nh4_chl1_conc.to_csv("concentration/nh4_chl1.csv")
+no2_conc.to_csv("concentrations/no2_antibiotics.csv")
+no3_conc.to_csv("concentrations/no3_antibiotics.csv")
 
-# Evaporation Correction
-norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
-norm_no2_chl1 = no2_chl1_conc.loc[no2_rows].mean(axis=0) / no2_chl1_conc.loc[no2_rows].mean(axis=0).iloc[0]
-norm_no3_chl0 = no3_chl0_conc.loc[no3_rows].mean(axis=0) / no3_chl0_conc.loc[no3_rows].mean(axis=0).iloc[0]
-norm_no3_chl1 = no3_chl1_conc.loc[no3_rows].mean(axis=0) / no3_chl1_conc.loc[no3_rows].mean(axis=0).iloc[0]
-norm_nh4_chl0 = (norm_no2_chl0 + norm_no3_chl0) / 2
-norm_nh4_chl1 = (norm_no2_chl1 + norm_no3_chl1) / 2
+# # Evaporation Correction
+# norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
+# norm_no2_chl1 = no2_chl1_conc.loc[no2_rows].mean(axis=0) / no2_chl1_conc.loc[no2_rows].mean(axis=0).iloc[0]
+# norm_no3_chl0 = no3_chl0_conc.loc[no3_rows].mean(axis=0) / no3_chl0_conc.loc[no3_rows].mean(axis=0).iloc[0]
+# norm_no3_chl1 = no3_chl1_conc.loc[no3_rows].mean(axis=0) / no3_chl1_conc.loc[no3_rows].mean(axis=0).iloc[0]
+# norm_nh4_chl0 = (norm_no2_chl0 + norm_no3_chl0) / 2
+# norm_nh4_chl1 = (norm_no2_chl1 + norm_no3_chl1) / 2
 
-no2_chl0_evap = no2_chl0_conc.div(norm_no2_chl0.values, axis=1)
-no2_chl1_evap = no2_chl1_conc.div(norm_no2_chl1.values, axis=1)
-no3_chl0_evap = no3_chl0_conc.div(norm_no3_chl0.values, axis=1)
-no3_chl1_evap = no3_chl1_conc.div(norm_no3_chl1.values, axis=1)
-nh4_chl0_evap = nh4_chl0_conc.div(norm_nh4_chl0.values, axis=1)
-nh4_chl1_evap = nh4_chl1_conc.div(norm_nh4_chl1.values, axis=1)
+# no2_chl0_evap = no2_chl0_conc.div(norm_no2_chl0.values, axis=1)
+# no2_chl1_evap = no2_chl1_conc.div(norm_no2_chl1.values, axis=1)
+# no3_chl0_evap = no3_chl0_conc.div(norm_no3_chl0.values, axis=1)
+# no3_chl1_evap = no3_chl1_conc.div(norm_no3_chl1.values, axis=1)
+# nh4_chl0_evap = nh4_chl0_conc.div(norm_nh4_chl0.values, axis=1)
+# nh4_chl1_evap = nh4_chl1_conc.div(norm_nh4_chl1.values, axis=1)
 
-no2_chl0_evap.to_csv("concentration/no2_chl0_evap.csv")
-no2_chl1_evap.to_csv("concentration/no2_chl1_evap.csv")
-no3_chl0_evap.to_csv("concentration/no3_chl0_evap.csv")
-no3_chl1_evap.to_csv("concentration/no3_chl1_evap.csv")
-nh4_chl0_evap.to_csv("concentration/nh4_chl0_evap.csv")
-nh4_chl1_evap.to_csv("concentration/nh4_chl1_evap.csv")
+# no2_chl0_evap.to_csv("concentration/no2_chl0_evap.csv")
+# no2_chl1_evap.to_csv("concentration/no2_chl1_evap.csv")
+# no3_chl0_evap.to_csv("concentration/no3_chl0_evap.csv")
+# no3_chl1_evap.to_csv("concentration/no3_chl1_evap.csv")
+# nh4_chl0_evap.to_csv("concentration/nh4_chl0_evap.csv")
+# nh4_chl1_evap.to_csv("concentration/nh4_chl1_evap.csv")
 
-# NO3 and NO2 consumptions
-no3_chl0_cons = no3_chl0_evap.iloc[:, 0].values.reshape(-1, 1) - no3_chl0_evap
-no2_chl0_cons = no2_chl0_evap.iloc[:, 0].values.reshape(-1, 1) - no2_chl0_evap + no3_chl0_cons
-no3_chl1_cons = no3_chl1_evap.iloc[:, 0].values.reshape(-1, 1) - no3_chl1_evap
-no2_chl1_cons = no2_chl1_evap.iloc[:, 0].values.reshape(-1, 1) - no2_chl1_evap + no3_chl1_cons
+# # NO3 and NO2 consumptions
+# no3_chl0_cons = no3_chl0_evap.iloc[:, 0].values.reshape(-1, 1) - no3_chl0_evap
+# no2_chl0_cons = no2_chl0_evap.iloc[:, 0].values.reshape(-1, 1) - no2_chl0_evap + no3_chl0_cons
+# no3_chl1_cons = no3_chl1_evap.iloc[:, 0].values.reshape(-1, 1) - no3_chl1_evap
+# no2_chl1_cons = no2_chl1_evap.iloc[:, 0].values.reshape(-1, 1) - no2_chl1_evap + no3_chl1_cons
 
-no3_chl0_cons.to_csv("concentration/no3_chl0_cons.csv")
-no2_chl0_cons.to_csv("concentration/no2_chl0_cons.csv")
-no3_chl1_cons.to_csv("concentration/no3_chl1_cons.csv")
-no2_chl1_cons.to_csv("concentration/no2_chl1_cons.csv")
+# no3_chl0_cons.to_csv("concentration/no3_chl0_cons.csv")
+# no2_chl0_cons.to_csv("concentration/no2_chl0_cons.csv")
+# no3_chl1_cons.to_csv("concentration/no3_chl1_cons.csv")
+# no2_chl1_cons.to_csv("concentration/no2_chl1_cons.csv")
 
 # Create figures
 # List of row names in the order you want to display them
@@ -230,17 +201,15 @@ rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', '
                 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
                 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12',
                 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09',
-                'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12',
-                'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12',
-                'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12',
-                'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'D10', 'D11', 'D12', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+                'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12']
 
 # Number of rows and columns for the subplots grid
-nrows = 7
-ncols = 5
+nrows = 5
+ncols = 6
 plots_per_figure = nrows * ncols
+num_of_replicates = 2
 
-for [times, no2_data, no3_data, nh4_data, filename] in zip([chl0_times, chl1_times], [no2_chl0_evap, no2_chl1_evap], [no3_chl0_evap, no3_chl1_evap], [nh4_chl0_evap, nh4_chl1_evap], ['plots/chl0_original_plot', 'plots/chl1_original_plot']):
-    for i in range(0, len(rows_to_plot), plots_per_figure * 3):
-        rows_chunk = rows_to_plot[i:i + plots_per_figure * 3]
-        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, nh4_data=nh4_data, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * 3), filename=filename)
+for [times, no2_data, no3_data, filename] in zip([times], [no2_conc], [no3_conc], ['plots/antibiotics_conc']):
+    for i in range(0, len(rows_to_plot), plots_per_figure * num_of_replicates):
+        rows_chunk = rows_to_plot[i:i + plots_per_figure * num_of_replicates]
+        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * num_of_replicates), filename=filename, num_of_replicates=num_of_replicates)
