@@ -157,8 +157,6 @@ for i in range(1, len(datetime_array)):
 no2_conc.columns = times
 no3_conc.columns = times
 
-
-
 no2_conc.to_csv("concentrations/no2_antibiotics.csv")
 no3_conc.to_csv("concentrations/no3_antibiotics.csv")
 
