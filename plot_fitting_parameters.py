@@ -16,17 +16,17 @@ I10_rows = ['A07', 'A08', 'A09', 'B10', 'B11', 'B12', 'D01', 'D02', 'D03', 'E07'
 I05_rows = ['A10', 'A11', 'A12', 'C01', 'C02', 'C03', 'D04', 'D05', 'D06', 'E10', 'E11', 'E12', 'G01', 'G02', 'G03']
 I00_rows = ['B01', 'B02', 'B03', 'C04', 'C05', 'C06', 'D07', 'D08', 'D09', 'F01', 'F02', 'F03']
 
-data_dict = {'r_A': [], 'r_I': [], 'gamA': [], 'gamI': []}
+data_dict = {'r_A': [], 'r_I': [], 'GamA': [], 'GamI': []}
 
 for row in all_rows:
     with open(f"fitting_results/no3_no2_chl1_model2_rA_rI_{row}.pkl", "rb") as file:
         data = pickle.load(file)
         data_dict['r_A'].append(data.params['r_A'].value)
         data_dict['r_I'].append(data.params['r_I'].value)
-    with open(f"fitting_results/no3_no2_chl0_model2_gamA_gamI_{row}.pkl", "rb") as file:
+    with open(f"fitting_results/no3_no2_chl0_model2_GamA_GamI_{row}.pkl", "rb") as file:
         data = pickle.load(file)
-        data_dict['gamA'].append(data.params['gamA'].value)
-        data_dict['gamI'].append(data.params['gamI'].value)
+        data_dict['GamA'].append(data.params['GamA'].value)
+        data_dict['GamI'].append(data.params['GamI'].value)
 
 params = pd.DataFrame(data_dict, index=all_rows)
 params.to_csv("fitting_results/parameters.csv")
@@ -35,7 +35,7 @@ params.to_csv("fitting_results/parameters.csv")
 metadata = pd.read_csv("concentrations/samples_metadata.csv", index_col=0)
 
 for rows_to_plot in [A20_rows, A15_rows, A10_rows, A05_rows, A00_rows]:
-    for param, color in zip(['r_A', 'r_I', 'gamA', 'gamI'], ['blue', 'red', 'blue', 'red']):
+    for param, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['blue', 'red', 'blue', 'red']):
         y_values = params.loc[rows_to_plot, param]
         A0_values = metadata.loc[rows_to_plot, 'Nitrate_input']
         I0_values = metadata.loc[rows_to_plot, 'Nitrite_input']
@@ -54,7 +54,7 @@ for rows_to_plot in [A20_rows, A15_rows, A10_rows, A05_rows, A00_rows]:
 
 
 for rows_to_plot in [I20_rows, I15_rows, I10_rows, I05_rows, I00_rows]:
-    for param, color in zip(['r_A', 'r_I', 'gamA', 'gamI'], ['blue', 'red', 'blue', 'red']):
+    for param, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['blue', 'red', 'blue', 'red']):
         y_values = params.loc[rows_to_plot, param]
         A0_values = metadata.loc[rows_to_plot, 'Nitrate_input']
         I0_values = metadata.loc[rows_to_plot, 'Nitrite_input']
