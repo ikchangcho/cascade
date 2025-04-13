@@ -29,6 +29,7 @@ for row in all_rows:
         data_dict['gamI'].append(data.params['gamI'].value)
 
 params = pd.DataFrame(data_dict, index=all_rows)
+params.to_csv("fitting_results/parameters.csv")
 
 # Load metadata
 metadata = pd.read_csv("concentrations/samples_metadata.csv", index_col=0)

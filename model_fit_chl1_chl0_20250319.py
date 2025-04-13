@@ -10,7 +10,7 @@ import json
 import pickle
 import copy
 import lmfit
-from model2 import *   ###############################################################################################################
+from model2_20250413 import *   ###############################################################################################################
 
 # Load your data
 no3_chl0 = pd.read_csv('concentrations/no3_chl0_evap.csv', index_col=0)
@@ -20,7 +20,7 @@ no2_chl1 = pd.read_csv('concentrations/no2_chl1_evap.csv', index_col=0)
 # no2 = no2.iloc[:, :10]
 # no3 = no3.iloc[:, :10]
 
-for row in no3_chl0.index[15:]:
+for row in no3_chl0.index[0:1]:
     # Fit CHL+ data
     X0 = 0.01
     A_chl1 = no3_chl1.loc[row]
@@ -31,13 +31,13 @@ for row in no3_chl0.index[15:]:
 
     # Create lmfit Parameters with optional constraints
     params_chl1 = Parameters()
-    params_chl1.add('K_A',  value=0.001, min=1e-3, max=1, vary=False)
-    params_chl1.add('K_I',  value=0.001, min=1e-3, max=1, vary=False)
-    params_chl1.add('r_A',  value=0.5, min=1e-3, max=1e3)
-    params_chl1.add('r_I',  value=0.5, min=1e-3, max=1e3)
-    params_chl1.add('gamA', value=0.0, min=1e-3, max=1e3, vary=False)
-    params_chl1.add('gamI', value=0.0, min=1e-3, max=1e3, vary=False)
-    #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
+    params_chl1.add('K_A',  value=1e-3, min=1e-3, max=1, vary=False)
+    params_chl1.add('K_I',  value=1e-3, min=1e-3, max=1, vary=False)
+    params_chl1.add('r_A',  value=0.5, min=0, max=10)
+    params_chl1.add('r_I',  value=0.5, min=0, max=10)
+    params_chl1.add('GamA', value=0.0, min=0, max=1e3, vary=False)
+    params_chl1.add('GamI', value=0.0, min=0, max=1e3, vary=False)
+    #params.add('GamI', expr='r_A * GamA / r_I')  # Constraint: r_A * GamA = r_I * GamI
     fit_str_chl1 = f'model2_rA_rI'  ###############################################################################################################
 
     fitter = Minimizer(residual, params_chl1, fcn_args=(initial_chl1, t_eval_chl1, A_chl1, I_chl1))
@@ -58,7 +58,7 @@ for row in no3_chl0.index[15:]:
         pickle.dump(result_chl1, f)
 
     params_chl1 = result_chl1.params
-    print('=====Best-fit values=====')
+    print(f'=====Best-fit values for CHL+ {row}=====')
     for param_name, param in result_chl1.params.items():
         print(f'{param_name}: {param.value} ± {param.stderr}')
     
@@ -74,18 +74,18 @@ for row in no3_chl0.index[15:]:
     K_I = params_chl1['K_I'].value
     r_A = params_chl1['r_A'].value
     r_I = params_chl1['r_I'].value
-    gamA = params_chl1['gamA'].value
-    gamI = params_chl1['gamI'].value
+    GamA = params_chl1['GamA'].value
+    GamI = params_chl1['GamI'].value
 
     params_chl0 = Parameters()
-    params_chl0.add('K_A',  value=K_A, min=1e-4, max=10, vary=False)
-    params_chl0.add('K_I',  value=K_I, min=1e-4, max=10, vary=False)
-    params_chl0.add('r_A',  value=r_A, min=1e-4, max=1e3, vary=False)
-    params_chl0.add('r_I',  value=r_I, min=1e-4, max=1e3, vary=False)
-    params_chl0.add('gamA', value=1.0, min=1e-3, max=100)
-    params_chl0.add('gamI', value=1.0, min=1e-3, max=100)
-    #params.add('gamI', expr='r_A * gamA / r_I')  # Constraint: r_A * gamA = r_I * gamI
-    fit_str_chl0 = f'model2_gamA_gamI'  ###############################################################################################################
+    params_chl0.add('K_A',  value=K_A, min=1e-3, max=10, vary=False)
+    params_chl0.add('K_I',  value=K_I, min=1e-3, max=10, vary=False)
+    params_chl0.add('r_A',  value=r_A, min=1e-3, max=10, vary=False)
+    params_chl0.add('r_I',  value=r_I, min=1e-3, max=10, vary=False)
+    params_chl0.add('GamA', value=1.0, min=0, max=5)
+    params_chl0.add('GamI', value=1.0, min=0, max=5)
+    #params.add('GamI', expr='r_A * GamA / r_I')  # Constraint: r_A * GamA = r_I * GamI
+    fit_str_chl0 = f'model2_GamA_GamI'  ###############################################################################################################
 
     fitter = Minimizer(residual, params_chl0, fcn_args=(initial_chl0, t_eval_chl0, A_chl0, I_chl0))
     print(f'=====Brute fitting for CHL- row {row} started=====')
@@ -118,15 +118,15 @@ for row in no3_chl0.index[15:]:
     K_I_chl0 = result_chl0.params['K_I'].value
     r_A_chl0 = result_chl0.params['r_A'].value
     r_I_chl0 = result_chl0.params['r_I'].value
-    gamA_chl0 = result_chl0.params['gamA'].value
-    gamI_chl0 = result_chl0.params['gamI'].value
+    GamA_chl0 = result_chl0.params['GamA'].value
+    GamI_chl0 = result_chl0.params['GamI'].value
 
     K_A_chl1 = result_chl1.params['K_A'].value
     K_I_chl1 = result_chl1.params['K_I'].value
     r_A_chl1 = result_chl1.params['r_A'].value
     r_I_chl1 = result_chl1.params['r_I'].value
-    gamA_chl1 = result_chl1.params['gamA'].value
-    gamI_chl1 = result_chl1.params['gamI'].value
+    GamA_chl1 = result_chl1.params['GamA'].value
+    GamI_chl1 = result_chl1.params['GamI'].value
 
     # CHL- plot
     plt.figure()
@@ -138,9 +138,8 @@ for row in no3_chl0.index[15:]:
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
     plt.title(f'{data_str_chl0}_{fit_str_chl0} ({row})\n'
-            f'$r_A$={r_A_chl0:.3f}, $r_I$={r_I_chl0:.3f}, $\gamma_A$={gamA_chl0:.3f}, $\gamma_I$={gamI_chl0:.3f},\n'
-            f'$K_A$={K_A_chl0:.3f}, $K_I$={K_I_chl0:.3f}, $X_0$={X0:.2f}',
-            fontsize=14)
+            f'$r_A X_A(0)$={r_A_chl0 * X0:.3f}, $r_I X_I(0)$={r_I_chl0 * X0:.3f}, $\Gamma_A$={GamA_chl0:.3f}, $\Gamma_I$={GamI_chl0:.3f}\n',
+            fontsize=15)
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'plots/model_fit_{data_str_chl0}_{fit_str_chl0}_{row}.png')
@@ -156,9 +155,8 @@ for row in no3_chl0.index[15:]:
     plt.ylabel('Concentration (mM)', fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=15)
     plt.title(f'{data_str_chl1}_{fit_str_chl1} ({row})\n'
-            f'$r_A$={r_A_chl1:.3f}, $r_I$={r_I_chl1:.3f}, $\gamma_A$=0.0, $\gamma_I$=0.0\n'
-            f'$K_A$={K_A_chl1:.3f}, $K_I$={K_I_chl1:.3f}, $X_0$={X0:.2f}',
-            fontsize=14)
+            f'$r_A X_A(0)$={r_A_chl0 * X0:.3f}, $r_I X_I(0)$={r_I_chl0 * X0:.3f}, $\Gamma_A$={GamA_chl0:.1f}, $\Gamma_I$={GamI_chl0:.1f}\n',
+            fontsize=15)
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'plots/model_fit_{data_str_chl1}_{fit_str_chl1}_{row}.png')

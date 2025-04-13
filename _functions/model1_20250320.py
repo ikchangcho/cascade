@@ -1,4 +1,3 @@
-# Last Modified on 2025-03-20 by Ik
 import pandas as pd
 import numpy as np
 from scipy.integrate import solve_ivp

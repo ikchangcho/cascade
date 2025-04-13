@@ -1,4 +1,3 @@
-# Last Modified on 2025-03-20 by Ik
 import pandas as pd
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -15,12 +14,12 @@ def odes(t, y, params):
     K_I = params['K_I'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
-    gamA = params['gamA'].value
-    gamI = params['gamI'].value
+    GamA = params['GamA'].value
+    GamI = params['GamI'].value
     dA_dt = - A/(K_A + A) * r_A * X_A
     dI_dt = -dA_dt - I/(K_I + I) * r_I * X_I
-    dX_A_dt = A/(K_A + A) * r_A * gamA * X_A
-    dX_I_dt = I/(K_I + I) * r_I * gamI * X_I
+    dX_A_dt = A/(K_A + A) * GamA * X_A
+    dX_I_dt = I/(K_I + I) * GamI * X_I
     return [dA_dt, dI_dt, dX_A_dt, dX_I_dt]
 
 def simulate(params, initial, t_eval):
@@ -53,8 +52,8 @@ def residual(params, initial, t_eval, A_data, I_data):
 def residual_chl01(params, initial, t_eval_chl0, t_eval_chl1, A_chl0, I_chl0, A_chl1, I_chl1):
     
     params_chl1 = params.copy()
-    params_chl1['gamA'].value = 0.0
-    params_chl1['gamI'].value = 0.0
+    params_chl1['GamA'].value = 0.0
+    params_chl1['GamI'].value = 0.0
 
     # Simulate
     A_model_chl0, I_model_chl0 = simulate(params, initial[0:4], t_eval_chl0)
