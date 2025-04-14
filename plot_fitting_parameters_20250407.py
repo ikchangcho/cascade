@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 
-all_rows = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12', 'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03']
+all_rows = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03']
 
 A20_rows = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03']
 A15_rows = ['B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06']
@@ -35,7 +35,7 @@ params.to_csv("fitting_results/parameters.csv")
 metadata = pd.read_csv("concentrations/samples_metadata_chl01.csv", index_col=0)
 
 for rows_to_plot in [A20_rows, A15_rows, A10_rows, A05_rows, A00_rows]:
-    for param, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['blue', 'red', 'blue', 'red']):
+    for param, label, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['$r_A$', '$r_I$', '$\Gamma_A$', '$\Gamma_I$'], ['blue', 'red', 'blue', 'red']):
         y_values = params.loc[rows_to_plot, param]
         A0_values = metadata.loc[rows_to_plot, 'Nitrate_input']
         I0_values = metadata.loc[rows_to_plot, 'Nitrite_input']
@@ -43,10 +43,11 @@ for rows_to_plot in [A20_rows, A15_rows, A10_rows, A05_rows, A00_rows]:
         # Create a scatter plot for parameter values on same A(0)
         plt.figure(figsize=(8, 6))
         plt.scatter(I0_values, y_values, color=color)
-        plt.xlabel('I(0)', fontsize=15)
-        plt.ylabel(param, fontsize=15)
+        plt.xlabel('I(0) (mM)', fontsize=15)
+        plt.xticks([0.0, 0.5, 1.0, 1.5, 2.0])
+        plt.ylabel(f'{label} (/hour)' , fontsize=15)
         plt.tick_params(axis='both', which='major', labelsize=13)
-        plt.title(f'A(0)={A0_values.iloc[0]:.1f} mM', fontsize=15)
+        plt.title(f'{label} values in the A(0)={A0_values.iloc[0]:.1f} mM conditions', fontsize=20)
         plt.grid(True)
         plt.savefig(f'plots/{param}_A0_{A0_values.iloc[0]:.1f}.png')
         plt.close()
@@ -54,7 +55,7 @@ for rows_to_plot in [A20_rows, A15_rows, A10_rows, A05_rows, A00_rows]:
 
 
 for rows_to_plot in [I20_rows, I15_rows, I10_rows, I05_rows, I00_rows]:
-    for param, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['blue', 'red', 'blue', 'red']):
+    for param, label, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['$r_A$', '$r_I$', '$\Gamma_A$', '$\Gamma_I$'], ['blue', 'red', 'blue', 'red']):
         y_values = params.loc[rows_to_plot, param]
         A0_values = metadata.loc[rows_to_plot, 'Nitrate_input']
         I0_values = metadata.loc[rows_to_plot, 'Nitrite_input']
@@ -62,10 +63,11 @@ for rows_to_plot in [I20_rows, I15_rows, I10_rows, I05_rows, I00_rows]:
         # Create a scatter plot for parameter values on same A(0)
         plt.figure(figsize=(8, 6))
         plt.scatter(A0_values, y_values, color=color)
-        plt.xlabel('A(0)', fontsize=15)
-        plt.ylabel(param, fontsize=15)
+        plt.xlabel('A(0) (mM)', fontsize=15)
+        plt.xticks([0.0, 0.5, 1.0, 1.5, 2.0])
+        plt.ylabel(f'{label} (/hour)', fontsize=15)
         plt.tick_params(axis='both', which='major', labelsize=13)
-        plt.title(f'I(0)={I0_values.iloc[0]:.1f} mM', fontsize=15)
+        plt.title(f'{label} values in the I(0)={I0_values.iloc[0]:.1f} mM conditions', fontsize=20)
         plt.grid(True)
         plt.savefig(f'plots/{param}_I0_{I0_values.iloc[0]:.1f}.png')
         plt.close()
