@@ -51,7 +51,7 @@ for param, label in zip(parameters, labels):
         sns.heatmap(heatmap_data, annot=True, fmt=".2f", cmap="gray")
         plt.xticks(fontsize=15)
         plt.yticks(fontsize=15)
-        plt.title(f"{label} {stat} values", fontsize=20)
+        plt.title(f"{label} {stat} values (/hour)", fontsize=20)
         plt.ylabel("A(0) (mM)", fontsize=15)
         plt.xlabel("I(0) (mM)", fontsize=15)
         plt.savefig(f"plots/heatmap_{param}_{stat}.png")
