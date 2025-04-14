@@ -7,7 +7,7 @@ all_rows = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10'
 A20_rows = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03']
 A15_rows = ['B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06']
 A10_rows = ['C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']
-A05_rows = ['D10', 'D11', 'D12', 'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'F01', 'F02', 'F03']
+A05_rows = ['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03']
 A00_rows = ['F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03']
 
 I20_rows = ['A01', 'A02', 'A03', 'B04', 'B05', 'B06', 'C07', 'C08', 'C09', 'E01', 'E02', 'E03', 'F04', 'F05', 'F06']
@@ -32,7 +32,7 @@ params = pd.DataFrame(data_dict, index=all_rows)
 params.to_csv("fitting_results/parameters.csv")
 
 # Load metadata
-metadata = pd.read_csv("concentrations/samples_metadata.csv", index_col=0)
+metadata = pd.read_csv("concentrations/samples_metadata_chl01.csv", index_col=0)
 
 for rows_to_plot in [A20_rows, A15_rows, A10_rows, A05_rows, A00_rows]:
     for param, color in zip(['r_A', 'r_I', 'GamA', 'GamI'], ['blue', 'red', 'blue', 'red']):
@@ -70,3 +70,4 @@ for rows_to_plot in [I20_rows, I15_rows, I10_rows, I05_rows, I00_rows]:
         plt.savefig(f'plots/{param}_I0_{I0_values.iloc[0]:.1f}.png')
         plt.close()
         print(f'Saved plot: {param}_I0_{I0_values.iloc[0]:.1f}.png')
+
