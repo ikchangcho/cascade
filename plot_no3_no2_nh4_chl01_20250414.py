@@ -26,33 +26,33 @@ times_chl1 = no3_chl1_evap.columns.astype(float).tolist()
 times_anti = no3_anti.columns.astype(float).tolist()
 
 
-# scatter plot, no3_no2_cons vs time, one condition, chl0 / chl1
-row = 'A01'
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.plot(times_chl0, no3_chl0_cons.loc[row], 'bo', label='$-\Delta A$')
-ax.plot(times_chl0, no2_chl0_cons.loc[row], 'ro', label='$-\Delta I -\Delta A$')
-ax.set_xlabel('Time (hours)', fontsize=15)
-ax.set_ylabel('Concentration (mM)', fontsize=15)
-ax.tick_params(axis='x', labelsize=15)
-ax.tick_params(axis='y', labelsize=15)
-ax.legend(fontsize=15)
-filename = f'scatter_no3_no2_chl0_cons_{row}.png'
-plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
-print(f'Saved {filename}')
-plt.close()
+# # scatter plot, no3_no2_cons vs time, one condition, chl0 / chl1
+# row = 'A01'
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.plot(times_chl0, no3_chl0_cons.loc[row], 'bo', label='$-\Delta A$')
+# ax.plot(times_chl0, no2_chl0_cons.loc[row], 'ro', label='$-\Delta I -\Delta A$')
+# ax.set_xlabel('Time (hours)', fontsize=15)
+# ax.set_ylabel('Concentration (mM)', fontsize=15)
+# ax.tick_params(axis='x', labelsize=15)
+# ax.tick_params(axis='y', labelsize=15)
+# ax.legend(fontsize=15)
+# filename = f'scatter_no3_no2_chl0_cons_{row}.png'
+# plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
+# print(f'Saved {filename}')
+# plt.close()
 
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.plot(times_chl1, no3_chl1_cons.loc[row], 'bo', label='$-\Delta A$')
-ax.plot(times_chl1, no2_chl1_cons.loc[row], 'ro', label='$-\Delta I -\Delta A$')
-ax.set_xlabel('Time (hours)', fontsize=15)
-ax.set_ylabel('Concentration (mM)', fontsize=15)
-ax.tick_params(axis='x', labelsize=15)
-ax.tick_params(axis='y', labelsize=15)
-ax.legend(fontsize=15)
-filename = f'scatter_no3_no2_chl1_cons_{row}.png'
-plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
-print(f'Saved {filename}')
-plt.close()
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.plot(times_chl1, no3_chl1_cons.loc[row], 'bo', label='$-\Delta A$')
+# ax.plot(times_chl1, no2_chl1_cons.loc[row], 'ro', label='$-\Delta I -\Delta A$')
+# ax.set_xlabel('Time (hours)', fontsize=15)
+# ax.set_ylabel('Concentration (mM)', fontsize=15)
+# ax.tick_params(axis='x', labelsize=15)
+# ax.tick_params(axis='y', labelsize=15)
+# ax.legend(fontsize=15)
+# filename = f'scatter_no3_no2_chl1_cons_{row}.png'
+# plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
+# print(f'Saved {filename}')
+# plt.close()
 
 
 
@@ -85,22 +85,23 @@ plt.close()
 #     print(f'Saved {filename}')
 
 
-# # no3_no2_chl1_cons vs time, one condition
-# rows = ['C07', 'C08', 'C09']
-# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-# for row in rows:
-#     ax.plot(times_chl1[:-3], no3_chl1_cons.loc[row][:-3], 'b.-')
-#     ax.plot(times_chl1[:-3], no2_chl1_cons.loc[row][:-3], 'r.-')
-# ax.set_xlabel('Time (hours)', fontsize=15)
-# ax.set_ylabel('Concentration (mM)', fontsize=15)
-# ax.tick_params(axis='x', labelsize=15)
-# ax.tick_params(axis='y', labelsize=15)
-# handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$-\Delta A$'),
-#             plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$-\Delta I -\Delta A$')]
-# ax.legend(handles=handles, loc='upper right', fontsize=15)
-# filename = f'no3_no2_chl1_cons_(1,2).png'
-# plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
-# print(f'Saved plots/{filename}')
+# no3_no2_chl1_cons vs time, one condition
+rows = ['C07', 'C08', 'C09']
+fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+for row in rows:
+    ax.plot(times_chl1[:], no3_chl1_cons.loc[row][:], 'b.-')
+    ax.plot(times_chl1[:], no2_chl1_cons.loc[row][:], 'r.-')
+ax.set_xlabel('Time (hours)', fontsize=20)
+ax.set_ylabel('Concentration (mM)', fontsize=20)
+ax.tick_params(axis='x', labelsize=20)
+ax.tick_params(axis='y', labelsize=20)
+handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$-\Delta A$'),
+            plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$-\Delta I -\Delta A$')]
+ax.legend(handles=handles, fontsize=15)
+ax.set_title('A(0) = 1 mM, I(0) = 2 mM, drug', fontsize=20)
+filename = f'no3_no2_chl1_cons_(1,2).png'
+plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
+print(f'Saved plots/{filename}')
 
 # # no3_no2_chl0_cons vs time, all conditions withour carbon addition
 # rows = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06']
