@@ -18,6 +18,8 @@ no2_chl1_cons = pd.read_csv(f'concentrations/no2_chl1_cons.csv', index_col=0)
 
 no3_anti = pd.read_csv(f'concentrations/no3_antibiotics.csv', index_col=0)
 no2_anti = pd.read_csv(f'concentrations/no2_antibiotics.csv', index_col=0)
+no3_anti_cons = pd.read_csv(f'concentrations/no3_antibiotics_cons.csv', index_col=0)
+no2_anti_cons = pd.read_csv(f'concentrations/no2_antibiotics_cons.csv', index_col=0)
 
 times_chl0 = no3_chl0_evap.columns.astype(float).tolist()
 times_chl1 = no3_chl1_evap.columns.astype(float).tolist()
@@ -26,43 +28,45 @@ times_anti = no3_anti.columns.astype(float).tolist()
 # Compare previous CHL result and new one
 rows_old = ['A01', 'A02', 'A03', 'B01', 'B02', 'B03', 'D01', 'D02', 'D03', 'D07', 'D08', 'D09']
 rows_new = ['A05', 'A06', 'B05', 'B06', 'C05', 'C06', 'D05', 'D06']
+titles = ['A(0) = 2.0 mM, I(0) = 2.0 mM', 'A(0) = 2.0 mM, I(0) = 0.0 mM', 'A(0) = 1.0 mM, I(0) = 1.0 mM', 'A(0) = 1.0 mM, I(0) = 0.0 mM']
 
-# for idx in np.arange(0, len(rows_old) // 3):
-#     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-#     for row in rows_old[idx*3:(idx+1)*3]:
-#         ax.plot(times_chl1[:5], no3_chl1_evap.loc[row][:5], 'b.-')
-#         ax.plot(times_chl1[:5], no2_chl1_evap.loc[row][:5], 'r.-')
-#     for row in rows_new[idx*2:(idx+1)*2]:
-#         ax.plot(times_anti, no3_anti.loc[row], 'bo--', alpha=0.5)
-#         ax.plot(times_anti, no2_anti.loc[row], 'ro--', alpha=0.5)
-#     ax.set_xlabel('Time (hours)', fontsize=15)
-#     ax.set_ylabel('Concentration (mM)', fontsize=15)
-#     ax.tick_params(axis='x', labelsize=15)
-#     ax.tick_params(axis='y', labelsize=15)
-#     handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'old A'),
-#             plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'old I'),
-#             plt.Line2D([0], [0], color='b', marker='o', linestyle='--', label=f'new A'),
-#             plt.Line2D([0], [0], color='r', marker='o', linestyle='--', label=f'new I')]
-#     ax.legend(handles=handles, loc='upper right', fontsize=12)
-#     #plt.show()
-#     filename = f'no3_no2_chl1_old_new_{idx}.png'
-#     plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
-#     print(f'Saved {filename}')
+for idx in np.arange(0, len(rows_old) // 3):
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+    for row in rows_old[idx*3:(idx+1)*3]:
+        ax.plot(times_chl1[:5], no3_chl1_cons.loc[row][:5], 'b.-')
+        ax.plot(times_chl1[:5], no2_chl1_cons.loc[row][:5], 'r.-')
+    for row in rows_new[idx*2:(idx+1)*2]:
+        ax.plot(times_anti, no3_anti_cons.loc[row], 'bo--', alpha=0.5)
+        ax.plot(times_anti, no2_anti_cons.loc[row], 'ro--', alpha=0.5)
+    ax.set_xlabel('Time (hours)', fontsize=15)
+    ax.set_ylabel('Concentration (mM)', fontsize=15)
+    ax.tick_params(axis='x', labelsize=15)
+    ax.tick_params(axis='y', labelsize=15)
+    handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'old $-\Delta A$'),
+            plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'old $\Delta I -\Delta A$'),
+            plt.Line2D([0], [0], color='b', marker='o', linestyle='--', label=f'new $-\Delta A$'),
+            plt.Line2D([0], [0], color='r', marker='o', linestyle='--', label=f'new $\Delta I -\Delta A$')]
+    ax.legend(handles=handles, loc='upper right', fontsize=12)
+    ax.set_title(titles[idx], fontsize=15)
+    #plt.show()
+    filename = f'no3_no2_chl1_cons_old_new_{idx}.png'
+    plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
+    print(f'Saved {filename}')
 
-# # no3_no2_chl0_cons vs time, one condition
-# rows = ['A01', 'A02', 'A03']
+# # no3_no2_chl1_cons vs time, one condition
+# rows = ['C07', 'C08', 'C09']
 # fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 # for row in rows:
-#     ax.plot(times_chl0[:-3], no3_chl0_cons.loc[row][:-3], 'b.-')
-#     ax.plot(times_chl0[:-3], no2_chl0_cons.loc[row][:-3], 'r.-')
+#     ax.plot(times_chl1[:-3], no3_chl1_cons.loc[row][:-3], 'b.-')
+#     ax.plot(times_chl1[:-3], no2_chl1_cons.loc[row][:-3], 'r.-')
 # ax.set_xlabel('Time (hours)', fontsize=15)
 # ax.set_ylabel('Concentration (mM)', fontsize=15)
 # ax.tick_params(axis='x', labelsize=15)
 # ax.tick_params(axis='y', labelsize=15)
-# handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
-#             plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
-# ax.legend(handles=handles, loc='upper right', fontsize=12)
-# filename = f'no3_no2_chl0_cons_(2,2).png'
+# handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$-\Delta A$'),
+#             plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$-\Delta I -\Delta A$')]
+# ax.legend(handles=handles, loc='upper right', fontsize=15)
+# filename = f'no3_no2_chl1_cons_(1,2).png'
 # plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
 # print(f'Saved plots/{filename}')
 

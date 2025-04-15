@@ -126,7 +126,6 @@ def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename,
 no2_conc = pd.concat([no2_conc1, no2_conc2], axis=1)
 no3_conc = pd.concat([no3_conc1, no3_conc2], axis=1)
 
-
 # Time arrays
 datetime_array = [
     datetime(2025, 1, 1, 14, 19),       # T0
@@ -156,9 +155,14 @@ for i in range(1, len(datetime_array)):
 
 no2_conc.columns = times
 no3_conc.columns = times
+no3_cons = no3_conc.iloc[:, 0].values.reshape(-1, 1) - no3_conc
+no2_cons = no2_conc.iloc[:, 0].values.reshape(-1, 1) - no2_conc + no3_cons
 
 no2_conc.to_csv("concentrations/no2_antibiotics.csv")
 no3_conc.to_csv("concentrations/no3_antibiotics.csv")
+no2_cons.to_csv("concentrations/no2_antibiotics_cons.csv")
+no3_cons.to_csv("concentrations/no3_antibiotics_cons.csv")
+
 
 # # Evaporation Correction
 # norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
@@ -207,7 +211,7 @@ ncols = 6
 plots_per_figure = nrows * ncols
 num_of_replicates = 2
 
-for [times, no2_data, no3_data, filename] in zip([times], [no2_conc], [no3_conc], ['plots/antibiotics_conc']):
+for [times, no2_data, no3_data, filename] in zip([times], [no2_conc], [no3_conc], ['plots/antibiotics_rows']):
     for i in range(0, len(rows_to_plot), plots_per_figure * num_of_replicates):
         rows_chunk = rows_to_plot[i:i + plots_per_figure * num_of_replicates]
         create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * num_of_replicates), filename=filename, num_of_replicates=num_of_replicates)
