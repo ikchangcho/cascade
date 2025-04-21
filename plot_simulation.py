@@ -10,7 +10,8 @@ import json
 import pickle
 import copy
 import lmfit
-from model2 import *
+from model1_20250414 import *
+
 
 
 t_eval = np.linspace(0, 60, 100)
@@ -23,13 +24,13 @@ params = Parameters()
 #params.add('eps',  value=0.1, min=1e-3, max=1)
 params.add('K_A',  value=0.001, min=1e-4, max=10)
 params.add('K_I',  value=0.001, min=1e-4, max=10)
-params.add('r_A',  value=0.5, min=1e-4, max=1e3)
-params.add('r_I',  value=0.5, min=1e-4, max=1e3)
-params.add('gamA', value=1.0, min=1e-4, max=1e3)
-params.add('gamI', value=0.5, min=1e-4, max=1e3)
+params.add('r_A',  value=0.528, min=1e-4, max=1e3)
+params.add('r_I',  value=0.399, min=1e-4, max=1e3)
+params.add('GamA', value=1.58, min=1e-4, max=1e3)
+params.add('GamI', value=0.127, min=1e-4, max=1e3)
 
-
-A_sim, I_sim = simulate(params, initial, t_eval)
+A_sim_con, I_sim_conc = simulate(params, initial, t_eval)
+A_data_conc = pd.read_csv('concentrations/no3_chl0_
 
 plt.figure(figsize=(10, 5))
 plt.plot(t_eval, A_sim, label='A(t)', color='blue')
