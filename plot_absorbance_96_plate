@@ -1,0 +1,20 @@
+import sys
+sys.path.append('_functions')
+import griess as gr
+import bmgdata as bd
+import denitfit as dn
+import ammonia as am
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+
+date = '20250418'
+meta_fn = glob.glob(f'absorbances/{date}_samples_metadata.csv')[0]
+no2_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_*540*'))
+no2_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_*900*'))
+no2no3_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_*540*'))
+no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_*900*'))
+
+no2_data = gr.read_griess(meta_fn=meta_fn, data_540_fn=no2_540_fns[0], data_900_fn=no2_900_fns[0])
+print(no2_data)
