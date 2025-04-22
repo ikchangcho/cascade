@@ -60,8 +60,8 @@ plt.title(f'Simulation ({row})\n'
             f'$\Gamma_A$={GamA:.2e}, $\Gamma_I$={GamI:.2e}',
             fontsize=14)
 plt.tight_layout()
-plt.show()
 plt.savefig(f'plots/simulate_{row}.png')
 print(f'Plot saved as plots/simulate_{row}.png')
+plt.show()
 plt.close()
 
