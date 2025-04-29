@@ -18,18 +18,18 @@ import ammonia as am
 import os
 import re
 
-def no2_no3_abs_to_conc(date, chl):
+def no2_no3_abs_to_conc(date, key):
     std_meta_fn = glob.glob(f'absorbances/{date}_standards_metadata.csv')[0]
-    std_no2_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*_540.CSV")[0]
-    std_no2_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*_900.CSV")[0]
-    std_no2no3_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_*_540.CSV")[0]
-    std_no2no3_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_*_900.CSV")[0]
+    std_no2_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*540.CSV")[0]
+    std_no2_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*900.CSV")[0]
+    std_no2no3_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_*540.CSV")[0]
+    std_no2no3_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_*900.CSV")[0]
 
     meta_fn = glob.glob(f'absorbances/{date}_samples_metadata.csv')[0]
-    no2_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{chl}*540*'))
-    no2_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{chl}*900*'))
-    no2no3_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{chl}*540*'))
-    no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{chl}*900*'))
+    no2_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{key}*540*'))
+    no2_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{key}*900*'))
+    no2no3_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{key}*540*'))
+    no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{key}*900*'))
 
     # fitted parameters from standards
     [[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
@@ -121,25 +121,26 @@ def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename,
 
 ###################################Input Parameters###################################
 # Convert absorbances to concentration and save as dataframes
-[no2_conc1, no3_conc1] = no2_no3_abs_to_conc("20250404", "antibiotics")
-[no2_conc2, no3_conc2] = no2_no3_abs_to_conc("20250407", "antibiotics")
-no2_conc = pd.concat([no2_conc1, no2_conc2], axis=1)
-no3_conc = pd.concat([no3_conc1, no3_conc2], axis=1)
+[no2_conc1, no3_conc1] = no2_no3_abs_to_conc("20250428", "")
+no2_conc = pd.concat([no2_conc1], axis=1)
+no3_conc = pd.concat([no3_conc1], axis=1)
 
 # Time arrays
 datetime_array = [
-    datetime(2025, 1, 1, 14, 19),       # T0
-    datetime(2025, 1, 1, 15, 19),       # T1
-    datetime(2025, 1, 1, 17, 19),       # T2
-    datetime(2025, 1, 1, 20, 9),       # T3
-    datetime(2025, 1, 2, 0, 8),       # T4
-    datetime(2025, 1, 2, 7, 42),       # T5
-    datetime(2025, 1, 2, 15, 4),       # T6
-    datetime(2025, 1, 2, 23, 11),       # T7
-    datetime(2025, 1, 3, 8, 48),       # T8
-    datetime(2025, 1, 3, 16, 4),       # T9
-    datetime(2025, 1, 3, 23, 33),       # T10
-    datetime(2025, 1, 4, 7, 48)]       # T11       
+    datetime(2025, 1, 1, 9, 5),       # T0
+    datetime(2025, 1, 1, 11, 8),       # T1
+    datetime(2025, 1, 1, 13, 13),       # T2
+    datetime(2025, 1, 1, 16, 6),       # T3
+    datetime(2025, 1, 1, 20, 5),       # T4
+    datetime(2025, 1, 2, 0, 2),       # T5
+    datetime(2025, 1, 2, 5, 39),       # T6
+    datetime(2025, 1, 2, 12, 15),       # T7
+    datetime(2025, 1, 2, 17, 56),       # T8
+    datetime(2025, 1, 2, 23, 00)]       # T9
+
+# datetime(2025, 1, 3, 8, 22)       # T10
+# datetime(2025, 1, 3, 15, 49)       # T11
+# datetime(2025, 1, 3, 22, 59)       # T12
 
 # Rows for evaporation correction
 # no2_rows = ['H10', 'H11', 'H12']
@@ -203,7 +204,10 @@ rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', '
                 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
                 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12',
                 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12',
-                'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12']
+                'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12',
+                'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12',
+                'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12',
+                'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
 
 # Number of rows and columns for the subplots grid
 nrows = 5
