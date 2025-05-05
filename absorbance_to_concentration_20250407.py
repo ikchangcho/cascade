@@ -119,9 +119,10 @@ def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename,
     plt.close()
     print(f'Saved figure: {filename}_{figure_index}.png')
 
-###################################Input Parameters###################################
 # Convert absorbances to concentration and save as dataframes
-[no2_conc1, no3_conc1] = no2_no3_abs_to_conc("20250428", "")
+date = "20250428"
+key = ""
+[no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, key)
 no2_conc = pd.concat([no2_conc1], axis=1)
 no3_conc = pd.concat([no3_conc1], axis=1)
 
@@ -146,8 +147,6 @@ datetime_array = [
 # no2_rows = ['H10', 'H11', 'H12']
 # no3_rows = ['H07', 'H08', 'H09']
 
-#######################################################################################
-
 # Concentration
 times = [0]
 for i in range(1, len(datetime_array)):
@@ -159,11 +158,10 @@ no3_conc.columns = times
 no3_cons = no3_conc.iloc[:, 0].values.reshape(-1, 1) - no3_conc
 no2_cons = no2_conc.iloc[:, 0].values.reshape(-1, 1) - no2_conc + no3_cons
 
-no2_conc.to_csv("concentrations/no2_antibiotics.csv")
-no3_conc.to_csv("concentrations/no3_antibiotics.csv")
-no2_cons.to_csv("concentrations/no2_antibiotics_cons.csv")
-no3_cons.to_csv("concentrations/no3_antibiotics_cons.csv")
-
+no2_conc.to_csv(f"concentrations/{date}_{key}_no2_conc.csv")
+no3_conc.to_csv(f"concentrations/{date}_{key}_no3_conc.csv")
+no2_cons.to_csv(f"concentrations/{date}_{key}_no2_cons.csv")
+no3_cons.to_csv(f"concentrations/{date}_{key}_no3_cons.csv")
 
 # # Evaporation Correction
 # norm_no2_chl0 = no2_chl0_conc.loc[no2_rows].mean(axis=0) / no2_chl0_conc.loc[no2_rows].mean(axis=0).iloc[0]
@@ -210,12 +208,13 @@ rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', '
                 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
 
 # Number of rows and columns for the subplots grid
-nrows = 5
-ncols = 6
+num_rpl = 3
+ncols = 5
+nrows = int(np.ceil(len(rows_to_plot) / ncols / num_rpl))
 plots_per_figure = nrows * ncols
-num_of_replicates = 2
 
-for [times, no2_data, no3_data, filename] in zip([times], [no2_conc], [no3_conc], ['plots/antibiotics_rows']):
-    for i in range(0, len(rows_to_plot), plots_per_figure * num_of_replicates):
-        rows_chunk = rows_to_plot[i:i + plots_per_figure * num_of_replicates]
-        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * num_of_replicates), filename=filename, num_of_replicates=num_of_replicates)
+
+for [times, no2_data, no3_data, filename] in zip([times, times], [no2_conc, no2_cons], [no3_conc, no3_cons], [f'plots/{date}_{key}_no3_no2_conc_rows', f'plots/{date}_{key}_no3_no2_cons_rows']):
+    for i in range(0, len(rows_to_plot), plots_per_figure * num_rpl):
+        rows_chunk = rows_to_plot[i:i + plots_per_figure * num_rpl]
+        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * num_rpl), filename=filename, num_of_replicates=num_rpl)
