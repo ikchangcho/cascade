@@ -6,16 +6,34 @@ import matplotlib.pyplot as plt
 date = 20250428
 key = ''
 meta = pd.read_csv(f'absorbances/{date}_samples_metadata.csv', index_col=0).dropna(how='all')
-no3_conc = pd.read_csv(f'concentrations/3.no3_conc.csv', index_col=0)
-no2_conc = pd.read_csv(f'concentrations/3.no2_conc.csv', index_col=0)
-no3_cons = pd.read_csv(f'concentrations/3.no3_cons.csv', index_col=0)
-no2_cons = pd.read_csv(f'concentrations/3.no2_cons.csv', index_col=0)
-no3_anti_conc = pd.read_csv(f'concentrations/no3_antibiotics.csv', index_col=0)
-no2_anti_conc = pd.read_csv(f'concentrations/no2_antibiotics.csv', index_col=0)
-no3_anti_cons = pd.read_csv(f'concentrations/no3_antibiotics_cons.csv', index_col=0)
-no2_anti_cons = pd.read_csv(f'concentrations/no2_antibiotics_cons.csv', index_col=0)
-times = no3_conc.columns.astype(float).tolist()
-times_anti = no3_anti_conc.columns.astype(float).tolist()
+no3_conc_3 = pd.read_csv(f'concentrations/3.no3_conc.csv', index_col=0)
+no2_conc_3 = pd.read_csv(f'concentrations/3.no2_conc.csv', index_col=0)
+no3_cons_3 = pd.read_csv(f'concentrations/3.no3_cons.csv', index_col=0)
+no2_cons_3 = pd.read_csv(f'concentrations/3.no2_cons.csv', index_col=0)
+times_3 = no3_conc_3.columns.astype(float).tolist()
+
+# no3_conc_22 = pd.read_csv(f'concentrations/2.2.no3_.csv', index_col=0)
+# no2_conc_22 = pd.read_csv(f'concentrations/no2_antibiotics.csv', index_col=0)
+# no3_cons_22 = pd.read_csv(f'concentrations/no3_antibiotics_cons.csv', index_col=0)
+# no2_cons_22 = pd.read_csv(f'concentrations/no2_antibiotics_cons.csv', index_col=0)
+# times_22 = no3_conc_22.columns.astype(float).tolist()
+
+no3_conc_2_chl0 = pd.read_csv(f'concentrations/2.no3_chl0_evap.csv', index_col=0)
+no2_conc_2_chl0 = pd.read_csv(f'concentrations/2.no2_chl0_evap.csv', index_col=0)
+nh4_conc_2_chl0 = pd.read_csv(f'concentrations/2.nh4_chl0_evap.csv', index_col=0)
+no3_cons_2_chl0 = pd.read_csv(f'concentrations/2.no3_chl0_cons.csv', index_col=0)
+no2_cons_2_chl0 = pd.read_csv(f'concentrations/2.no2_chl0_cons.csv', index_col=0)
+#nh4_cons_2_chl0 = pd.read_csv(f'concentrations/2.nh4_chl0_cons.csv', index_col=0)
+times_2_chl0 = no3_conc_2_chl0.columns.astype(float).tolist()
+
+no3_conc_2_chl1 = pd.read_csv(f'concentrations/2.no3_chl1_evap.csv', index_col=0)
+no2_conc_2_chl1 = pd.read_csv(f'concentrations/2.no2_chl1_evap.csv', index_col=0)
+nh4_conc_2_chl1 = pd.read_csv(f'concentrations/2.nh4_chl1_evap.csv', index_col=0)
+no3_cons_2_chl1 = pd.read_csv(f'concentrations/2.no3_chl1_cons.csv', index_col=0)
+no2_cons_2_chl1 = pd.read_csv(f'concentrations/2.no2_chl1_cons.csv', index_col=0)
+#nh4_cons_2_chl1 = pd.read_csv(f'concentrations/2.nh4_chl1_cons.csv', index_col=0)
+times_2_chl1 = no3_conc_2_chl1.columns.astype(float).tolist()
+
 
 # # scatter plot, no3_no2_cons vs time, one condition, chl0 / chl1
 # row = 'A01'
@@ -186,11 +204,13 @@ times_anti = no3_anti_conc.columns.astype(float).tolist()
 #     print(f'Saved {filename}')
 
 
-# no3_no2_conc vs time, all conditions
-rows_chl0 = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']
-rows_chl1 = ['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09']
-all_values_chl0 = pd.concat([no3_conc.loc[rows_chl0], no2_conc.loc[rows_chl0]])
-all_values_chl1 = pd.concat([no3_conc.loc[rows_chl1], no2_conc.loc[rows_chl1]])
+# Concentration, compare 2 and 3
+rows_3_chl0 = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']
+rows_2_chl0 = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06']
+rows_3_chl1 = ['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09']
+rows_2_chl1 = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06']
+all_values_chl0 = pd.concat([no3_conc_3.loc[rows_3_chl0], no2_conc_3.loc[rows_3_chl0], no3_conc_2_chl0.loc[rows_2_chl0][:-3], no2_conc_2_chl0.loc[rows_2_chl0][:-3]])
+all_values_chl1 = pd.concat([no3_conc_3.loc[rows_3_chl1], no2_conc_3.loc[rows_3_chl1], no3_conc_2_chl1.loc[rows_2_chl1][:4], no2_conc_2_chl1.loc[rows_2_chl1][:4]])
 y_min_chl0 = all_values_chl0.min().min()
 y_min_chl1 = all_values_chl1.min().min()
 y_max_chl0 = all_values_chl0.max().max()
@@ -199,13 +219,17 @@ y_max_chl1 = all_values_chl1.max().max()
 # No drug data
 num_rpl = 3
 num_col = 5
-num_row = int(np.ceil(len(rows_chl0) / num_col / num_rpl))
+num_row = int(np.ceil(len(rows_3_chl0) / num_col / num_rpl))
 fig, axes = plt.subplots(num_row, num_col, figsize=(8*num_row, 3*num_col))
 axes = axes.flatten()
-for i ,row in enumerate(rows_chl0):
+for i ,row in enumerate(rows_3_chl0):
+    row_3 = rows_3_chl0[i]
+    row_2 = rows_2_chl0[i]
     ax = axes[i//num_rpl]
-    ax.plot(times, no3_conc.loc[row], 'b.-')
-    ax.plot(times, no2_conc.loc[row], 'r.-')
+    ax.plot(times_3, no3_conc_3.loc[row_3], 'b.-')
+    ax.plot(times_3, no2_conc_3.loc[row_3], 'r.-')
+    ax.plot(times_2_chl0[:-3], no3_conc_2_chl0.loc[row_2][:-3], 'bo--', alpha=0.5)
+    ax.plot(times_2_chl0[:-3], no2_conc_2_chl0.loc[row_2][:-3], 'ro--', alpha=0.5)
     ax.set_xticks([0, 20, 40])
     ax.tick_params(axis='x', labelsize=25)
     ax.set_ylim(y_min_chl0, y_max_chl0)
@@ -221,24 +245,30 @@ fig.text(0.08, 0.5, 'Concentration (mM)', va='center', rotation='vertical', font
 fig.text(0.91, 0.75, f'A(0) =\n2.0 mM', fontsize=25)
 fig.text(0.91, 0.48, f'A(0) =\n1.0 mM', fontsize=25)
 fig.text(0.91, 0.21, f'A(0) =\n0.0 mM', fontsize=25)
-handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
-            plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
+handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A) in Exp.3'),
+            plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I) in Exp.3'),
+            plt.Line2D([0], [0], color='b', marker='o', linestyle='--', label=f'$NO_3$ (A) in Exp.2'),
+            plt.Line2D([0], [0], color='r', marker='o', linestyle='--', label=f'$NO_2$ (I) in Exp.2')]
 fig.legend(handles=handles, loc='upper right', fontsize=20)
-fig.suptitle(f'$NO_3$, $NO_2$ Concentration, No Drug', fontsize=30)
-filename = f'3.no3_no2_conc_chl0.png'
+fig.suptitle(f'Exp.3 (2025 Apr) vs Exp.2 (2024 Dec), No Drug', fontsize=30, fontweight='bold')
+filename = f'3vs2_chl0_no3_no2_conc.png'
 plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
 print(f'Saved plots/{filename}')
 
 # Under drug data
 num_rpl = 3
 num_col = 5
-num_row = int(np.ceil(len(rows_chl1) / num_col / num_rpl))
+num_row = int(np.ceil(len(rows_3_chl1) / num_col / num_rpl))
 fig, axes = plt.subplots(num_row, num_col, figsize=(8*num_row, 3*num_col))
 axes = axes.flatten()
-for i ,row in enumerate(rows_chl1):
+for i ,row in enumerate(rows_3_chl1):
+    row_3 = rows_3_chl1[i]
+    row_2 = rows_2_chl1[i]
     ax = axes[i//num_rpl]
-    ax.plot(times, no3_conc.loc[row], 'b.-')
-    ax.plot(times, no2_conc.loc[row], 'r.-')
+    ax.plot(times_3, no3_conc_3.loc[row_3], 'b.-')
+    ax.plot(times_3, no2_conc_3.loc[row_3], 'r.-')
+    ax.plot(times_2_chl1[:4], no3_conc_2_chl1.loc[row_2][:4], 'bo--', alpha=0.5)
+    ax.plot(times_2_chl1[:4], no2_conc_2_chl1.loc[row_2][:4], 'ro--', alpha=0.5)
     ax.set_xticks([0, 20, 40])
     ax.tick_params(axis='x', labelsize=25)
     ax.set_ylim(y_min_chl1, y_max_chl1)
@@ -254,19 +284,19 @@ fig.text(0.08, 0.5, 'Concentration (mM)', va='center', rotation='vertical', font
 fig.text(0.91, 0.75, f'A(0) =\n2.0 mM', fontsize=25)
 fig.text(0.91, 0.48, f'A(0) =\n1.0 mM', fontsize=25)
 fig.text(0.91, 0.21, f'A(0) =\n0.0 mM', fontsize=25)
-handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
-            plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
+handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A) in Exp.3'),
+            plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I) in Exp.3'),
+            plt.Line2D([0], [0], color='b', marker='o', linestyle='--', label=f'$NO_3$ (A) in Exp.2'),
+            plt.Line2D([0], [0], color='r', marker='o', linestyle='--', label=f'$NO_2$ (I) in Exp.2')]
 fig.legend(handles=handles, loc='upper right', fontsize=20)
-fig.suptitle(f'$NO_3$, $NO_2$ Concentration, Under Drug', fontsize=30)
-filename = f'3.no3_no2_conc_chl1.png'
+fig.suptitle(f'Exp.3 (2025 Apr) vs Exp.2 (2024 Dec), Under Drug', fontsize=30, fontweight='bold')
+filename = f'3vs2_chl1_no3_no2_conc.png'
 plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
 print(f'Saved plots/{filename}')
 
 # no3_no2_cons vs time, all conditions
-rows_chl0 = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09']
-rows_chl1 = ['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09']
-all_values_chl0 = pd.concat([no3_cons.loc[rows_chl0], no2_cons.loc[rows_chl0]])
-all_values_chl1 = pd.concat([no3_cons.loc[rows_chl1], no2_cons.loc[rows_chl1]])
+all_values_chl0 = pd.concat([no3_cons_3.loc[rows_3_chl0], no2_cons_3.loc[rows_3_chl0]])
+all_values_chl1 = pd.concat([no3_cons_3.loc[rows_3_chl1], no2_cons_3.loc[rows_3_chl1]])
 y_min_chl0 = all_values_chl0.min().min()
 y_min_chl1 = all_values_chl1.min().min()
 y_max_chl0 = all_values_chl0.max().max()
@@ -275,13 +305,13 @@ y_max_chl1 = all_values_chl1.max().max()
 # No drug data
 num_rpl = 3
 num_col = 5
-num_row = int(np.ceil(len(rows_chl0) / num_col / num_rpl))
+num_row = int(np.ceil(len(rows_3_chl0) / num_col / num_rpl))
 fig, axes = plt.subplots(num_row, num_col, figsize=(8*num_row, 3*num_col))
 axes = axes.flatten()
-for i ,row in enumerate(rows_chl0):
+for i ,row in enumerate(rows_3_chl0):
     ax = axes[i//num_rpl]
-    ax.plot(times, no3_cons.loc[row], 'b.-')
-    ax.plot(times, no2_cons.loc[row], 'r.-')
+    ax.plot(times_3, no3_cons_3.loc[row], 'b.-')
+    ax.plot(times_3, no2_cons_3.loc[row], 'r.-')
     ax.set_xticks([0, 20, 40])
     ax.tick_params(axis='x', labelsize=25)
     ax.set_ylim(y_min_chl0, y_max_chl0)
@@ -308,13 +338,13 @@ print(f'Saved plots/{filename}')
 # Under drug data
 num_rpl = 3
 num_col = 5
-num_row = int(np.ceil(len(rows_chl1) / num_col / num_rpl))
+num_row = int(np.ceil(len(rows_3_chl1) / num_col / num_rpl))
 fig, axes = plt.subplots(num_row, num_col, figsize=(8*num_row, 3*num_col))
 axes = axes.flatten()
-for i ,row in enumerate(rows_chl1):
+for i ,row in enumerate(rows_3_chl1):
     ax = axes[i//num_rpl]
-    ax.plot(times, no3_cons.loc[row], 'b.-')
-    ax.plot(times, no2_cons.loc[row], 'r.-')
+    ax.plot(times_3, no3_cons_3.loc[row], 'b.-')
+    ax.plot(times_3, no2_cons_3.loc[row], 'r.-')
     ax.set_xticks([0, 20, 40])
     ax.tick_params(axis='x', labelsize=25)
     ax.set_ylim(y_min_chl1, y_max_chl1)
