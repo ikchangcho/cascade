@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 # Data for second plot
-time_2 = [0, 0.966666667, 1.965277778, 3.882638889, 5.840972222, 6.8125, 8.814583333]
-water_pink = [75.62154696, 72.14654696, 68.69654696, 61.29654696, 55.77154696, 52.09654696, 45.62154696]
-water_white = [75.84654696, 72.57154696, 69.47154696, 63.04654696, 58.27154696, 55.22154696, 49.64654696]
+time = [0, 0.966666667, 1.965277778, 3.882638889, 5.840972222, 6.8125, 8.814583333, 9.804166667]
+water_pink = [75.62154696, 72.14654696, 68.69654696, 61.29654696, 55.77154696, 52.09654696, 45.62154696, 41.82154696]
+water_white = [75.84654696, 72.57154696, 69.47154696, 63.04654696, 58.27154696, 55.22154696, 49.64654696, 46.24654696]
 
 # Plotting second figure
 plt.figure(figsize=(8, 6))
-plt.plot(time_2, water_pink, label='Water in Soil 1', marker='o')
-plt.plot(time_2, water_white, label='Water in Soil 2', marker='o')
+plt.plot(time, water_pink, label='Water in Soil 1', marker='o')
+plt.plot(time, water_white, label='Water in Soil 2', marker='o')
 
 # Labels and title for second figure
 plt.xlabel('Time (days)', fontsize=15)
@@ -21,10 +21,8 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# Data
-time = [0, 0.966666667, 1.965277778, 3.882638889, 5.840972222, 6.8125, 8.814583333]
-pink_mass = [75, 73.61, 72.23, 69.27, 67.06, 65.59, 63]
-white_mass = [75.09, 73.78, 72.54, 69.97, 68.06, 66.84, 64.61]
+pink_mass = [75, 73.61, 72.23, 69.27, 67.06, 65.59, 63, 61.48]
+white_mass = [75.09, 73.78, 72.54, 69.97, 68.06, 66.84, 64.61, 63.25]
 
 # Plotting
 plt.figure(figsize=(8, 6))
