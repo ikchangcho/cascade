@@ -73,37 +73,38 @@ import matplotlib.pyplot as plt
 # if __name__ == "__main__":
 #     main()
 
-# Additional plot for dishes 1-10
-time_days2 = [0, 1.976388889, 3.761111111, 6.170833333, 7.963888889]
+# # Additional plot for dishes 1-10
+# time_days2 = [0, 1.976388889, 3.761111111, 6.170833333, 7.963888889]
 
-dish_data = {
-    1: [120, 116.6518519, 115.0518519, 113.037037, 111.3185185],
-    2: [120, 116.8, 115.2888889, 112.3851852, 110.9925926],
-    3: [120, 116.4444444, 114.6074074, 112.4444444, 110.6074074],
-    4: [120, 116.8592593, 115.2592593, 113.362963, 111.8814815],
-    5: [120, 115.762963, 113.4518519, 110.5777778, 108.0592593],
-    6: [120, 115.8814815, 114.0148148, 111.6740741, 109.8074074],
-    7: [120, 114.5481481, 111.0814815, 106.9037037, 102.9037037],
-    8: [120, 115.0814815, 112.4444444, 109.2740741, 105.1259259],
-    9: [120, 109.5111111, 101.0962963, 91.37777778, 81.68888889],
-    10:[120, 112.2962963, 106.3111111, 99.2, 91.76296296],
-}
+# dish_data = {
+#     1: [120, 116.6518519, 115.0518519, 113.037037, 111.3185185],
+#     2: [120, 116.8, 115.2888889, 112.3851852, 110.9925926],
+#     3: [120, 116.4444444, 114.6074074, 112.4444444, 110.6074074],
+#     4: [120, 116.8592593, 115.2592593, 113.362963, 111.8814815],
+#     5: [120, 115.762963, 113.4518519, 110.5777778, 108.0592593],
+#     6: [120, 115.8814815, 114.0148148, 111.6740741, 109.8074074],
+#     7: [120, 114.5481481, 111.0814815, 106.9037037, 102.9037037],
+#     8: [120, 115.0814815, 112.4444444, 109.2740741, 105.1259259],
+#     9: [120, 109.5111111, 101.0962963, 91.37777778, 81.68888889],
+#     10:[120, 112.2962963, 106.3111111, 99.2, 91.76296296],
+# }
 
-pair_colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple']
+# pair_colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple']
 
-plt.figure(figsize=(8,5))
-for dish, values in dish_data.items():
-    color = pair_colors[(dish - 1) // 2]
-    marker = 'o' if dish % 2 == 1 else 'D'
-    plt.plot(time_days2, values, marker=marker, label=f'Dish #{dish}', color=color)
+# plt.figure(figsize=(8,5))
+# for dish, values in dish_data.items():
+#     color = pair_colors[(dish - 1) // 2]
+#     marker = 'o' if dish % 2 == 1 else 'D'
+#     plt.plot(time_days2, values, marker=marker, label=f'Dish #{dish}', color=color)
 
-plt.title('Drying Curve of La Bagh Wood Soil 50 g', fontsize=15)
-plt.xlabel('Time (day)', fontsize=15)
-plt.ylabel('Water Content (%WHC)', fontsize=15)
-plt.xticks(fontsize=15)
-plt.yticks(fontsize=15)
-plt.grid(alpha=0.3)
+# plt.title('Drying Curve of La Bagh Wood Soil 50 g', fontsize=15)
+# plt.xlabel('Time (day)', fontsize=15)
+# plt.ylabel('Water Content (%WHC)', fontsize=15)
+# plt.xticks(fontsize=15)
+# plt.yticks(fontsize=15)
+# plt.grid(alpha=0.3)
 
-legend = plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=15)
-plt.tight_layout()
-plt.show()
+# legend = plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=15)
+# plt.tight_layout()
+# plt.show()
+
