@@ -1,3 +1,6 @@
+import pandas as pd
+from pathlib import Path
+
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 
@@ -107,4 +110,61 @@ import matplotlib.pyplot as plt
 # legend = plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=15)
 # plt.tight_layout()
 # plt.show()
+
+import matplotlib.pyplot as plt
+
+def load_sensor_data(path):
+    # Data start at row 3; temperature = 3rd col, RH = 4th col
+    df = pd.read_csv(path, header=None, skiprows=2)
+    temperature = pd.to_numeric(df.iloc[:, 2], errors='coerce')
+    humidity = pd.to_numeric(df.iloc[:, 3], errors='coerce')
+    time = pd.to_timedelta(range(len(df)), unit='min')
+    return time, temperature, humidity
+
+sensor_files = [
+    ("ThermoProSensor_export_TP351S-1_09032025.csv", "Sensor 1"),
+    ("ThermoProSensor_export_TP351S-2_09032025.csv", "Sensor 2"),
+]
+
+series = []
+for fname, label in sensor_files:
+    fpath = Path(fname)
+    if not fpath.exists():
+        print(f"Warning: {fname} not found, skipping.")
+        continue
+    t, temp, rh = load_sensor_data(fpath)
+    series.append((label, t, temp, rh))
+
+if not series:
+    raise SystemExit("No sensor data loaded.")
+
+# Convert time to hours for nicer axis scaling
+def to_days(td_index):
+    return [td.total_seconds() / 3600 / 24 for td in td_index]
+
+plt.figure(figsize=(9, 4.5))
+for label, t, temp, _ in series:
+    plt.plot(to_days(t), temp, label=label)
+plt.xlabel("Time (days)", fontsize=15)
+plt.ylabel("Temperature (°C)", fontsize=15)
+plt.ylim(25.7, 26.7)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.legend(fontsize=15)
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(9, 4.5))
+for label, t, _, rh in series:
+    plt.plot(to_days(t), rh, label=label)
+plt.xlabel("Time (days)", fontsize=15)
+plt.ylabel("Relative Humidity (%)", fontsize=15)
+plt.ylim(75, 100)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.legend(fontsize=15)
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
 
