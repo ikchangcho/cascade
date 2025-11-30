@@ -136,9 +136,9 @@ datetime_array = [
     datetime(2025, 1, 2, 7, 36),       # T5
     datetime(2025, 1, 2, 14, 45),       # T6
     datetime(2025, 1, 2, 23, 4),       # T7
-    datetime(2025, 1, 2, 8, 1),       # T8
-    datetime(2025, 1, 2, 20, 3),        # T9
-    datetime(2025, 1, 3, 15, 3)]       # T10
+    datetime(2025, 1, 3, 8, 1),       # T8
+    datetime(2025, 1, 3, 20, 3),        # T9
+    datetime(2025, 1, 4, 15, 3)]       # T10
 
 # Concentration
 times = [0]
@@ -168,10 +168,10 @@ no3_conc_evap = no3_conc.div(norm_no3.values, axis=1)
 no3_cons_evap = no3_conc_evap.iloc[:, 0].values.reshape(-1, 1) - no3_conc_evap
 no2_cons_evap = no2_conc_evap.iloc[:, 0].values.reshape(-1, 1) - no2_conc_evap + no3_cons_evap
 
-no2_conc_evap.to_csv(f"concentration/{date}_{key}_no2_conc_evap.csv")
-no3_conc_evap.to_csv(f"concentration/{date}_{key}_no3_conc_evap.csv")
-no2_cons_evap.to_csv(f"concentration/{date}_{key}_no2_cons_evap.csv")
-no3_cons_evap.to_csv(f"concentration/{date}_{key}_no3_cons_evap.csv")
+no2_conc_evap.to_csv(f"concentrations/{date}_{key}_no2_conc_evap.csv")
+no3_conc_evap.to_csv(f"concentrations/{date}_{key}_no3_conc_evap.csv")
+no2_cons_evap.to_csv(f"concentrations/{date}_{key}_no2_cons_evap.csv")
+no3_cons_evap.to_csv(f"concentrations/{date}_{key}_no3_cons_evap.csv")
 
 # Create figures
 # List of row names in the order you want to display them
