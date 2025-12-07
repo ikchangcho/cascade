@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load the data
-date = '20251129'
-key = 'batch1'
+date = '20251206'
+key = 'batch2'
 meta = pd.read_csv(f'absorbances/{date}_samples_metadata.csv', index_col=0).dropna(how='all')
 no3_conc = pd.read_csv(f'concentrations/{date}_{key}_no3_conc_evap.csv', index_col=0)
 no2_conc = pd.read_csv(f'concentrations/{date}_{key}_no2_conc_evap.csv', index_col=0)
@@ -45,8 +45,8 @@ fig.text(0.91, 0.165, f'I(0) =\n0.0 mM', fontsize=25)
 handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
             plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
 fig.legend(handles=handles, loc='upper right', fontsize=20)
-fig.suptitle(f'Batch 1 (100% whc), CHL+', fontsize=30, fontweight='bold')
-filename = f'4.2_batch1_chl1_no3_no2_conc.png'
+fig.suptitle(f'Batch 2 (62.5 %whc), CHL+', fontsize=30, fontweight='bold')
+filename = f'4.2_{key}_chl1_no3_no2_conc.png'
 plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
 print(f'Saved plots/{filename}')
 
@@ -83,8 +83,8 @@ fig.text(0.91, 0.165, f'I(0) =\n0.0 mM', fontsize=25)
 handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
             plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
 fig.legend(handles=handles, loc='upper right', fontsize=20)
-fig.suptitle(f'Batch 1 (100% whc), CHL-', fontsize=30, fontweight='bold')
-filename = f'4.2_batch1_chl0_no3_no2_conc.png'
+fig.suptitle(f'Batch 2 (62.5 %whc), CHL-', fontsize=30, fontweight='bold')
+filename = f'4.2_{key}_chl0_no3_no2_conc.png'
 plt.savefig(f'plots/{filename}', dpi=300, bbox_inches='tight')
 print(f'Saved plots/{filename}')
 
