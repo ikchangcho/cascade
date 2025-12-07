@@ -120,25 +120,25 @@ def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename,
     print(f'Saved figure: {filename}_{figure_index}.png')
 
 # Convert absorbances to concentration and save as dataframes
-date = "20251129"
-key = "batch1"
+date = "20251206"
+key = "batch2"
 [no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, key)
 no2_conc = pd.concat([no2_conc1], axis=1)
 no3_conc = pd.concat([no3_conc1], axis=1)
 
 # Time arrays
 datetime_array = [
-    datetime(2025, 1, 1, 7, 41),       # T0
-    datetime(2025, 1, 1, 14, 1),       # T1
-    datetime(2025, 1, 1, 17, 16),       # T2
-    datetime(2025, 1, 1, 20, 35),       # T3
-    datetime(2025, 1, 1, 23, 18),       # T4
-    datetime(2025, 1, 2, 7, 36),       # T5
-    datetime(2025, 1, 2, 14, 45),       # T6
-    datetime(2025, 1, 2, 23, 4),       # T7
-    datetime(2025, 1, 3, 8, 1),       # T8
-    datetime(2025, 1, 3, 20, 3),        # T9
-    datetime(2025, 1, 4, 15, 3)]       # T10
+    datetime(2025, 1, 1, 8, 39),       # T0
+    datetime(2025, 1, 1, 11, 25),       # T1
+    datetime(2025, 1, 1, 14, 29),       # T2
+    datetime(2025, 1, 1, 17, 19),       # T3
+    datetime(2025, 1, 1, 20, 27),       # T4
+    datetime(2025, 1, 1, 23, 44),       # T5
+    datetime(2025, 1, 2, 8, 6),       # T6
+    datetime(2025, 1, 2, 14, 56),       # T7
+    datetime(2025, 1, 2, 23, 10),       # T8
+    datetime(2025, 1, 3, 7, 48),        # T9
+    datetime(2025, 1, 3, 17, 16)]       # T10
 
 # Concentration
 times = [0]
@@ -186,7 +186,7 @@ rows_to_plot = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', '
 
 # Number of rows and columns for the subplots grid
 num_rpl = 3
-ncols = 5
+ncols = 4
 nrows = int(np.ceil(len(rows_to_plot) / ncols / num_rpl))
 plots_per_figure = nrows * ncols
 
