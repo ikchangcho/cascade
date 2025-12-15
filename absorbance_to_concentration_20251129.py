@@ -75,7 +75,7 @@ def nh4_abs_to_conc(date, chl):
 
     return nh4_conc
 
-def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename, num_of_replicates=3, nh4_data=None):
+def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=None, num_of_replicates=3, nh4_data=None):
     # Determine the global y-axis limits
     all_values = pd.concat([no2_data, no3_data])
     if nh4_data is not None:
@@ -115,16 +115,26 @@ def create_figure(times, no2_data, no3_data, rows_chunk, figure_index, filename,
     plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
     # Save the figure
-    plt.savefig(f'{filename}_{figure_index}.png')
+    if figure_index is None:
+        plt.savefig(f'{filename}.png')
+        print(f'Saved figure: {filename}.png')
+    else:
+        plt.savefig(f'{filename}_{figure_index}.png')
+        print(f'Saved figure: {filename}_{figure_index}.png')
     plt.close()
-    print(f'Saved figure: {filename}_{figure_index}.png')
+        
 
 # Convert absorbances to concentration and save as dataframes
 date = "20251213"
 key = "batch3"
+exp_num = "4.2"
 [no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, key)
 no2_conc = pd.concat([no2_conc1], axis=1)
 no3_conc = pd.concat([no3_conc1], axis=1)
+
+# # Multiply column 4 (index 4) by 24/15 for rows E01-E12
+# no2_conc.loc['E01':'E12', 4] *= 24/15
+# no3_conc.loc['E01':'E12', 4] *= 24/15
 
 # Time arrays
 datetime_array = [
@@ -151,10 +161,10 @@ no3_conc.columns = times
 no3_cons = no3_conc.iloc[:, 0].values.reshape(-1, 1) - no3_conc
 no2_cons = no2_conc.iloc[:, 0].values.reshape(-1, 1) - no2_conc + no3_cons
 
-no2_conc.to_csv(f"concentrations/{date}_{key}_no2_conc.csv")
-no3_conc.to_csv(f"concentrations/{date}_{key}_no3_conc.csv")
-no2_cons.to_csv(f"concentrations/{date}_{key}_no2_cons.csv")
-no3_cons.to_csv(f"concentrations/{date}_{key}_no3_cons.csv")
+# no2_conc.to_csv(f"concentrations/{date}_{key}_no2_conc.csv")
+# no3_conc.to_csv(f"concentrations/{date}_{key}_no3_conc.csv")
+# no2_cons.to_csv(f"concentrations/{date}_{key}_no2_cons.csv")
+# no3_cons.to_csv(f"concentrations/{date}_{key}_no3_cons.csv")
 
 # Evaporation Correction
 evap_rows = ['A01', 'A02', 'A03']
@@ -168,10 +178,10 @@ no3_conc_evap = no3_conc.div(norm_no3.values, axis=1)
 no3_cons_evap = no3_conc_evap.iloc[:, 0].values.reshape(-1, 1) - no3_conc_evap
 no2_cons_evap = no2_conc_evap.iloc[:, 0].values.reshape(-1, 1) - no2_conc_evap + no3_cons_evap
 
-no2_conc_evap.to_csv(f"concentrations/{date}_{key}_no2_conc_evap.csv")
-no3_conc_evap.to_csv(f"concentrations/{date}_{key}_no3_conc_evap.csv")
-no2_cons_evap.to_csv(f"concentrations/{date}_{key}_no2_cons_evap.csv")
-no3_cons_evap.to_csv(f"concentrations/{date}_{key}_no3_cons_evap.csv")
+no2_conc_evap.to_csv(f"concentrations/{exp_num}.{key}_no2_conc.csv")
+no3_conc_evap.to_csv(f"concentrations/{exp_num}.{key}_no3_conc.csv")
+no2_cons_evap.to_csv(f"concentrations/{exp_num}.{key}_no2_cons.csv")
+no3_cons_evap.to_csv(f"concentrations/{exp_num}.{key}_no3_cons.csv")
 
 # Create figures
 # List of row names in the order you want to display them
@@ -190,7 +200,7 @@ ncols = 4
 nrows = int(np.ceil(len(rows_to_plot) / ncols / num_rpl))
 plots_per_figure = nrows * ncols
 
-for [times, no2_data, no3_data, filename] in zip([times, times], [no2_conc, no2_cons], [no3_conc, no3_cons], [f'plots/{date}_{key}_no3_no2_conc_rows', f'plots/{date}_{key}_no3_no2_cons_rows']):
+for [times, no2_data, no3_data, filename] in zip([times, times], [no2_conc, no2_cons], [no3_conc, no3_cons], [f'plots/{exp_num}.{key}_no3_no2_conc_all', f'plots/{exp_num}.{key}_no3_no2_cons_all']):
     for i in range(0, len(rows_to_plot), plots_per_figure * num_rpl):
         rows_chunk = rows_to_plot[i:i + plots_per_figure * num_rpl]
-        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, figure_index=i // (plots_per_figure * num_rpl), filename=filename, num_of_replicates=num_rpl)
+        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, filename=filename, num_of_replicates=num_rpl) #figure_index=i // (plots_per_figure * num_rpl)
