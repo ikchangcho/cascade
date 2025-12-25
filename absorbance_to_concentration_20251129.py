@@ -125,8 +125,8 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
         
 
 # Convert absorbances to concentration and save as dataframes
-date = "20251213"
-key = "batch3"
+date = "20251224"
+key = "batch4"
 exp_num = "4.2"
 [no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, key)
 no2_conc = pd.concat([no2_conc1], axis=1)
