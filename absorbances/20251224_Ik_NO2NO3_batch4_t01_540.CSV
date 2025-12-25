@@ -1,0 +1,488 @@
+User: USER,Path: C:\Program Files (x86)\BMG\CLARIOstar\User\Data,Test run no.: 2754
+Test name: Ik_NO2NO3,Date: 12/24/2025,Time: 7:40:37 PM
+
+ID1: batch4,ID2: t01,
+Absorbance
+
+
+A01
+X1 Raw Data (Well scan) 540
+1.0126,1.0095
+1.0144,1.0068
+
+A02
+X2 Raw Data (Well scan) 540
+1.0329,1.0294
+1.0319,1.0287
+
+A03
+X3 Raw Data (Well scan) 540
+1.0287,1.0312
+1.0291,1.0293
+
+A04
+X4 Raw Data (Well scan) 540
+1.6121,1.6089
+1.609,1.6038
+
+A05
+X5 Raw Data (Well scan) 540
+1.7758,1.7817
+1.8039,1.7738
+
+A06
+X6 Raw Data (Well scan) 540
+1.6605,1.69
+1.6847,1.6629
+
+A07
+X7 Raw Data (Well scan) 540
+1.5492,2.1186
+1.5589,1.5539
+
+A08
+X8 Raw Data (Well scan) 540
+1.5084,1.7092
+1.505,1.5104
+
+A09
+X9 Raw Data (Well scan) 540
+1.438,1.4311
+1.4572,1.4374
+
+A10
+X10 Raw Data (Well scan) 540
+1.2592,1.2657
+1.2634,1.2581
+
+A11
+X11 Raw Data (Well scan) 540
+1.2689,1.3254
+1.2884,1.2701
+
+A12
+X12 Raw Data (Well scan) 540
+1.2958,1.3099
+1.3402,1.3029
+
+B01
+X13 Raw Data (Well scan) 540
+1.6551,1.6449
+1.7384,1.6687
+
+B02
+X14 Raw Data (Well scan) 540
+1.6964,1.6914
+1.7527,1.7092
+
+B03
+X15 Raw Data (Well scan) 540
+1.67,1.6631
+1.6799,1.6666
+
+B04
+X16 Raw Data (Well scan) 540
+1.7179,1.727
+1.7938,1.7056
+
+B05
+X17 Raw Data (Well scan) 540
+1.4831,2.1417
+1.4963,1.479
+
+B06
+X18 Raw Data (Well scan) 540
+1.5722,1.5783
+1.6391,1.5894
+
+B07
+X19 Raw Data (Well scan) 540
+1.3521,1.3796
+1.3931,1.3604
+
+B08
+X20 Raw Data (Well scan) 540
+1.4407,1.4663
+1.4249,1.3874
+
+B09
+X21 Raw Data (Well scan) 540
+1.3173,1.2893
+1.3026,1.2877
+
+B10
+X22 Raw Data (Well scan) 540
+1.1351,1.1415
+1.1398,1.1427
+
+B11
+X23 Raw Data (Well scan) 540
+0.9938,0.9956
+0.9925,0.992
+
+B12
+X24 Raw Data (Well scan) 540
+1.1043,1.1068
+1.0994,1.1031
+
+C01
+X25 Raw Data (Well scan) 540
+1.4591,1.4489
+1.6205,1.468
+
+C02
+X26 Raw Data (Well scan) 540
+1.415,1.4038
+1.4167,1.4085
+
+C03
+X27 Raw Data (Well scan) 540
+1.4509,1.4489
+1.4592,1.4651
+
+C04
+X28 Raw Data (Well scan) 540
+1.2566,1.2521
+1.2649,1.2582
+
+C05
+X29 Raw Data (Well scan) 540
+1.3083,1.3269
+1.3741,1.309
+
+C06
+X30 Raw Data (Well scan) 540
+1.2458,1.2331
+1.2545,1.2361
+
+C07
+X31 Raw Data (Well scan) 540
+1.0091,1.0137
+1.0169,1.0173
+
+C08
+X32 Raw Data (Well scan) 540
+0.9852,1.0194
+0.9841,0.9854
+
+C09
+X33 Raw Data (Well scan) 540
+0.9692,0.97
+0.9704,0.9706
+
+C10
+X34 Raw Data (Well scan) 540
+0.7324,0.7467
+0.7326,0.7337
+
+C11
+X35 Raw Data (Well scan) 540
+0.7277,0.7349
+0.7312,0.7267
+
+C12
+X36 Raw Data (Well scan) 540
+0.7204,0.7245
+0.7228,1.2218
+
+D01
+X37 Raw Data (Well scan) 540
+1.1434,1.1331
+1.1462,1.1337
+
+D02
+X38 Raw Data (Well scan) 540
+1.1241,1.1278
+1.1316,1.1343
+
+D03
+X39 Raw Data (Well scan) 540
+1.1541,1.1738
+1.2032,1.1583
+
+D04
+X40 Raw Data (Well scan) 540
+0.9756,0.9784
+0.9781,0.9773
+
+D05
+X41 Raw Data (Well scan) 540
+0.9814,0.9645
+0.9679,0.9632
+
+D06
+X42 Raw Data (Well scan) 540
+0.915,0.9166
+0.9216,0.917
+
+D07
+X43 Raw Data (Well scan) 540
+0.6889,0.6965
+0.6885,0.6885
+
+D08
+X44 Raw Data (Well scan) 540
+0.6283,0.6345
+0.6313,0.6276
+
+D09
+X45 Raw Data (Well scan) 540
+0.6691,0.6678
+0.6638,0.6602
+
+D10
+X46 Raw Data (Well scan) 540
+0.4132,0.4303
+0.4158,0.4181
+
+D11
+X47 Raw Data (Well scan) 540
+0.4589,0.4521
+0.4551,0.4517
+
+D12
+X48 Raw Data (Well scan) 540
+0.431,0.4327
+0.4299,0.8538
+
+E01
+X49 Raw Data (Well scan) 540
+1.0351,1.0455
+1.0365,1.0293
+
+E02
+X50 Raw Data (Well scan) 540
+1.0419,1.0424
+1.0458,1.6109
+
+E03
+X51 Raw Data (Well scan) 540
+1.0635,1.0701
+1.065,1.0683
+
+E04
+X52 Raw Data (Well scan) 540
+1.7137,1.6861
+1.7722,1.71
+
+E05
+X53 Raw Data (Well scan) 540
+1.7002,1.7179
+1.781,1.7065
+
+E06
+X54 Raw Data (Well scan) 540
+1.6831,1.6917
+1.7029,1.6967
+
+E07
+X55 Raw Data (Well scan) 540
+1.4532,1.4579
+1.4981,1.4669
+
+E08
+X56 Raw Data (Well scan) 540
+1.5942,1.5778
+1.6281,1.8751
+
+E09
+X57 Raw Data (Well scan) 540
+1.5647,1.4736
+1.5874,1.4915
+
+E10
+X58 Raw Data (Well scan) 540
+1.3208,1.3009
+1.3864,1.3312
+
+E11
+X59 Raw Data (Well scan) 540
+1.296,1.2567
+1.3264,1.2835
+
+E12
+X60 Raw Data (Well scan) 540
+1.3919,1.2734
+1.3066,1.3603
+
+F01
+X61 Raw Data (Well scan) 540
+1.717,1.7149
+1.7956,1.7715
+
+F02
+X62 Raw Data (Well scan) 540
+1.5826,1.5822
+1.6532,1.5941
+
+F03
+X63 Raw Data (Well scan) 540
+1.6971,1.6922
+1.7281,1.7334
+
+F04
+X64 Raw Data (Well scan) 540
+1.4488,1.4403
+1.48,1.4451
+
+F05
+X65 Raw Data (Well scan) 540
+1.5577,1.5644
+1.5803,1.579
+
+F06
+X66 Raw Data (Well scan) 540
+1.5094,1.4646
+1.6206,1.6204
+
+F07
+X67 Raw Data (Well scan) 540
+1.3654,1.377
+1.4014,1.3714
+
+F08
+X68 Raw Data (Well scan) 540
+1.2319,1.2348
+1.2365,1.2349
+
+F09
+X69 Raw Data (Well scan) 540
+1.3152,1.2872
+1.268,1.2704
+
+F10
+X70 Raw Data (Well scan) 540
+1.0103,1.0299
+1.0136,1.0141
+
+F11
+X71 Raw Data (Well scan) 540
+1.0577,1.0472
+1.0541,1.0525
+
+F12
+X72 Raw Data (Well scan) 540
+1.0518,1.078
+1.0508,1.0512
+
+G01
+X73 Raw Data (Well scan) 540
+1.3893,1.3856
+1.4845,1.4731
+
+G02
+X74 Raw Data (Well scan) 540
+1.2477,1.2682
+1.2804,1.2508
+
+G03
+X75 Raw Data (Well scan) 540
+1.3747,1.3707
+1.394,1.3846
+
+G04
+X76 Raw Data (Well scan) 540
+1.0965,1.092
+1.0945,1.0968
+
+G05
+X77 Raw Data (Well scan) 540
+1.214,1.2162
+1.2227,1.2179
+
+G06
+X78 Raw Data (Well scan) 540
+1.139,1.1413
+1.1419,1.1393
+
+G07
+X79 Raw Data (Well scan) 540
+0.96,0.9563
+0.9566,0.9558
+
+G08
+X80 Raw Data (Well scan) 540
+0.988,0.9885
+0.9924,0.9857
+
+G09
+X81 Raw Data (Well scan) 540
+0.9969,0.9976
+1.0028,0.997
+
+G10
+X82 Raw Data (Well scan) 540
+0.6683,0.6804
+0.6723,0.6705
+
+G11
+X83 Raw Data (Well scan) 540
+0.7179,0.7242
+0.7209,0.7253
+
+G12
+X84 Raw Data (Well scan) 540
+0.6359,0.6495
+0.6446,0.6417
+
+H01
+X85 Raw Data (Well scan) 540
+1.1585,1.1525
+1.1716,1.1645
+
+H02
+X86 Raw Data (Well scan) 540
+1.1086,1.0973
+1.117,1.1005
+
+H03
+X87 Raw Data (Well scan) 540
+1.0869,1.0822
+1.0955,1.0832
+
+H04
+X88 Raw Data (Well scan) 540
+0.9018,0.8755
+0.8723,0.875
+
+H05
+X89 Raw Data (Well scan) 540
+0.9263,0.926
+0.9257,0.9322
+
+H06
+X90 Raw Data (Well scan) 540
+0.9404,0.9345
+0.9392,0.9353
+
+H07
+X91 Raw Data (Well scan) 540
+0.5978,0.6056
+0.6049,1.084
+
+H08
+X92 Raw Data (Well scan) 540
+0.5544,0.5609
+0.5598,0.5565
+
+H09
+X93 Raw Data (Well scan) 540
+0.632,0.6317
+0.629,0.6299
+
+H10
+X94 Raw Data (Well scan) 540
+0.3155,0.3205
+0.3161,0.3217
+
+H11
+X95 Raw Data (Well scan) 540
+0.3942,0.3962
+0.3961,0.3946
+
+H12
+X96 Raw Data (Well scan) 540
+0.3982,0.4004
+0.3976,0.3991
+
+

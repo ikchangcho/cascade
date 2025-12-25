@@ -138,17 +138,17 @@ no3_conc = pd.concat([no3_conc1], axis=1)
 
 # Time arrays
 datetime_array = [
-    datetime(2025, 1, 1, 7, 22),       # T0
-    datetime(2025, 1, 1, 12, 10),       # T1
-    datetime(2025, 1, 1, 15, 14),       # T2
-    datetime(2025, 1, 1, 18, 0),       # T3
-    datetime(2025, 1, 1, 21, 10),       # T4
-    datetime(2025, 1, 1, 23, 47),       # T5
-    datetime(2025, 1, 2, 7, 14),       # T6
-    datetime(2025, 1, 2, 15, 44),       # T7
-    datetime(2025, 1, 2, 23, 47),       # T8
-    datetime(2025, 1, 3, 8, 44),        # T9
-    datetime(2025, 1, 3, 17, 41)]       # T10
+    datetime(2025, 1, 1, 8, 17),       # T0
+    datetime(2025, 1, 1, 12, 32),       # T1
+    datetime(2025, 1, 1, 15, 59),       # T2
+    datetime(2025, 1, 1, 20, 0),       # T3
+    datetime(2025, 1, 1, 23, 29),       # T4
+    datetime(2025, 1, 2, 6, 31),       # T5
+    datetime(2025, 1, 2, 15, 12),       # T6
+    datetime(2025, 1, 2, 23, 0),       # T7
+    datetime(2025, 1, 3, 7, 58),       # T8
+    datetime(2025, 1, 3, 21, 13),        # T9
+    datetime(2025, 1, 4, 13, 1)]       # T10
 
 # Concentration
 times = [0]
