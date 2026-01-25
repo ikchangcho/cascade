@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load the data
-date = '20251224'
+date = '20260124'
 exp_num = '4.2'
-id = 'batch4'
-wc = 7.10
+id = 'batch5'
+wc = 5.16
 meta = pd.read_csv(f'absorbances/{date}_samples_metadata.csv', index_col=0).dropna(how='all')
 no3_conc = pd.read_csv(f'concentrations/{exp_num}.{id}_no3_conc.csv', index_col=0)
 no2_conc = pd.read_csv(f'concentrations/{exp_num}.{id}_no2_conc.csv', index_col=0)
