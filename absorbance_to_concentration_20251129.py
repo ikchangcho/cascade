@@ -18,7 +18,7 @@ import ammonia as am
 import os
 import re
 
-def no2_no3_abs_to_conc(date, key):
+def no2_no3_abs_to_conc(date, id):
     std_meta_fn = glob.glob(f'absorbances/{date}_standards_metadata.csv')[0]
     std_no2_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*540.CSV")[0]
     std_no2_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*900.CSV")[0]
@@ -26,10 +26,10 @@ def no2_no3_abs_to_conc(date, key):
     std_no2no3_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2NO3_*900.CSV")[0]
 
     meta_fn = glob.glob(f'absorbances/{date}_samples_metadata.csv')[0]
-    no2_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{key}*540*'))
-    no2_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{key}*900*'))
-    no2no3_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{key}*540*'))
-    no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{key}*900*'))
+    no2_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{id}*540*'))
+    no2_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2_{id}*900*'))
+    no2no3_540_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{id}*540*'))
+    no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{id}*900*'))
 
     # fitted parameters from standards
     [[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
@@ -126,9 +126,9 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
 
 # Convert absorbances to concentration and save as dataframes
 date = "20251206"
-key = "batch2"
+id = "batch2"
 exp_num = "4.2"
-[no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, key)
+[no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, id)
 no2_conc = pd.concat([no2_conc1], axis=1)
 no3_conc = pd.concat([no3_conc1], axis=1)
 
@@ -161,10 +161,10 @@ no3_conc.columns = times
 no3_cons = no3_conc.iloc[:, 0].values.reshape(-1, 1) - no3_conc
 no2_cons = no2_conc.iloc[:, 0].values.reshape(-1, 1) - no2_conc + no3_cons
 
-# no2_conc.to_csv(f"concentrations/{date}_{key}_no2_conc.csv")
-# no3_conc.to_csv(f"concentrations/{date}_{key}_no3_conc.csv")
-# no2_cons.to_csv(f"concentrations/{date}_{key}_no2_cons.csv")
-# no3_cons.to_csv(f"concentrations/{date}_{key}_no3_cons.csv")
+# no2_conc.to_csv(f"concentrations/{date}_{id}_no2_conc.csv")
+# no3_conc.to_csv(f"concentrations/{date}_{id}_no3_conc.csv")
+# no2_cons.to_csv(f"concentrations/{date}_{id}_no2_cons.csv")
+# no3_cons.to_csv(f"concentrations/{date}_{id}_no3_cons.csv")
 
 # Evaporation Correction
 evap_rows = ['A01', 'A02', 'A03']
@@ -178,10 +178,10 @@ no3_conc_evap = no3_conc.div(norm_no3.values, axis=1)
 no3_cons_evap = no3_conc_evap.iloc[:, 0].values.reshape(-1, 1) - no3_conc_evap
 no2_cons_evap = no2_conc_evap.iloc[:, 0].values.reshape(-1, 1) - no2_conc_evap + no3_cons_evap
 
-no2_conc_evap.to_csv(f"concentrations/{exp_num}.{key}_no2_conc.csv")
-no3_conc_evap.to_csv(f"concentrations/{exp_num}.{key}_no3_conc.csv")
-no2_cons_evap.to_csv(f"concentrations/{exp_num}.{key}_no2_cons.csv")
-no3_cons_evap.to_csv(f"concentrations/{exp_num}.{key}_no3_cons.csv")
+no2_conc_evap.to_csv(f"concentrations/{exp_num}.{id}_no2_conc.csv")
+no3_conc_evap.to_csv(f"concentrations/{exp_num}.{id}_no3_conc.csv")
+no2_cons_evap.to_csv(f"concentrations/{exp_num}.{id}_no2_cons.csv")
+no3_cons_evap.to_csv(f"concentrations/{exp_num}.{id}_no3_cons.csv")
 
 # Create figures
 # List of row names in the order you want to display them
@@ -200,7 +200,7 @@ ncols = 4
 nrows = int(np.ceil(len(rows_to_plot) / ncols / num_rpl))
 plots_per_figure = nrows * ncols
 
-for [times, no2_data, no3_data, filename] in zip([times, times], [no2_conc, no2_cons], [no3_conc, no3_cons], [f'plots/{exp_num}.{key}_no3_no2_conc_all', f'plots/{exp_num}.{key}_no3_no2_cons_all']):
+for [times, no2_data, no3_data, filename] in zip([times, times], [no2_conc, no2_cons], [no3_conc, no3_cons], [f'plots/{exp_num}.{id}_no3_no2_conc_all', f'plots/{exp_num}.{id}_no3_no2_cons_all']):
     for i in range(0, len(rows_to_plot), plots_per_figure * num_rpl):
         rows_chunk = rows_to_plot[i:i + plots_per_figure * num_rpl]
         create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, filename=filename, num_of_replicates=num_rpl) #figure_index=i // (plots_per_figure * num_rpl)
