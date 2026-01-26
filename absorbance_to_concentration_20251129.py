@@ -18,7 +18,7 @@ import ammonia as am
 import os
 import re
 
-def no2_no3_abs_to_conc(date, id):
+def no2_no3_abs_to_conc(date, exp_num, id):
     std_meta_fn = glob.glob(f'absorbances/{date}_standards_metadata.csv')[0]
     std_no2_540_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*540.CSV")[0]
     std_no2_900_fn = glob.glob(f"absorbances/{date}_Ik_STD_NO2_*900.CSV")[0]
@@ -32,7 +32,7 @@ def no2_no3_abs_to_conc(date, id):
     no2no3_900_fns = sorted(glob.glob(f'absorbances/{date}_Ik_NO2NO3_{id}*900*'))
 
     # fitted parameters from standards
-    [[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn)
+    [[no2_blank, no2no3_blank], g_fit, v_fit, no3_fit] = gr.fit_griess(meta_fn = std_meta_fn, no2_540_fn=std_no2_540_fn, no2_900_fn=std_no2_900_fn, no2no3_540_fn = std_no2no3_540_fn, no2no3_900_fn = std_no2no3_900_fn, out_dir=f'plots/{exp_num}.{id}')
 
     # create times series dataframe
     no2_conc_dic = {}
@@ -128,7 +128,7 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
 date = "20251206"
 id = "batch2"
 exp_num = "4.2"
-[no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, id)
+[no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, exp_num, id)
 no2_conc = pd.concat([no2_conc1], axis=1)
 no3_conc = pd.concat([no3_conc1], axis=1)
 

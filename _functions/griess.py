@@ -143,7 +143,7 @@ def fit_griess_mixed(meta_fn,no2_fn=None,no2_540_fn=None,no2_900_fn=None,no2no3_
 
 def find_outliers(data):  # Modified by Kiseok Lee 230622
     val_above = 1.5
-    print("returns true for elements more than " + str(val_above) + " interquartile ranges above the upper quartile")
+    # print("returns true for elements more than " + str(val_above) + " interquartile ranges above the upper quartile")
     q75 = np.quantile(data, 0.75)
     q25 = np.quantile(data, 0.25)
     is_outlier = data > q75 + (q75 - q25) * val_above
@@ -1056,7 +1056,7 @@ def plot_nitrate_standard_predict_no2no3(meta_fn, no2_fn, no2_540_fn=None, no2_9
 
 
 def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None,
-               no2no3_900_fn=None):
+               no2no3_900_fn=None, id=None, out_dir=None):
     """
     Fits a quadratic model to the nitrite and nitrate concentrations using the provided metadata and data files.
 
@@ -1100,8 +1100,8 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
     # no3_std_idx = meta.index[(meta['NO2']==0) & (meta['NO3']>0)].tolist()
 
     # identify samples with no2 or no3
-    no2_std_idx = meta.index[(meta['NO2'] > 0)].tolist()
-    no3_std_idx = meta.index[(meta['NO3'] > 0)].tolist()
+    no2_std_idx = meta.index[(meta['NO2'] >= 0)].tolist()
+    no3_std_idx = meta.index[(meta['NO3'] >= 0)].tolist()
 
     # no2 standard curve, griess measurement
     y = no2.loc[no2_std_idx].values.reshape(-1, 1)
@@ -1111,6 +1111,20 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
     x = np.append(x, x ** 2, axis=1)  # make x and x^2 the independent variables
     reg = LinearRegression().fit(x, y)
     g_fit = [reg.intercept_[0], reg.coef_[0][0], reg.coef_[0][1]]
+
+    if out_dir is not None:
+        # Save the plot of y vs x with the quadratic line given by g_fit
+        plt.scatter(x[:, 0], y, label='Measured values')
+        x_vals_smooth = np.linspace(min(x[:, 0]), max(x[:, 0]), num=50)
+        plt.plot(x_vals_smooth, g_fit[0] + g_fit[1] * x_vals_smooth + g_fit[2] * x_vals_smooth**2, label='Quadratic fit', color='red')
+        plt.xlabel('[NO2] (mM)')
+        plt.ylabel('540 nm Absorbance')
+        plt.title('NO2 Standard Curve')
+        plt.legend()
+
+        plt.savefig(f"{out_dir}_no2_standard_curve.png")
+        print(f"NO2 standard curve plot saved to {out_dir}_no2_standard_curve.png")
+        plt.close()
 
     ## Let's get the p-value (Source: https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression)
     params = np.append(reg.intercept_, reg.coef_)
@@ -1163,11 +1177,25 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
     x2 = meta.loc[no3_std_idx].values
 
     # Fit a quadratic model to the sum of nitrate and nitrite concentrations
-    x = np.append(np.sum(x1, axis=1), np.sum(x2, axis=1)).reshape(-1, 1)
+    x = np.append(np.sum(x1, axis=1), np.sum(x2, axis=1)).reshape(-1, 1)        # append?
     x = np.append(x, x ** 2, axis=1)  # make x and x^2 the independent variables
     y = np.append(y1, y2).reshape(-1, 1)
     reg = LinearRegression().fit(x, y)
     v_fit = [reg.intercept_[0], reg.coef_[0][0], reg.coef_[0][1]]
+
+    if out_dir is not None:
+        # Save the plot of y vs x with the quadratic line given by g_fit
+        plt.scatter(x[:, 0], y, label='Measured values')
+        x_vals_smooth = np.linspace(min(x[:, 0]), max(x[:, 0]), num=50)
+        plt.plot(x_vals_smooth, v_fit[0] + v_fit[1] * x_vals_smooth + v_fit[2] * x_vals_smooth**2, label='Quadratic fit', color='red')
+        plt.xlabel('[NO2] + [NO3] (mM)')
+        plt.ylabel('540 nm Absorbance')
+        plt.title('NO2 + NO3 Standard Curve')
+        plt.legend()
+
+        plt.savefig(f"{out_dir}_no2no3_standard_curve.png")
+        print(f"NO2 + NO3 standard curve plot saved to {out_dir}_no2no3_standard_curve.png")
+        plt.close()
 
     # (3) no3 standard curves (after vcl3 measurement only fitting with nitrate standards)
 
@@ -1207,7 +1235,7 @@ def invert_griess(no2, fit, no2no3=None):
     data_out = pd.concat([NO2, NO3], axis=1) # Ik added 02/17/2025
     return data_out
 
-
+# Use g_fit (NO2 standard equation) for calculating NO2 concentration and v_fit (NO2NO3 standard equation) for calculating NO2NO3 concentration
 def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=None, no2_540_fn=None,
                            no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None):
     # Check for wellscan outlier removal
@@ -1277,20 +1305,20 @@ def get_concentration_xlsx(excel_output, no2_blank, no2no3_blank, g_fit, v_fit, 
 def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=None, no2_540_fn=None,
                            no2_900_fn=None, no2no3_fn=None, no2no3_540_fn=None, no2no3_900_fn=None, extract_factor = 2.5): # Edited by Ik
     # read NO2
-    print(meta_fn)
-    print("Before subtracting blank value")
+    # print(meta_fn)
+    # print("Before subtracting blank value")
     NO2_OD540_plus_blank = read_griess(meta_fn, data_fn=None, data_540_fn=no2_540_fn, data_900_fn=no2_900_fn).rename(
         "NO2_OD540")
-    print(NO2_OD540_plus_blank)
+    # print(NO2_OD540_plus_blank)
 
     # read NO2NO3
     NO2NO3_OD540_plus_blank = read_griess(meta_fn, data_fn=None, data_540_fn=no2no3_540_fn,
                                           data_900_fn=no2no3_900_fn).rename("NO2NO3_OD540")
-    print(NO2NO3_OD540_plus_blank)
+    # print(NO2NO3_OD540_plus_blank)
 
     # Get NO2
     # subtract blanks
-    print("Subtracted blank value")
+    # print("Subtracted blank value")
     NO2_OD540 = NO2_OD540_plus_blank - no2_blank
     # print(NO2_OD540)
     NO2NO3_OD540 = NO2NO3_OD540_plus_blank - no2no3_blank
@@ -1302,7 +1330,7 @@ def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=Non
     # print(NO2NO3_OD540)
 
     # Returns inferred concentrations
-    print("Calculated NO2, NO3 concentrations")
+    # print("Calculated NO2, NO3 concentrations")
     NO2_mM = ((-g_fit[1] + np.sqrt(g_fit[1] ** 2 - 4 * (g_fit[0] - NO2_OD540) * g_fit[2])) / 2 / g_fit[2]).rename(
         "NO2_mM")  ## solve quadratic formula
     NO2_mM[NO2_mM < 0] = 0.0  # make it zero if it is less than zero
@@ -1316,9 +1344,9 @@ def get_concentration(no2_blank, no2no3_blank, g_fit, v_fit, meta_fn, no2_fn=Non
     NO2NO3_mM = NO2NO3_mM * extract_factor
     NO3_mM = NO3_mM * extract_factor
 
-    print(NO2_mM)
-    print(NO2NO3_mM)
-    print(NO3_mM)
+    # print(NO2_mM)
+    # print(NO2NO3_mM)
+    # print(NO3_mM)
 
     # combine it into a dataframe
     df_read = pd.DataFrame()
