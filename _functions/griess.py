@@ -1192,6 +1192,7 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
         plt.ylabel('540 nm Absorbance')
         plt.title('NO2 + NO3 Standard Curve')
         plt.legend()
+        plt.grid()
 
         plt.savefig(f"{out_dir}_no2no3_standard_curve.png")
         print(f"NO2 + NO3 standard curve plot saved to {out_dir}_no2no3_standard_curve.png")
