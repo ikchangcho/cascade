@@ -125,9 +125,9 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
         
 
 # Convert absorbances to concentration and save as dataframes
-date = "20251206"
-id = "batch2"
 exp_num = "4.2"
+date = "20260124"
+id = "batch5"
 [no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, exp_num, id)
 no2_conc = pd.concat([no2_conc1], axis=1)
 no3_conc = pd.concat([no3_conc1], axis=1)
@@ -138,17 +138,17 @@ no3_conc = pd.concat([no3_conc1], axis=1)
 
 # Time arrays
 datetime_array = [
-    datetime(2025, 1, 1, 8, 39),       # T0
-    datetime(2025, 1, 1, 11, 25),       # T1
-    datetime(2025, 1, 1, 14, 29),       # T2
-    datetime(2025, 1, 1, 17, 19),       # T3
-    datetime(2025, 1, 1, 20, 27),       # T4
-    datetime(2025, 1, 1, 23, 44),       # T5
-    datetime(2025, 1, 2, 8, 6),       # T6
-    datetime(2025, 1, 2, 14, 56),       # T7
-    datetime(2025, 1, 2, 23, 10),       # T8
-    datetime(2025, 1, 3, 7, 48),        # T9
-    datetime(2025, 1, 3, 17, 16)]       # T10
+    datetime(2025, 1, 1, 8, 28),       # T0
+    datetime(2025, 1, 1, 13, 3),       # T1
+    datetime(2025, 1, 1, 16, 2),       # T2
+    datetime(2025, 1, 1, 20, 3),       # T3
+    datetime(2025, 1, 1, 23, 37),       # T4
+    datetime(2025, 1, 2, 7, 51),       # T5
+    datetime(2025, 1, 2, 15, 55),       # T6
+    datetime(2025, 1, 2, 23, 2),       # T7
+    datetime(2025, 1, 3, 7, 33),       # T8
+    datetime(2025, 1, 3, 19, 35),        # T9
+    datetime(2025, 1, 4, 11, 16)]       # T10
 
 # Concentration
 times = [0]
