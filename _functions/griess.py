@@ -1121,9 +1121,10 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
         plt.ylabel('540 nm Absorbance')
         plt.title('NO2 Standard Curve')
         plt.legend()
+        plt.grid()
 
-        plt.savefig(f"{out_dir}_no2_standard_curve.png")
-        print(f"NO2 standard curve plot saved to {out_dir}_no2_standard_curve.png")
+        plt.savefig(f"{out_dir}_standard_no2.png")
+        print(f"NO2 standard curve plot saved to {out_dir}_standard_no2.png")
         plt.close()
 
     ## Let's get the p-value (Source: https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression)
@@ -1194,8 +1195,8 @@ def fit_griess(meta_fn, no2_fn=None, no2_540_fn=None, no2_900_fn=None, no2no3_fn
         plt.legend()
         plt.grid()
 
-        plt.savefig(f"{out_dir}_no2no3_standard_curve.png")
-        print(f"NO2 + NO3 standard curve plot saved to {out_dir}_no2no3_standard_curve.png")
+        plt.savefig(f"{out_dir}_standard_no2no3.png")
+        print(f"NO2 + NO3 standard curve plot saved to {out_dir}_standard_no2no3.png")
         plt.close()
 
     # (3) no3 standard curves (after vcl3 measurement only fitting with nitrate standards)
