@@ -15,6 +15,7 @@ class LinearRegressor:
             output_dir: str="fitting_results",
             conc: bool=True
     ):
+        print(f"Linear Regression on Exp {exp_num} {id} data")
         self.input_dir = input_dir
         self.output_dir = output_dir
         if conc:
@@ -61,13 +62,14 @@ class LinearRegressor:
             column_indices: Optional[List[int]] = None,
             show_plot: bool = False
     ) -> Tuple[float, float, float, float]:
-        time, no2, no3 = self._get_time_and_values_for_row(row_label, column_indices)
+        x, no2, no3 = self._get_time_and_values_for_row(row_label, column_indices)
         
-        time = time.reshape(-1, 1)
+        x = x.reshape(-1, 1)
+        time = self.time.reshape(-1, 1)
         no2_fit = LinearRegression()
         no3_fit = LinearRegression()
-        no2_fit.fit(time, no2)
-        no3_fit.fit(time, no3)
+        no2_fit.fit(x, no2)
+        no3_fit.fit(x, no3)
         
         no2_slope = no2_fit.coef_[0]
         no2_intercept = no2_fit.intercept_
@@ -78,13 +80,18 @@ class LinearRegressor:
         print(f"Row {row_label} | NO2: ({no2_slope:.3g}, {no2_intercept:.3g}), NO3: ({no3_slope:.3g}, {no3_intercept:.3g}) | Fit on {column_indices}")
     
         if show_plot:
-            plt.scatter(time, no2, color='red', label='NO2 Data')
+            y_min = min(np.min(self.no2_data.loc[row_label]), np.min(self.no3_data.loc[row_label]))
+            y_max = max(np.max(self.no2_data.loc[row_label]), np.max(self.no3_data.loc[row_label]))
+            plt.ylim(y_min - 0.1 * abs(y_min), y_max + 0.1 * abs(y_max))
+            plt.scatter(time, self.no2_data.loc[row_label], color='red', label='NO2 Data')
             plt.plot(time, no2_fit.predict(time), color='red', label='NO2 Fit')
-            plt.scatter(time, no3, color='blue', label='NO3 Data')
+            plt.scatter(time, self.no3_data.loc[row_label], color='blue', label='NO3 Data')
             plt.plot(time, no3_fit.predict(time), color='blue', label='NO3 Fit')
-            plt.title(f'Linear Regression for {row_label}')
-            plt.xlabel('Time (hours)')
-            plt.ylabel('Concentration (mM)')
+            plt.title(f'Linear Regression for {row_label}', fontsize=15)
+            plt.xlabel('Time (hours)', fontsize=14)
+            plt.ylabel('Concentration (mM)', fontsize=14)
+            plt.xticks(fontsize=12)
+            plt.yticks(fontsize=12)
             plt.legend()
             plt.show()
         
@@ -118,8 +125,12 @@ class LinearRegressor:
     
 if __name__ == "__main__":
     exp_num = 4.2
-    id = 'batch1'
-    regressor = LinearRegressor(exp_num, id)
-    results = regressor.fit_for_entire_data(time_threshold=20, filename=f'{exp_num}.{id}_linear_regression_results.csv')
-    #result = regressor.fit_for_row('A04', [0, 1, 3, 4], show_plot=True)
+    ids = ['batch1', 'batch2', 'batch3', 'batch4', 'batch5']
+################################################################################################
+################################################################################################
+    for id in ids[0:5]:
+        regressor = LinearRegressor(exp_num, id)
+        result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        results = regressor.fit_for_entire_data(time_threshold=20, filename=f'{exp_num}.{id}_linear_regression_results.csv')
+        
         
