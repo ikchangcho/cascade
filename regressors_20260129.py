@@ -103,6 +103,7 @@ class LinearRegressor:
             conc_threshold: float = 0.001,
             filename: Optional[str] = None
     ) -> Dict[str, Tuple[float, float, float, float]]:                
+        self.regression_results = {}
         for row_label in self.rows:
             no3_values = self.no3_data.loc[row_label].values.astype(float)
             indices_no3_below_threshold = np.where(no3_values <= conc_threshold)[0]
@@ -126,11 +127,10 @@ class LinearRegressor:
 if __name__ == "__main__":
     exp_num = 4.2
     ids = ['batch1', 'batch2', 'batch3', 'batch4', 'batch5']
-################################################################################################
-################################################################################################
+    time_threshold=20
     for id in ids[0:5]:
         regressor = LinearRegressor(exp_num, id)
         result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        results = regressor.fit_for_entire_data(time_threshold=20, filename=f'{exp_num}.{id}_linear_regression_results.csv')
+        results = regressor.fit_for_entire_data(time_threshold, filename=f'{exp_num}.{id}_linear_regression_results.csv')
         
         
