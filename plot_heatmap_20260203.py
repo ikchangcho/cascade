@@ -2,6 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Function to create pivot table
+def create_pivot_table(df, chl, column_name):
+    return df.query(f'Chloramphenicol == {chl}').pivot(
+        index='Nitrite_input', 
+        columns='Nitrate_input', 
+        values=column_name
+    ).sort_index(ascending=False).sort_index(axis=1, ascending=False)
 
 exp_num = 4.2
 ids = ['batch1', 'batch2', 'batch3', 'batch4', 'batch5']
@@ -18,14 +25,6 @@ for id in ids[0:5]:
     
     mean_df = fitting_results.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
     var_df = fitting_results.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
-
-    # Function to create pivot table
-    def create_pivot_table(df, chl, column_name):
-        return df.query(f'Chloramphenicol == {chl}').pivot(
-            index='Nitrite_input', 
-            columns='Nitrate_input', 
-            values=column_name
-        ).sort_index(ascending=False).sort_index(axis=1, ascending=False)
     
     no3_rate_mean_chl0 = -create_pivot_table(mean_df, 0, 'NO3 Slope') * 24  # convert to per day
     no3_rate_var_chl0 = create_pivot_table(var_df, 0, 'NO3 Slope') * (24 ** 2)  # convert to per day squared
