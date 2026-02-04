@@ -88,7 +88,7 @@ class LinearRegressor:
             plt.plot(time, no2_fit.predict(time), color='red', label='NO2 Fit')
             plt.scatter(time, self.no3_df.loc[row_label], color='blue', label='NO3 Data')
             plt.plot(time, no3_fit.predict(time), color='blue', label='NO3 Fit')
-            plt.title(f'Linear Regression for {row_label}', fontsize=15)
+            plt.title(f'Linear Regression on {row_label}', fontsize=15)
             plt.xlabel('Time (hours)', fontsize=14)
             plt.ylabel('Concentration (mM)', fontsize=14)
             plt.xticks(fontsize=12)
@@ -156,109 +156,62 @@ class PolynomialRegressor:
         self.time = self.no2_conc_df.columns.values.astype(float)
         self.regression_results = {}
 
-    def _get_time_and_values_for_row(
+    def choose_columns_for_regression(
             self,
             row_label: str,
-            column_indices: Optional[List[int]] = None
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        if row_label not in self.no2_df.index:
-            raise ValueError(f"Row {row_label} not found in dataframe index.")
+            epsilon: float = 0.01
+    ) -> Tuple[List[int], List[int]]:
+        init_no3_value = self.no3_conc_df.loc[row_label].values.astype(float)[0]
+        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < init_no3_value - epsilon)[0]
+        init_no2_value = self.no2_conc_df.loc[row_label].values.astype(float)[0]
+        indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < init_no2_value + init_no3_value - epsilon)[0]
 
-        x = self.time
-        no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)
-        no3_cons = self.no3_cons_df.loc[row_label].values.astype(float)
-        if column_indices is not None:
-            if any(idx < 0 or idx >= len(x) for idx in column_indices):
-                raise ValueError("One or more indices in column_indices are out of bounds.")
-            x = x[column_indices]
-            no2_cons = no2_cons[column_indices]
-            no3_cons = no3_cons[column_indices]
-
-        return x, no2_cons, no3_cons
-        
+        return indices_for_no2_fit.tolist(), indices_for_no3_fit.tolist()
+    
     def fit_for_row(
             self,
             row_label: str,
-            column_indices: Optional[List[int]] = None,
             show_plot: bool = False
-    ) -> Tuple[List[float], List[float]]:
-        x, no2_cons, no3_cons = self._get_time_and_values_for_row(row_label, column_indices)
-        
-        # Polynomial fit on consumption data
-        x = x.flatten()
-        time = time.flatten()
-        no2_fit = np.poly1d(np.polyfit(x, no2_cons, deg=self.poly_deg))
-        no3_fit = np.poly1d(np.polyfit(x, no3_cons, deg=self.poly_deg))
-        self.regression_results[row_label] = (no2_fit.tolist(), no3_fit.tolist())
-        
-        print(f"Row {row_label} | NO2: ({no2_fit.coef[0]:.3g}, {no2_fit.coef[1]:.3g}, {no2_fit.coef[2]:.3g}), NO3: ({no3_fit.coef[0]:.3g}, {no3_fit.coef[1]:.3g}, {no3_fit.coef[2]:.3g}) | {self.poly_deg}nd Poly Fit on {column_indices}")
-    
+    ):
+        indices_for_no2_fit, indices_for_no3_fit = self.choose_columns_for_regression(row_label)
+        x_no2 = self.time[indices_for_no2_fit].flatten()
+        no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)[indices_for_no2_fit].flatten()
+        x_no3 = self.time[indices_for_no3_fit].flatten()
+        no3_cons = self.no3_cons_df.loc[row_label].values.astype(float)[indices_for_no3_fit].flatten()
+
+        no2_fit = np.poly1d(np.polyfit(x_no2, no2_cons, self.poly_deg))
+        no3_fit = np.poly1d(np.polyfit(x_no3, no3_cons, self.poly_deg))
+
+        self.regression_results[row_label] = (no2_fit.coef.tolist(), no3_fit.coef.tolist())
+
         if show_plot:
+            time = self.time.flatten()
+            time_array = np.linspace(np.min(time), np.max(time), 100)
             y_min = min(np.min(self.no2_cons_df.loc[row_label]), np.min(self.no3_cons_df.loc[row_label]))
             y_max = max(np.max(self.no2_cons_df.loc[row_label]), np.max(self.no3_cons_df.loc[row_label]))
             plt.ylim(y_min - 0.1 * abs(y_min), y_max + 0.1 * abs(y_max))
+
             plt.scatter(time, self.no2_cons_df.loc[row_label], color='red', label='NO2 Data')
-            plt.plot(time, no2_fit.predict(time), color='red', label='NO2 Fit')
+            plt.plot(time_array, no2_fit(time_array), color='red', label='NO2 Fit')
             plt.scatter(time, self.no3_cons_df.loc[row_label], color='blue', label='NO3 Data')
-            plt.plot(time, no3_fit.predict(time), color='blue', label='NO3 Fit')
+            plt.plot(time_array, no3_fit(time_array), color='blue', label='NO3 Fit')
             plt.title(f'{self.poly_deg}nd Polynomial Regression on {row_label}', fontsize=15)
             plt.xlabel('Time (hours)', fontsize=14)
-            plt.ylabel('Concentration (mM)', fontsize=14)
+            plt.ylabel('Consumption (mM)', fontsize=14)
             plt.xticks(fontsize=12)
             plt.yticks(fontsize=12)
             plt.legend()
             plt.show()
-        
-        return (no2_fit.tolist(), no3_fit.tolist())
-    
-    def estimate_half_life(
-            self,
-            row_label: str,
-            column_indices: Optional[List[int]] = None,
-            epsilon: float = 0.01
-    ):
-        no3_init_conc = self.no3_conc_df.loc[row_label].values.astype(float)[0]
-        no2_init_conc = self.no2_conc_df.loc[row_label].values.astype(float)[0]
-        indices_no3_cons_below_init = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < no3_init_conc - epsilon)[0]
-        indices_no2_cons_below_init = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < no2_init_conc + no3_init_conc - epsilon)[0]
-
-        x, no2_cons, no3_cons = self._get_time_and_values_for_row(row_label, column_indices)
-
-    def fit_for_entire_data(
-            self,
-            filename: Optional[str] = None
-    ) -> Dict[str, Tuple[float, float, float, float]]:                
-        self.regression_results = {}
-        for row_label in self.rows:
-
-
-
-            indices_no3_below_threshold = np.where(no3_values <= conc_threshold)[0]
-            index_no3_become_zero = indices_no3_below_threshold[0] if len(indices_no3_below_threshold) > 0 else len(no3_values) - 1
-            max_time_no3_nonzero = min(self.time[index_no3_become_zero], time_threshold) if index_no3_become_zero > 0 else time_threshold
-            column_indices = np.where(self.time <= max_time_no3_nonzero)[0].tolist()
-            self.fit_for_row(row_label, column_indices)
-                
-        if filename is not None:
-            output_path = os.path.join(self.output_dir, filename)
-            results_df = pd.DataFrame.from_dict(
-                self.regression_results, 
-                orient='index', 
-                columns=['NO2 Slope', 'NO2 Intercept', 'NO3 Slope', 'NO3 Intercept']
-            )
-            results_df.to_csv(output_path)
-            print(f"Linear regression results saved to {output_path}")
-                
-        return self.regression_results
-
 
 if __name__ == "__main__":
     exp_num = 4.2
     ids = ['batch1', 'batch2', 'batch3', 'batch4', 'batch5']
     time_threshold=20
     for id in ids[0:5]:
-        regressor = LinearRegressor(exp_num, id)
-        result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        results = regressor.fit_for_entire_data(time_threshold, filename=f'{exp_num}.{id}_linear_regression_results.csv')
-        
+        # regressor = LinearRegressor(exp_num, id)
+        # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        # results = regressor.fit_for_entire_data(time_threshold, filename=f'{exp_num}.{id}_linear_regression_results.csv')
+    
+        regressor = PolynomialRegressor(exp_num, id)
+        regressor.fit_for_row('E04', show_plot=True)
         
