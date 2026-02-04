@@ -172,7 +172,7 @@ class PolynomialRegressor:
             self,
             row_label: str,
             show_plot: bool = False
-    ):
+    ) -> Tuple[np.poly1d, np.poly1d]:
         indices_for_no2_fit, indices_for_no3_fit = self.choose_columns_for_regression(row_label)
         x_no2 = self.time[indices_for_no2_fit].flatten()
         no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)[indices_for_no2_fit].flatten()
@@ -203,6 +203,33 @@ class PolynomialRegressor:
             plt.legend()
             plt.show()
 
+        return no2_fit, no3_fit
+
+    def fit_for_selected_rows(
+            self,
+            row_labels: List[str],
+            filename: Optional[str] = None
+    ) -> Dict[str, Tuple[List[float], List[float]]]:
+        self.regression_results = {}
+        for row_label in row_labels:
+            self.fit_for_row(row_label)
+
+        if filename is not None:
+            output_path = os.path.join(self.output_dir, filename)
+            results_data = []
+            for row_label, (no2_coeffs, no3_coeffs) in self.regression_results.items():
+                row_data = {'Row': row_label}
+                for i, coeff in enumerate(no2_coeffs):
+                    row_data[f'NO2_coeff_{len(no2_coeffs)-1-i}'] = coeff
+                for i, coeff in enumerate(no3_coeffs):
+                    row_data[f'NO3_coeff_{len(no3_coeffs)-1-i}'] = coeff
+                results_data.append(row_data)
+            results_df = pd.DataFrame(results_data)
+            results_df.to_csv(output_path, index=False)
+            print(f"Polynomial regression results saved to {output_path}")
+                
+        return self.regression_results
+
 if __name__ == "__main__":
     exp_num = 4.2
     ids = ['batch1', 'batch2', 'batch3', 'batch4', 'batch5']
@@ -214,4 +241,6 @@ if __name__ == "__main__":
     
         regressor = PolynomialRegressor(exp_num, id)
         regressor.fit_for_row('E04', show_plot=True)
+        rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+        results = regressor.fit_for_selected_rows(rows_chl0, filename=f'{exp_num}.{id}_polynomial_regression_results.csv')
         
