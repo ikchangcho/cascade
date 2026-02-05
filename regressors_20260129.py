@@ -11,29 +11,28 @@ import pickle
 class LinearRegressor:
     def __init__(
             self,
-            exp_num: float,
             id: str,
             meta_col_num: int=4,
             input_dir: str="concentrations",
             output_dir: str="fitting_results",
             conc: bool=True
     ):
-        print(f"Linear Regression on Exp {exp_num} {id} data")
+        print(f"Linear Regression on Exp {id} data")
         self.input_dir = input_dir
         self.output_dir = output_dir
         if conc:
-            self.no2_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
-            self.no3_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
+            self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
+            self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
         else:
-            self.no2_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
-            self.no3_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+            self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+            self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
 
         if not os.path.exists(self.output_dir):
             raise ValueError(f"Output directory {self.output_dir} does not exist.")
         if self.no2_df is None or self.no2_df.empty:
-            raise ValueError(f"NO2 data could not be loaded from {self.input_dir}/{exp_num}.{id}_no2_conc.csv or is empty.")
+            raise ValueError(f"NO2 data could not be loaded from {self.input_dir}/{id}_no2_conc.csv or is empty.")
         if self.no3_df is None or self.no3_df.empty:
-            raise ValueError(f"NO3 data could not be loaded from {self.input_dir}/{exp_num}.{id}_no3_conc.csv or is empty.")
+            raise ValueError(f"NO3 data could not be loaded from {self.input_dir}/{id}_no3_conc.csv or is empty.")
         
         self.rows = self.no2_df.index.tolist()
         self.time = self.no2_df.columns.values.astype(float)
@@ -130,66 +129,67 @@ class LinearRegressor:
 class PolynomialRegressor:
     def __init__(
             self,
-            exp_num: float,
             id: str,
             poly_deg: int=2,
             meta_col_num: int=4,
             input_dir: str="concentrations",
             output_dir: str="fitting_results",
     ):
-        print(f"======Polynomial Regression on Exp {exp_num} {id} data======")
+        print(f"======Polynomial Regression on Exp {id} Consumption data======")
         self.poly_deg_no2 = poly_deg
         self.poly_deg_no3 = poly_deg
         #self.meta_col_num = meta_col_num
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.no2_conc_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.no3_conc_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.no2_cons_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.no3_cons_df = pd.read_csv(f'{self.input_dir}/{exp_num}.{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+        #self.no2_conc_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
+        #self.no3_conc_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.no2_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]    # Exclude metadata columns
+        self.no3_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
 
         if not os.path.exists(self.output_dir):
             raise ValueError(f"Output directory {self.output_dir} does not exist.")
-        if self.no2_conc_df is None or self.no2_conc_df.empty or self.no2_cons_df is None or self.no2_cons_df.empty:
-            raise ValueError(f"NO2 cdata could not be loaded from {self.input_dir} or is empty.")
-        if self.no3_conc_df is None or self.no3_conc_df.empty or self.no3_cons_df is None or self.no3_cons_df.empty:
-            raise ValueError(f"NO3 data could not be loaded from {self.input_dir} or is empty.")
+        if self.no2_cons_df is None or self.no2_cons_df.empty:
+            raise ValueError(f"NO2 consumption data could not be loaded from {self.input_dir} or is empty.")
+        if self.no3_cons_df is None or self.no3_cons_df.empty:
+            raise ValueError(f"NO3 consumption data could not be loaded from {self.input_dir} or is empty.")
         
         self.no2_total_cons = self.no2_cons_df.iloc[:, -1]  # Total consumption values for NO2
         self.no3_total_cons = self.no3_cons_df.iloc[:, -1]
-        self.rows = self.no2_conc_df.index.tolist()
-        self.time = self.no2_conc_df.columns.values.astype(float)
+        self.rows = self.no2_cons_df.index.tolist()
+        self.time = self.no2_cons_df.columns.values.astype(float)
         self.regression_results = {}
 
     def _choose_columns_for_regression(
             self,
             row_label: str,
             epsilon: float = 0.05
-    ) -> Tuple[List[int], List[int]]:
+    ):
         indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < self.no3_total_cons[row_label] - epsilon)[0].tolist()            
+        poly_deg_no3 = self.poly_deg_no3
         if 0 < len(indices_for_no3_fit) < len(self.time):
             indices_for_no3_fit.append(indices_for_no3_fit[-1] + 1)
-            self.poly_deg_no3 = min(self.poly_deg_no3, len(indices_for_no3_fit) - 1)
+            poly_deg_no3 = min(poly_deg_no3, len(indices_for_no3_fit) - 1)
         if len(indices_for_no3_fit) == 0:
             indices_for_no3_fit = [0]
-            self.poly_deg_no3 = 0
+            poly_deg_no3 = 0
 
         indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < self.no2_total_cons[row_label] - epsilon)[0].tolist()
+        poly_deg_no2 = self.poly_deg_no2
         if 0 < len(indices_for_no2_fit) < len(self.time):
             indices_for_no2_fit.append(indices_for_no2_fit[-1] + 1)
-            self.poly_deg_no2 = min(self.poly_deg_no2, len(indices_for_no2_fit) - 1)
+            poly_deg_no2 = min(poly_deg_no2, len(indices_for_no2_fit) - 1)
         if len(indices_for_no2_fit) == 0:
             indices_for_no2_fit = [0]
-            self.poly_deg_no2 = 0
+            poly_deg_no2 = 0
         
-        return indices_for_no2_fit, indices_for_no3_fit
+        return indices_for_no2_fit, poly_deg_no2, indices_for_no3_fit, poly_deg_no3
     
     def fit_for_row(
             self,
             row_label: str,
             show_plot: bool = False
-    ) -> Tuple[np.poly1d, np.poly1d]:
-        indices_for_no2_fit, indices_for_no3_fit = self._choose_columns_for_regression(row_label)
+    ):
+        indices_for_no2_fit, poly_deg_no2, indices_for_no3_fit, poly_deg_no3 = self._choose_columns_for_regression(row_label)
         x_no2 = self.time[indices_for_no2_fit].flatten()
         no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)[indices_for_no2_fit].flatten()
         x_no3 = self.time[indices_for_no3_fit].flatten()
@@ -200,8 +200,8 @@ class PolynomialRegressor:
         print(f"  NO2 fit indices: {indices_for_no2_fit}")
         print(f"  NO3 fit indices: {indices_for_no3_fit}")
 
-        no2_fit = np.poly1d(np.polyfit(x_no2, no2_cons, self.poly_deg_no2))
-        no3_fit = np.poly1d(np.polyfit(x_no3, no3_cons, self.poly_deg_no3))
+        no2_fit = np.poly1d(np.polyfit(x_no2, no2_cons, poly_deg_no2))
+        no3_fit = np.poly1d(np.polyfit(x_no3, no3_cons, poly_deg_no3))
 
         if show_plot:
             plt.close('all')
@@ -260,10 +260,8 @@ class PolynomialRegressor:
     def fit_for_selected_rows(
             self,
             row_labels: List[str],
-            output_fn: Optional[str] = None,
-            save_plot: bool = False
-    ) -> Dict[str, Tuple[List[float], List[float]]]:
-        
+            output_fn: Optional[str] = None
+    ):
         for row_label in row_labels:
             no2_fit, no3_fit = self.fit_for_row(row_label)
             no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
@@ -282,22 +280,77 @@ class PolynomialRegressor:
                 pickle.dump(self.regression_results, f)
             print(f"Polynomial regression results saved to {output_path}")
 
-        if save_plot:
-
-
         return self.regression_results
 
+    def create_plot_for_selected_rows(
+            self,
+            row_labels: List[str],
+            output_fn: str,
+            show_plot: bool = False
+    ):
+        all_values = pd.concat([self.no3_cons_df.loc[row_labels], self.no2_cons_df.loc[row_labels]])
+        y_min = all_values.min().min()
+        y_max = all_values.max().max()
+        num_rpl = 3
+        num_col = 4
+        num_row = int(np.ceil(len(row_labels) / num_col / num_rpl))
+        fig, axes = plt.subplots(num_row, num_col, figsize=(5*num_row, 4*num_col))
+        axes = axes.flatten()
+
+        x = self.time.flatten()
+        x_fit = np.linspace(min(x), max(x), 100)
+        for i, row in enumerate(row_labels):
+            no2_cons = self.no2_cons_df.loc[row].values.astype(float)
+            no3_cons = self.no3_cons_df.loc[row].values.astype(float)
+
+            ax = axes[i // num_rpl + 1]
+            marker_styles = ['o', 's', '^']
+            marker = marker_styles[i % num_rpl]
+            
+            ax.scatter(x, no2_cons, color='r', marker=marker)
+            ax.scatter(x, no3_cons, color='b', marker=marker)
+
+            no2_fit, no3_fit = self.fit_for_row(row)
+            ax.plot(x_fit, no2_fit(x_fit), 'r-')
+            ax.plot(x_fit, no3_fit(x_fit), 'b-')
+
+            #ax.set_xticks([0, 20, 40, 60, 80])
+            #ax.tick_params(axis='x', labelsize=25)
+            ax.set_ylim(y_min, y_max)
+            #ax.set_yticks([0, 1, 2, 3])
+            #ax.tick_params(axis='y', labelsize=25)
+        fig.text(0.55, 0.05, 'Time (hours)', ha='center', fontsize=30)
+        fig.text(0.145, 0.9, f'A(0) = 2.0 mM', fontsize=25)
+        fig.text(0.35, 0.9, f'A(0) = 1.4 mM', fontsize=25)
+        fig.text(0.55, 0.9, f'A(0) = 0.7 mM', fontsize=25)
+        fig.text(0.75, 0.9, f'A(0) = 0.0 mM', fontsize=25)
+        fig.text(0.08, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
+        fig.text(0.91, 0.77, f'I(0) =\n2.0 mM', fontsize=25)
+        fig.text(0.91, 0.575, f'I(0) =\n1.4 mM', fontsize=25)
+        fig.text(0.91, 0.37, f'I(0) =\n0.7 mM', fontsize=25)
+        fig.text(0.91, 0.165, f'I(0) =\n0.0 mM', fontsize=25)
+        handles = [plt.Line2D([0], [0], color='b', marker='o', label=f'$NO_3$ Cosumption'),
+                    plt.Line2D([0], [0], color='r', marker='o', label=f'$NO_2$ Consumption')]
+        fig.legend(handles=handles, loc='upper right', fontsize=20)
+        fig.suptitle(f'{id}, CHL-\nPolynomial Regression', fontsize=30, fontweight='bold')
+
+        plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
+        print(f'Saved plots/{output_fn}.png')
+        if show_plot:
+            plt.show()
+        plt.close()
+
 if __name__ == "__main__":
-    exp_num = 4.2
-    ids = ['batch1', 'batch2', 'batch3', 'batch4', 'batch5']
-    time_threshold=20
+    ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[0:5]:
-        # regressor = LinearRegressor(exp_num, id)
+        #time_threshold=20
+        # regressor = LinearRegressor(id)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        # results = regressor.fit_for_entire_data(time_threshold, filename=f'{exp_num}.{id}_linear_regression_results.csv')
+        # results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
     
-        regressor = PolynomialRegressor(exp_num, id)
-        regressor.fit_for_row('G10', show_plot=True)
-        rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        results = regressor.fit_for_selected_rows(rows_chl0, output_fn=f'{exp_num}.{id}_polynomial_regression_results')
+        regressor = PolynomialRegressor(id)
+        regressor.fit_for_row('F01', show_plot=True)
+        row_labels = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+        #results = regressor.fit_for_selected_rows(row_labels, output_fn=f'{id}_polynomial_regression_results')
+        regressor.create_plot_for_selected_rows(row_labels, output_fn=f'{id}_polynomial_regression_plots')
         

@@ -13,7 +13,7 @@ for i in [0, 1, 2, 3, 4]:       # batch number - 1
     id = ids[i]
     wc = wcs[i]
 
-    meta = pd.read_csv(f'absorbances/{date}_{id}_samples_metadata.csv', index_col=0).dropna(how='all')
+    meta = pd.read_csv(f'absorbances/{date}_samples_metadata.csv', index_col=0).dropna(how='all')
     no2_conc = pd.read_csv(f'concentrations/{exp_num}.{id}_no2_conc.csv', index_col=0)
     no3_conc = pd.read_csv(f'concentrations/{exp_num}.{id}_no3_conc.csv', index_col=0)
     linear_regression_results = pd.read_csv(f'fitting_results/{exp_num}.{id}_linear_regression_results.csv', index_col=0)
