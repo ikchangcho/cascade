@@ -163,19 +163,19 @@ class PolynomialRegressor:
             epsilon: float = 0.05
     ) -> Tuple[List[int], List[int]]:
         init_no3_value = self.no3_conc_df.loc[row_label].values.astype(float)[0]
-        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < init_no3_value - epsilon)[0].tolist()
-        if 0 < len(indices_for_no3_fit) < 3:
-            indices_for_no3_fit = [0, 1]
-            self.poly_deg_no3 = 1
+        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < init_no3_value - epsilon)[0].tolist()            
+        if 0 < len(indices_for_no3_fit) < len(self.time):
+            indices_for_no3_fit.append(indices_for_no3_fit[-1] + 1)
+            self.poly_deg_no3 = min(self.poly_deg_no3, len(indices_for_no3_fit) - 1)
         if len(indices_for_no3_fit) == 0:
             indices_for_no3_fit = [0]
             self.poly_deg_no3 = 0
 
         init_no2_value = self.no2_conc_df.loc[row_label].values.astype(float)[0]
         indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < init_no2_value + init_no3_value - epsilon)[0].tolist()
-        if 0 < len(indices_for_no2_fit) < 3:
-            indices_for_no2_fit = [0, 1]
-            self.poly_deg_no2 = 1
+        if 0 < len(indices_for_no2_fit) < len(self.time):
+            indices_for_no2_fit.append(indices_for_no2_fit[-1] + 1)
+            self.poly_deg_no2 = min(self.poly_deg_no2, len(indices_for_no2_fit) - 1)
         if len(indices_for_no2_fit) == 0:
             indices_for_no2_fit = [0]
             self.poly_deg_no2 = 0
