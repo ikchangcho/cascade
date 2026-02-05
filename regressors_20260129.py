@@ -135,8 +135,9 @@ class PolynomialRegressor:
             input_dir: str="concentrations",
             output_dir: str="fitting_results",
     ):
-        print(f"Polynomial Regression on Exp {exp_num} {id} data")
-        self.poly_deg = poly_deg
+        print(f"======Polynomial Regression on Exp {exp_num} {id} data======")
+        self.poly_deg_no2 = poly_deg
+        self.poly_deg_no3 = poly_deg
         #self.meta_col_num = meta_col_num
         self.input_dir = input_dir
         self.output_dir = output_dir
@@ -156,35 +157,54 @@ class PolynomialRegressor:
         self.time = self.no2_conc_df.columns.values.astype(float)
         self.regression_results = {}
 
-    def choose_columns_for_regression(
+    def _choose_columns_for_regression(
             self,
             row_label: str,
-            epsilon: float = 0.01
+            epsilon: float = 0.05
     ) -> Tuple[List[int], List[int]]:
         init_no3_value = self.no3_conc_df.loc[row_label].values.astype(float)[0]
-        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < init_no3_value - epsilon)[0]
-        init_no2_value = self.no2_conc_df.loc[row_label].values.astype(float)[0]
-        indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < init_no2_value + init_no3_value - epsilon)[0]
+        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < init_no3_value - epsilon)[0].tolist()
+        if 0 < len(indices_for_no3_fit) < 3:
+            indices_for_no3_fit = [0, 1]
+            self.poly_deg_no3 = 1
+        if len(indices_for_no3_fit) == 0:
+            indices_for_no3_fit = [0]
+            self.poly_deg_no3 = 0
 
-        return indices_for_no2_fit.tolist(), indices_for_no3_fit.tolist()
+        init_no2_value = self.no2_conc_df.loc[row_label].values.astype(float)[0]
+        indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < init_no2_value + init_no3_value - epsilon)[0].tolist()
+        if 0 < len(indices_for_no2_fit) < 3:
+            indices_for_no2_fit = [0, 1]
+            self.poly_deg_no2 = 1
+        if len(indices_for_no2_fit) == 0:
+            indices_for_no2_fit = [0]
+            self.poly_deg_no2 = 0
+        
+        return indices_for_no2_fit, indices_for_no3_fit
     
     def fit_for_row(
             self,
             row_label: str,
             show_plot: bool = False
     ) -> Tuple[np.poly1d, np.poly1d]:
-        indices_for_no2_fit, indices_for_no3_fit = self.choose_columns_for_regression(row_label)
+        indices_for_no2_fit, indices_for_no3_fit = self._choose_columns_for_regression(row_label)
         x_no2 = self.time[indices_for_no2_fit].flatten()
         no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)[indices_for_no2_fit].flatten()
         x_no3 = self.time[indices_for_no3_fit].flatten()
         no3_cons = self.no3_cons_df.loc[row_label].values.astype(float)[indices_for_no3_fit].flatten()
 
-        no2_fit = np.poly1d(np.polyfit(x_no2, no2_cons, self.poly_deg))
-        no3_fit = np.poly1d(np.polyfit(x_no3, no3_cons, self.poly_deg))
+        # Debugging prints
+        print(f"Fitting row {row_label}:")
+        print(f"  NO2 fit indices: {indices_for_no2_fit}")
+        print(f"  NO3 fit indices: {indices_for_no3_fit}")
+
+        no2_fit = np.poly1d(np.polyfit(x_no2, no2_cons, self.poly_deg_no2))
+        no3_fit = np.poly1d(np.polyfit(x_no3, no3_cons, self.poly_deg_no3))
 
         self.regression_results[row_label] = (no2_fit.coef.tolist(), no3_fit.coef.tolist())
 
         if show_plot:
+            plt.close('all')
             time = self.time.flatten()
             time_array = np.linspace(np.min(time), np.max(time), 100)
             y_min = min(np.min(self.no2_cons_df.loc[row_label]), np.min(self.no3_cons_df.loc[row_label]))
@@ -195,7 +215,7 @@ class PolynomialRegressor:
             plt.plot(time_array, no2_fit(time_array), color='red', label='NO2 Fit')
             plt.scatter(time, self.no3_cons_df.loc[row_label], color='blue', label='NO3 Data')
             plt.plot(time_array, no3_fit(time_array), color='blue', label='NO3 Fit')
-            plt.title(f'{self.poly_deg}nd Polynomial Regression on {row_label}', fontsize=15)
+            plt.title(f'Polynomial Regression on {row_label}', fontsize=15)
             plt.xlabel('Time (hours)', fontsize=14)
             plt.ylabel('Consumption (mM)', fontsize=14)
             plt.xticks(fontsize=12)
@@ -208,14 +228,14 @@ class PolynomialRegressor:
     def fit_for_selected_rows(
             self,
             row_labels: List[str],
-            filename: Optional[str] = None
+            output_fn: Optional[str] = None
     ) -> Dict[str, Tuple[List[float], List[float]]]:
         self.regression_results = {}
         for row_label in row_labels:
             self.fit_for_row(row_label)
 
-        if filename is not None:
-            output_path = os.path.join(self.output_dir, filename)
+        if output_fn is not None:
+            output_path = os.path.join(self.output_dir, output_fn)
             results_data = []
             for row_label, (no2_coeffs, no3_coeffs) in self.regression_results.items():
                 row_data = {'Row': row_label}
@@ -240,7 +260,7 @@ if __name__ == "__main__":
         # results = regressor.fit_for_entire_data(time_threshold, filename=f'{exp_num}.{id}_linear_regression_results.csv')
     
         regressor = PolynomialRegressor(exp_num, id)
-        regressor.fit_for_row('E04', show_plot=True)
+        regressor.fit_for_row('G10', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        results = regressor.fit_for_selected_rows(rows_chl0, filename=f'{exp_num}.{id}_polynomial_regression_results.csv')
+        results = regressor.fit_for_selected_rows(rows_chl0, output_fn=f'{exp_num}.{id}_polynomial_regression_results.csv')
         
