@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from numpy.polynomial import polynomial as P
+import pickle
 
 class LinearRegressor:
     def __init__(
@@ -202,8 +203,6 @@ class PolynomialRegressor:
         no2_fit = np.poly1d(np.polyfit(x_no2, no2_cons, self.poly_deg_no2))
         no3_fit = np.poly1d(np.polyfit(x_no3, no3_cons, self.poly_deg_no3))
 
-        self.regression_results[row_label] = (no2_fit.coef.tolist(), no3_fit.coef.tolist())
-
         if show_plot:
             plt.close('all')
             time = self.time.flatten()
@@ -229,6 +228,8 @@ class PolynomialRegressor:
     def rates_for_first_and_second_half(
             self,
             row_label: str,
+            no2_fit: np.poly1d,
+            no3_fit: np.poly1d,
             epsilon: float = 0.05
     ):
         def _get_smallest_positive_real_root(poly, target_value):
@@ -236,7 +237,6 @@ class PolynomialRegressor:
             positive_real_roots = roots[np.isreal(roots) & (np.real(roots) > 0)]
             return np.real(min(positive_real_roots)) if len(positive_real_roots) > 0 else 0
         
-        no2_fit, no3_fit = self.fit_for_row(row_label)
         no2_total_cons = self.no2_total_cons[row_label] - epsilon
         no3_total_cons = self.no3_total_cons[row_label] - epsilon
 
@@ -260,22 +260,31 @@ class PolynomialRegressor:
     def fit_for_selected_rows(
             self,
             row_labels: List[str],
-            output_fn: Optional[str] = None
+            output_fn: Optional[str] = None,
+            save_plot: bool = False
     ) -> Dict[str, Tuple[List[float], List[float]]]:
-        self.regression_results = {}
+        
         for row_label in row_labels:
-            self.fit_for_row(row_label)
-
-        if output_fn is not None:
-            output_path = os.path.join(self.output_dir, output_fn)
-            results_df = pd.DataFrame.from_dict(
-                self.regression_results, 
-                orient='index', 
-                columns=['NO2 Coefficients', 'NO2 First Half Rate', 'NO2 Second Half Rate',
-                         'NO3 Coefficients', 'NO3 First Half Rate', 'NO3 Second Half Rate']
+            no2_fit, no3_fit = self.fit_for_row(row_label)
+            no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
+            self.regression_results[row_label] = (
+                no2_fit.coef.tolist(), 
+                no2_first_rate, 
+                no2_second_rate, 
+                no3_fit.coef.tolist(), 
+                no3_first_rate, 
+                no3_second_rate
             )
+        
+        if output_fn is not None:
+            output_path = os.path.join(self.output_dir, f'{output_fn}.pkl')
+            with open(output_path, 'wb') as f:
+                pickle.dump(self.regression_results, f)
             print(f"Polynomial regression results saved to {output_path}")
-                
+
+        if save_plot:
+
+
         return self.regression_results
 
 if __name__ == "__main__":
@@ -290,5 +299,5 @@ if __name__ == "__main__":
         regressor = PolynomialRegressor(exp_num, id)
         regressor.fit_for_row('G10', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        results = regressor.fit_for_selected_rows(rows_chl0, output_fn=f'{exp_num}.{id}_polynomial_regression_results.csv')
+        results = regressor.fit_for_selected_rows(rows_chl0, output_fn=f'{exp_num}.{id}_polynomial_regression_results')
         
