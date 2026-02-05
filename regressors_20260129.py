@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from numpy.polynomial import polynomial as P
 
 class LinearRegressor:
     def __init__(
@@ -153,6 +154,8 @@ class PolynomialRegressor:
         if self.no3_conc_df is None or self.no3_conc_df.empty or self.no3_cons_df is None or self.no3_cons_df.empty:
             raise ValueError(f"NO3 data could not be loaded from {self.input_dir} or is empty.")
         
+        self.no2_total_cons = self.no2_cons_df.iloc[:, -1]  # Total consumption values for NO2
+        self.no3_total_cons = self.no3_cons_df.iloc[:, -1]
         self.rows = self.no2_conc_df.index.tolist()
         self.time = self.no2_conc_df.columns.values.astype(float)
         self.regression_results = {}
@@ -162,8 +165,7 @@ class PolynomialRegressor:
             row_label: str,
             epsilon: float = 0.05
     ) -> Tuple[List[int], List[int]]:
-        init_no3_value = self.no3_conc_df.loc[row_label].values.astype(float)[0]
-        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < init_no3_value - epsilon)[0].tolist()            
+        indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < self.no3_total_cons[row_label] - epsilon)[0].tolist()            
         if 0 < len(indices_for_no3_fit) < len(self.time):
             indices_for_no3_fit.append(indices_for_no3_fit[-1] + 1)
             self.poly_deg_no3 = min(self.poly_deg_no3, len(indices_for_no3_fit) - 1)
@@ -171,8 +173,7 @@ class PolynomialRegressor:
             indices_for_no3_fit = [0]
             self.poly_deg_no3 = 0
 
-        init_no2_value = self.no2_conc_df.loc[row_label].values.astype(float)[0]
-        indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < init_no2_value + init_no3_value - epsilon)[0].tolist()
+        indices_for_no2_fit = np.where(self.no2_cons_df.loc[row_label].values.astype(float) < self.no2_total_cons[row_label] - epsilon)[0].tolist()
         if 0 < len(indices_for_no2_fit) < len(self.time):
             indices_for_no2_fit.append(indices_for_no2_fit[-1] + 1)
             self.poly_deg_no2 = min(self.poly_deg_no2, len(indices_for_no2_fit) - 1)
@@ -225,6 +226,37 @@ class PolynomialRegressor:
 
         return no2_fit, no3_fit
 
+    def rates_for_first_and_second_half(
+            self,
+            row_label: str,
+            epsilon: float = 0.05
+    ):
+        def _get_smallest_positive_real_root(poly, target_value):
+            roots = (poly - target_value).roots
+            positive_real_roots = roots[np.isreal(roots) & (np.real(roots) > 0)]
+            return np.real(min(positive_real_roots)) if len(positive_real_roots) > 0 else 0
+        
+        no2_fit, no3_fit = self.fit_for_row(row_label)
+        no2_total_cons = self.no2_total_cons[row_label] - epsilon
+        no3_total_cons = self.no3_total_cons[row_label] - epsilon
+
+        no2_half_time = _get_smallest_positive_real_root(no2_fit, no2_total_cons / 2)
+        no2_full_time = _get_smallest_positive_real_root(no2_fit, no2_total_cons)
+        no3_half_time = _get_smallest_positive_real_root(no3_fit, no3_total_cons / 2)
+        no3_full_time = _get_smallest_positive_real_root(no3_fit, no3_total_cons)
+
+        print(f"  NO2 half-consumption time: {no2_half_time}")
+        print(f"  NO2 full-consumption time: {no2_full_time}")
+        print(f"  NO3 half-consumption time: {no3_half_time}")
+        print(f"  NO3 full-consumption time: {no3_full_time}")
+
+        no2_first_rate = (no2_total_cons / 2) / no2_half_time if no2_half_time > 0 else 0
+        no2_second_rate = (no2_total_cons / 2) / (no2_full_time - no2_half_time) if no2_full_time > no2_half_time else 0
+        no3_first_rate = (no3_total_cons / 2) / no3_half_time if no3_half_time > 0 else 0
+        no3_second_rate = (no3_total_cons / 2) / (no3_full_time - no3_half_time) if no3_full_time > no3_half_time else 0
+
+        return no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate
+
     def fit_for_selected_rows(
             self,
             row_labels: List[str],
@@ -236,16 +268,12 @@ class PolynomialRegressor:
 
         if output_fn is not None:
             output_path = os.path.join(self.output_dir, output_fn)
-            results_data = []
-            for row_label, (no2_coeffs, no3_coeffs) in self.regression_results.items():
-                row_data = {'Row': row_label}
-                for i, coeff in enumerate(no2_coeffs):
-                    row_data[f'NO2_coeff_{len(no2_coeffs)-1-i}'] = coeff
-                for i, coeff in enumerate(no3_coeffs):
-                    row_data[f'NO3_coeff_{len(no3_coeffs)-1-i}'] = coeff
-                results_data.append(row_data)
-            results_df = pd.DataFrame(results_data)
-            results_df.to_csv(output_path, index=False)
+            results_df = pd.DataFrame.from_dict(
+                self.regression_results, 
+                orient='index', 
+                columns=['NO2 Coefficients', 'NO2 First Half Rate', 'NO2 Second Half Rate',
+                         'NO3 Coefficients', 'NO3 First Half Rate', 'NO3 Second Half Rate']
+            )
             print(f"Polynomial regression results saved to {output_path}")
                 
         return self.regression_results
