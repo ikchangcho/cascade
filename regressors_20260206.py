@@ -15,12 +15,12 @@ class LinearRegressor:
             id: str,
             meta_col_num: int=4,
             input_dir: str="concentrations",
-            output_dir: str="fitting_results",
+            results_dir: str="fitting_results",
             conc: bool=True
     ):
         print(f"Linear Regression on Exp {id} data")
         self.input_dir = input_dir
-        self.output_dir = output_dir
+        self.results_dir = results_dir
         if conc:
             self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
             self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
@@ -28,8 +28,8 @@ class LinearRegressor:
             self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
             self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
 
-        if not os.path.exists(self.output_dir):
-            raise ValueError(f"Output directory {self.output_dir} does not exist.")
+        if not os.path.exists(self.results_dir):
+            raise ValueError(f"Output directory {self.results_dir} does not exist.")
         if self.no2_df is None or self.no2_df.empty:
             raise ValueError(f"NO2 data could not be loaded from {self.input_dir}/{id}_no2_conc.csv or is empty.")
         if self.no3_df is None or self.no3_df.empty:
@@ -116,7 +116,7 @@ class LinearRegressor:
             self.fit_for_row(row_label, column_indices)
                 
         if filename is not None:
-            output_path = os.path.join(self.output_dir, filename)
+            output_path = os.path.join(self.results_dir, filename)
             results_df = pd.DataFrame.from_dict(
                 self.regression_results, 
                 orient='index', 
@@ -134,19 +134,20 @@ class PolynomialRegressor:
             poly_deg: int=2,
             meta_col_num: int=4,
             input_dir: str="concentrations",
-            output_dir: str="fitting_results",
+            results_dir: str="fitting_results",
+            plots_dir: str="plots"
     ):
         print(f"======Polynomial Regression on Exp {id} Consumption data======")
         self.poly_deg_no2 = poly_deg
         self.poly_deg_no3 = poly_deg
         self.input_dir = input_dir
-        self.output_dir = output_dir
+        self.results_dir = results_dir
         self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
         self.no2_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]    # Exclude metadata columns
         self.no3_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
 
-        if not os.path.exists(self.output_dir):
-            raise ValueError(f"Output directory {self.output_dir} does not exist.")
+        if not os.path.exists(self.results_dir):
+            raise ValueError(f"Output directory {self.results_dir} does not exist.")
         if self.no2_cons_df is None or self.no2_cons_df.empty:
             raise ValueError(f"NO2 consumption data could not be loaded from {self.input_dir} or is empty.")
         if self.no3_cons_df is None or self.no3_cons_df.empty:
@@ -255,33 +256,40 @@ class PolynomialRegressor:
 
         return no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate
 
-    def coefs_for_selected_rows(
+    def fit_for_selected_rows(
             self,
             row_labels: List[str],
-            output_fn: Optional[str] = None
+            output_fn: Optional[str] = None,
+            save_plot: bool = False
     ):
-        coef_df = pd.DataFrame()  # Initialize an empty DataFrame
+        regression_results = {}
         for row_label in row_labels:
             no2_fit, no3_fit = self.fit_for_row(row_label)
-            coef_df.loc[row_label] = pd.DataFrame({
-                'NO2_Second': [no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0],
-                'NO2_First': [no2_fit.coef[-2] if len(no2_fit.coef) > 1 else 0.0],
-                'NO2_Zero': [no2_fit.coef[-1]],
-                'NO3_Second': [no3_fit.coef[-3] if len(no3_fit.coef) > 2 else 0.0],
-                'NO3_First': [no3_fit.coef[-2] if len(no3_fit.coef) > 1 else 0.0],
-                'NO3_Zero': [no3_fit.coef[-1]]
-            })
+            no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
+            regression_results[row_label] = {
+                'NO2 Second Coef': no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0,
+                'NO2 First Coef': no2_fit.coef[-2] if len(no2_fit.coef) > 1 else 0.0,
+                'NO2 Zero Coef': no2_fit.coef[-1],
+                'NO2 First Rate': no2_first_rate,
+                'NO2 Second Rate': no2_second_rate,
+                'NO3 Second Ceof': no3_fit.coef[-3] if len(no3_fit.coef) > 2 else 0.0,
+                'NO3 First Coef': no3_fit.coef[-2] if len(no3_fit.coef) > 1 else 0.0,
+                'NO3 Zero Coef': no3_fit.coef[-1],
+                'NO3 First Rate': no3_first_rate,
+                'NO3 Second Rate': no3_second_rate}
+            
+        regression_results_df = pd.DataFrame.from_dict(regression_results, orient='index').astype(float)
             
         if output_fn is not None:
-            output_path = os.path.join(self.output_dir, output_fn)
-            coef_df.to_csv(output_path)
-            print(f"Coefficients of polynomial regression results saved to {output_path}")
+            output_path = os.path.join(self.results_dir, f'{output_fn}.csv')
+            regression_results_df.to_csv(output_path)
+            print(f"Polynomial regression results saved to {output_path}")
 
-        return coef_df
+        return regression_results
     
     def heatmap_of_rates(
             self,
-            regression_results: Dict[str, Tuple[float, float, float, float]],
+            regression_results: Dict,
             output_fn: Optional[str] = None,
             show_plot: bool = False
     ):
@@ -419,7 +427,7 @@ if __name__ == "__main__":
         regressor = PolynomialRegressor(id)
         #regressor.fit_for_row('F01', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        regression_results = regressor.coefs_for_selected_rows(row_labels=rows_chl0)
-        regressor.heatmap_of_rates(regression_results, output_fn=f'{id}_chl0_rates_heatmap', show_plot=False)
-        #regressor.consumption_plot_for_selected_rows(row_labels, output_fn=f'{id}_polynomial_regression_plots')
+        regression_results = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
+        #regressor.heatmap_of_rates(regression_results, output_fn=f'{id}_chl0_rates_heatmap', show_plot=False)
+        regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}_polynomial_regression_plots')
         
