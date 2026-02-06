@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from numpy.polynomial import polynomial as P
 import pickle
+import seaborn as sns
 
 class LinearRegressor:
     def __init__(
@@ -138,11 +139,9 @@ class PolynomialRegressor:
         print(f"======Polynomial Regression on Exp {id} Consumption data======")
         self.poly_deg_no2 = poly_deg
         self.poly_deg_no3 = poly_deg
-        #self.meta_col_num = meta_col_num
         self.input_dir = input_dir
         self.output_dir = output_dir
-        #self.no2_conc_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
-        #self.no3_conc_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
         self.no2_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]    # Exclude metadata columns
         self.no3_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
 
@@ -265,14 +264,15 @@ class PolynomialRegressor:
         for row_label in row_labels:
             no2_fit, no3_fit = self.fit_for_row(row_label)
             no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
-            self.regression_results[row_label] = (
-                no2_fit.coef.tolist(), 
-                no2_first_rate, 
-                no2_second_rate, 
-                no3_fit.coef.tolist(), 
-                no3_first_rate, 
-                no3_second_rate
-            )
+            self.regression_results[row_label] = {
+                'NO2_Fit_Coefficients': no2_fit.coef.tolist(),
+                'NO2_First_Rate': no2_first_rate,
+                'NO2_Second_Rate': no2_second_rate,
+                'NO3_Fit_Coefficients': no3_fit.coef.tolist(),
+                'NO3_First_Rate': no3_first_rate,
+                'NO3_Second_Rate': no3_second_rate
+            }
+            
         
         if output_fn is not None:
             output_path = os.path.join(self.output_dir, f'{output_fn}.pkl')
@@ -281,8 +281,79 @@ class PolynomialRegressor:
             print(f"Polynomial regression results saved to {output_path}")
 
         return self.regression_results
+    
+    def heatmap_of_rates(
+            self,
+            regression_results: Dict[str, Tuple[float, float, float, float]],
+            output_fn: Optional[str] = None,
+            show_plot: bool = False
+    ):
+        rates_dict = {
+            row_label: {
+                'NO2_First_Rate': values['NO2_First_Rate'],
+                'NO2_Second_Rate': values['NO2_Second_Rate'],
+                'NO3_First_Rate': values['NO3_First_Rate'],
+                'NO3_Second_Rate': values['NO3_Second_Rate']
+            }
+            for row_label, values in regression_results.items()
+        }
+        rates_df = pd.DataFrame.from_dict(rates_dict, orient='index', columns=['NO2_First_Rate', 'NO2_Second_Rate', 'NO3_First_Rate', 'NO3_Second_Rate'])
+        rates_df = rates_df * 24  # Convert rates to mM/day
+        rates_df = rates_df.join(self.meta_df.loc[rates_df.index])
 
-    def create_plot_for_selected_rows(
+        # Group by and calculate mean/std
+        groupby_cols = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol']
+        drop_cols = ['Sample_type']
+        
+        rates_mean_df = rates_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
+        rates_var_df = rates_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
+
+        # Function to create pivot table
+        def create_pivot_table(df, chl, column_name):
+            return df.query(f'Chloramphenicol == {chl}').pivot(
+                index='Nitrite_input', 
+                columns='Nitrate_input', 
+                values=column_name
+            ).sort_index(ascending=False).sort_index(axis=1, ascending=False)
+        
+        no2_first_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO2_First_Rate')
+        no2_first_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO2_First_Rate').pow(0.5)
+        no2_first_rate_annot_chl0 = no2_first_rate_mean_chl0.round(2).astype(str) + "\n±" + no2_first_rate_std_chl0.round(2).astype(str)
+        no2_second_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO2_Second_Rate')
+        no2_second_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO2_Second_Rate').pow(0.5)
+        no2_second_rate_annot_chl0 = no2_second_rate_mean_chl0.round(2).astype(str) + "\n±" + no2_second_rate_std_chl0.round(2).astype(str)
+        no3_first_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO3_First_Rate')
+        no3_first_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO3_First_Rate').pow(0.5)
+        no3_first_rate_annot_chl0 = no3_first_rate_mean_chl0.round(2).astype(str) + "\n±" + no3_first_rate_std_chl0.round(2).astype(str)
+        no3_second_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO3_Second_Rate')
+        no3_second_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO3_Second_Rate').pow(0.5)
+        no3_second_rate_annot_chl0 = no3_second_rate_mean_chl0.round(2).astype(str) + "\n±" + no3_second_rate_std_chl0.round(2).astype(str)
+
+        fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+        
+        heatmap_configs = [
+            (no2_first_rate_mean_chl0, no2_first_rate_annot_chl0, 'NO2_First_Rate', axes[0, 0]),
+            (no2_second_rate_mean_chl0, no2_second_rate_annot_chl0, 'NO2_Second_Rate', axes[1, 0]),
+            (no3_first_rate_mean_chl0, no3_first_rate_annot_chl0, 'NO3_First_Rate', axes[0, 1]),
+            (no3_second_rate_mean_chl0, no3_second_rate_annot_chl0, 'NO3_Second_Rate', axes[1, 1])]
+        
+        for data, annot, title, ax in heatmap_configs:
+            sns.heatmap(data, annot=annot, fmt='', cmap='binary', ax=ax, 
+                        cbar_kws={'label': 'Rate (mM/hour)'})
+            ax.set_title(title)
+            ax.set_xlabel('Nitrate Input (mM)')
+            ax.set_ylabel('Nitrite Input (mM)')
+        
+        plt.suptitle(f'First and Second Rates, {id} CHL-', fontsize=16)
+        if show_plot:
+            plt.show()
+        if output_fn is not None:
+            plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
+            print(f'Saved plots/{output_fn}.png')
+        plt.close()        
+
+
+    def consumption_plot_for_selected_rows(
             self,
             row_labels: List[str],
             output_fn: str,
@@ -349,8 +420,9 @@ if __name__ == "__main__":
         # results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
     
         regressor = PolynomialRegressor(id)
-        regressor.fit_for_row('F01', show_plot=True)
+        #regressor.fit_for_row('F01', show_plot=True)
         row_labels = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        #results = regressor.fit_for_selected_rows(row_labels, output_fn=f'{id}_polynomial_regression_results')
-        regressor.create_plot_for_selected_rows(row_labels, output_fn=f'{id}_polynomial_regression_plots')
+        regression_results = regressor.fit_for_selected_rows(row_labels)
+        regressor.heatmap_of_rates(regression_results, output_fn=f'{id}_chl0_rates_heatmap', show_plot=False)
+        #regressor.consumption_plot_for_selected_rows(row_labels, output_fn=f'{id}_polynomial_regression_plots')
         
