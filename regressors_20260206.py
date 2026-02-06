@@ -362,6 +362,7 @@ class PolynomialRegressor:
             self,
             row_labels: List[str],
             output_fn: str,
+            regression_results: Optional[Dict] = None,
             show_plot: bool = False
     ):
         all_values = pd.concat([self.no3_cons_df.loc[row_labels], self.no2_cons_df.loc[row_labels]])
@@ -375,9 +376,9 @@ class PolynomialRegressor:
 
         x = self.time.flatten()
         x_fit = np.linspace(min(x), max(x), 100)
-        for i, row in enumerate(row_labels):
-            no2_cons = self.no2_cons_df.loc[row].values.astype(float)
-            no3_cons = self.no3_cons_df.loc[row].values.astype(float)
+        for i, row_label in enumerate(row_labels):
+            no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)
+            no3_cons = self.no3_cons_df.loc[row_label].values.astype(float)
 
             ax = axes[i // num_rpl + 1]
             marker_styles = ['o', 's', '^']
@@ -386,9 +387,15 @@ class PolynomialRegressor:
             ax.scatter(x, no2_cons, color='r', marker=marker)
             ax.scatter(x, no3_cons, color='b', marker=marker)
 
-            no2_fit, no3_fit = self.fit_for_row(row)
-            ax.plot(x_fit, no2_fit(x_fit), 'r-')
-            ax.plot(x_fit, no3_fit(x_fit), 'b-')
+            if regression_results is None:
+                no2_fit, no3_fit = self.fit_for_row(row_label)
+                ax.plot(x_fit, no2_fit(x_fit), 'r-')
+                ax.plot(x_fit, no3_fit(x_fit), 'b-')
+            else:
+                no2_fit = np.poly1d([regression_results[row_label]['NO2 Second Coef'], regression_results[row_label]['NO2 First Coef'], regression_results[row_label]['NO2 Zero Coef']])
+                no3_fit = np.poly1d([regression_results[row_label]['NO3 Second Ceof'], regression_results[row_label]['NO3 First Coef'], regression_results[row_label]['NO3 Zero Coef']])
+                ax.plot(x_fit, no2_fit(x_fit), 'r-')
+                ax.plot(x_fit, no3_fit(x_fit), 'b-')
 
             #ax.set_xticks([0, 20, 40, 60, 80])
             #ax.tick_params(axis='x', labelsize=25)
@@ -428,6 +435,7 @@ if __name__ == "__main__":
         #regressor.fit_for_row('F01', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
         regression_results = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
+        regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results=regression_results, output_fn=f'{id}.chl0_polynomial_regression_plots')
         #regressor.heatmap_of_rates(regression_results, output_fn=f'{id}_chl0_rates_heatmap', show_plot=False)
-        regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}_polynomial_regression_plots')
+        
         
