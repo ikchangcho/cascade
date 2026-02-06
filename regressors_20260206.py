@@ -142,6 +142,8 @@ class PolynomialRegressor:
         self.poly_deg_no3 = poly_deg
         self.input_dir = input_dir
         self.results_dir = results_dir
+        self.plots_dir = plots_dir
+        self.meta_col_num = meta_col_num
         self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
         self.no2_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]    # Exclude metadata columns
         self.no3_cons_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
@@ -267,51 +269,112 @@ class PolynomialRegressor:
             no2_fit, no3_fit = self.fit_for_row(row_label)
             no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
             regression_results[row_label] = {
-                'NO2 Second Coef': no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0,
-                'NO2 First Coef': no2_fit.coef[-2] if len(no2_fit.coef) > 1 else 0.0,
-                'NO2 Zero Coef': no2_fit.coef[-1],
+                'NO2 Second Coefficient': no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0,
+                'NO2 First Coefficient': no2_fit.coef[-2] if len(no2_fit.coef) > 1 else 0.0,
+                'NO2 Zero Coefficient': no2_fit.coef[-1],
                 'NO2 First Rate': no2_first_rate,
                 'NO2 Second Rate': no2_second_rate,
-                'NO3 Second Ceof': no3_fit.coef[-3] if len(no3_fit.coef) > 2 else 0.0,
-                'NO3 First Coef': no3_fit.coef[-2] if len(no3_fit.coef) > 1 else 0.0,
-                'NO3 Zero Coef': no3_fit.coef[-1],
+                'NO3 Second Coefficient': no3_fit.coef[-3] if len(no3_fit.coef) > 2 else 0.0,
+                'NO3 First Coefficient': no3_fit.coef[-2] if len(no3_fit.coef) > 1 else 0.0,
+                'NO3 Zero Coefficient': no3_fit.coef[-1],
                 'NO3 First Rate': no3_first_rate,
                 'NO3 Second Rate': no3_second_rate}
             
         regression_results_df = pd.DataFrame.from_dict(regression_results, orient='index').astype(float)
-            
+        regression_results_df = regression_results_df.join(self.meta_df.loc[regression_results_df.index])
+
         if output_fn is not None:
             output_path = os.path.join(self.results_dir, f'{output_fn}.csv')
             regression_results_df.to_csv(output_path)
             print(f"Polynomial regression results saved to {output_path}")
 
-        return regression_results
+        return regression_results_df
     
-    def heatmap_of_rates(
+
+    def consumption_plot_for_selected_rows(
+                self,
+                row_labels: List[str],
+                output_fn: str,
+                regression_results_df: Optional[Dict] = None,
+                show_plot: bool = False
+        ):
+            all_values = pd.concat([self.no3_cons_df.loc[row_labels], self.no2_cons_df.loc[row_labels]])
+            y_min = all_values.min().min()
+            y_max = all_values.max().max()
+            num_rpl = 3
+            num_col = 4
+            num_row = int(np.ceil(len(row_labels) / num_col / num_rpl))
+            fig, axes = plt.subplots(num_row, num_col, figsize=(5*num_row, 4*num_col))
+            axes = axes.flatten()
+
+            x = self.time.flatten()
+            x_fit = np.linspace(min(x), max(x), 100)
+            for i, row_label in enumerate(row_labels):
+                no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)
+                no3_cons = self.no3_cons_df.loc[row_label].values.astype(float)
+
+                ax = axes[i // num_rpl + 1]
+                marker_styles = ['o', 's', '^']
+                marker = marker_styles[i % num_rpl]
+                
+                ax.scatter(x, no2_cons, color='r', marker=marker)
+                ax.scatter(x, no3_cons, color='b', marker=marker)
+
+                if regression_results_df is None:
+                    no2_fit, no3_fit = self.fit_for_row(row_label)
+                    ax.plot(x_fit, no2_fit(x_fit), 'r-')
+                    ax.plot(x_fit, no3_fit(x_fit), 'b-')
+                else:
+                    no2_fit = np.poly1d([regression_results_df.loc[row_label]['NO2 Second Coefficient'], regression_results_df.loc[row_label]['NO2 First Coefficient'], regression_results_df.loc[row_label]['NO2 Zero Coefficient']])
+                    no3_fit = np.poly1d([regression_results_df.loc[row_label]['NO3 Second Coefficient'], regression_results_df.loc[row_label]['NO3 First Coefficient'], regression_results_df.loc[row_label]['NO3 Zero Coefficient']])
+                    ax.plot(x_fit, no2_fit(x_fit), 'r-')
+                    ax.plot(x_fit, no3_fit(x_fit), 'b-')
+
+                #ax.set_xticks([0, 20, 40, 60, 80])
+                #ax.tick_params(axis='x', labelsize=25)
+                ax.set_ylim(y_min, y_max)
+                #ax.set_yticks([0, 1, 2, 3])
+                #ax.tick_params(axis='y', labelsize=25)
+            fig.text(0.55, 0.05, 'Time (hours)', ha='center', fontsize=30)
+            fig.text(0.145, 0.9, f'A(0) = 2.0 mM', fontsize=25)
+            fig.text(0.35, 0.9, f'A(0) = 1.4 mM', fontsize=25)
+            fig.text(0.55, 0.9, f'A(0) = 0.7 mM', fontsize=25)
+            fig.text(0.75, 0.9, f'A(0) = 0.0 mM', fontsize=25)
+            fig.text(0.08, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
+            fig.text(0.91, 0.77, f'I(0) =\n2.0 mM', fontsize=25)
+            fig.text(0.91, 0.575, f'I(0) =\n1.4 mM', fontsize=25)
+            fig.text(0.91, 0.37, f'I(0) =\n0.7 mM', fontsize=25)
+            fig.text(0.91, 0.165, f'I(0) =\n0.0 mM', fontsize=25)
+            handles = [plt.Line2D([0], [0], color='b', marker='o', label=f'$NO_3$ Cosumption'),
+                        plt.Line2D([0], [0], color='r', marker='o', label=f'$NO_2$ Consumption')]
+            fig.legend(handles=handles, loc='upper right', fontsize=20)
+            fig.suptitle(f'{id}, CHL-\nPolynomial Regression', fontsize=30, fontweight='bold')
+
+            plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
+            print(f'Saved plots/{output_fn}.png')
+            if show_plot:
+                plt.show()
+            plt.close()
+
+
+    def heatmaps_for_selected_columns(
             self,
-            regression_results: Dict,
-            output_fn: Optional[str] = None,
+            input_fn: str,
+            col_labels: List[str],
+            output_fn: str,
             show_plot: bool = False
     ):
-        rates_dict = {
-            row_label: {
-                'NO2_First_Rate': values['NO2_First_Rate'],
-                'NO2_Second_Rate': values['NO2_Second_Rate'],
-                'NO3_First_Rate': values['NO3_First_Rate'],
-                'NO3_Second_Rate': values['NO3_Second_Rate']
-            }
-            for row_label, values in regression_results.items()
-        }
-        rates_df = pd.DataFrame.from_dict(rates_dict, orient='index', columns=['NO2_First_Rate', 'NO2_Second_Rate', 'NO3_First_Rate', 'NO3_Second_Rate'])
-        rates_df = rates_df * 24  # Convert rates to mM/day
-        rates_df = rates_df.join(self.meta_df.loc[rates_df.index])
-
+        file_path = os.path.join(self.results_dir, f'{input_fn}.csv')
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
+        regression_results_df = pd.read_csv(file_path, index_col=0)
+        regression_results_df.iloc[:, :-self.meta_col_num] = regression_results_df.iloc[:, :-self.meta_col_num] * 24    # Convert rates to mM/day
+        
         # Group by and calculate mean/std
         groupby_cols = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol']
         drop_cols = ['Sample_type']
-        
-        rates_mean_df = rates_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
-        rates_var_df = rates_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
+        regression_results_mean = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
+        regression_results_var = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
 
         # Function to create pivot table
         def create_pivot_table(df, chl, column_name):
@@ -320,108 +383,22 @@ class PolynomialRegressor:
                 columns='Nitrate_input', 
                 values=column_name
             ).sort_index(ascending=False).sort_index(axis=1, ascending=False)
-        
-        no2_first_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO2_First_Rate')
-        no2_first_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO2_First_Rate').pow(0.5)
-        no2_first_rate_annot_chl0 = no2_first_rate_mean_chl0.round(2).astype(str) + "\n±" + no2_first_rate_std_chl0.round(2).astype(str)
-        no2_second_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO2_Second_Rate')
-        no2_second_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO2_Second_Rate').pow(0.5)
-        no2_second_rate_annot_chl0 = no2_second_rate_mean_chl0.round(2).astype(str) + "\n±" + no2_second_rate_std_chl0.round(2).astype(str)
-        no3_first_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO3_First_Rate')
-        no3_first_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO3_First_Rate').pow(0.5)
-        no3_first_rate_annot_chl0 = no3_first_rate_mean_chl0.round(2).astype(str) + "\n±" + no3_first_rate_std_chl0.round(2).astype(str)
-        no3_second_rate_mean_chl0 = create_pivot_table(rates_mean_df, 0, 'NO3_Second_Rate')
-        no3_second_rate_std_chl0 = create_pivot_table(rates_var_df, 0, 'NO3_Second_Rate').pow(0.5)
-        no3_second_rate_annot_chl0 = no3_second_rate_mean_chl0.round(2).astype(str) + "\n±" + no3_second_rate_std_chl0.round(2).astype(str)
 
-        fig, axes = plt.subplots(2, 2, figsize=(14, 12))
-        
-        heatmap_configs = [
-            (no2_first_rate_mean_chl0, no2_first_rate_annot_chl0, 'NO2_First_Rate', axes[0, 0]),
-            (no2_second_rate_mean_chl0, no2_second_rate_annot_chl0, 'NO2_Second_Rate', axes[1, 0]),
-            (no3_first_rate_mean_chl0, no3_first_rate_annot_chl0, 'NO3_First_Rate', axes[0, 1]),
-            (no3_second_rate_mean_chl0, no3_second_rate_annot_chl0, 'NO3_Second_Rate', axes[1, 1])]
-        
-        for data, annot, title, ax in heatmap_configs:
-            sns.heatmap(data, annot=annot, fmt='', cmap='binary', ax=ax, 
-                        cbar_kws={'label': 'Rate (mM/hour)'})
-            ax.set_title(title)
-            ax.set_xlabel('Nitrate Input (mM)')
-            ax.set_ylabel('Nitrite Input (mM)')
-        
-        plt.suptitle(f'First and Second Rates, {id} CHL-', fontsize=16)
-        if show_plot:
-            plt.show()
-        if output_fn is not None:
-            plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
-            print(f'Saved plots/{output_fn}.png')
-        plt.close()        
+        for col_label in col_labels:
+            if col_label not in regression_results_mean.columns:
+                raise ValueError(f"Column {col_label} not found in regression results.")
+            pivot_table_mean = create_pivot_table(regression_results_mean, 0, col_label)
+            pivot_table_std = create_pivot_table(regression_results_var, 0, col_label).pow(0.5)
+            pivot_table_annot = pivot_table_mean.round(2).astype(str) + "\n±" + pivot_table_std.round(2).astype(str)
 
+            sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='binary')
+            plt.title(f'{col_label} ({id} CHL-)', fontsize=16)
+            plt.xlabel('Nitrate Input (mM)', fontsize=14)
+            plt.ylabel('Nitrite Input (mM)', fontsize=14)
+            plt.xticks(fontsize=12)
+            plt.yticks(fontsize=12)
+            plt.savefig(f'{self.plots_dir}/{output_fn}_{col_label}_heatmap.png', dpi=300, bbox_inches='tight')    
 
-    def consumption_plot_for_selected_rows(
-            self,
-            row_labels: List[str],
-            output_fn: str,
-            regression_results: Optional[Dict] = None,
-            show_plot: bool = False
-    ):
-        all_values = pd.concat([self.no3_cons_df.loc[row_labels], self.no2_cons_df.loc[row_labels]])
-        y_min = all_values.min().min()
-        y_max = all_values.max().max()
-        num_rpl = 3
-        num_col = 4
-        num_row = int(np.ceil(len(row_labels) / num_col / num_rpl))
-        fig, axes = plt.subplots(num_row, num_col, figsize=(5*num_row, 4*num_col))
-        axes = axes.flatten()
-
-        x = self.time.flatten()
-        x_fit = np.linspace(min(x), max(x), 100)
-        for i, row_label in enumerate(row_labels):
-            no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)
-            no3_cons = self.no3_cons_df.loc[row_label].values.astype(float)
-
-            ax = axes[i // num_rpl + 1]
-            marker_styles = ['o', 's', '^']
-            marker = marker_styles[i % num_rpl]
-            
-            ax.scatter(x, no2_cons, color='r', marker=marker)
-            ax.scatter(x, no3_cons, color='b', marker=marker)
-
-            if regression_results is None:
-                no2_fit, no3_fit = self.fit_for_row(row_label)
-                ax.plot(x_fit, no2_fit(x_fit), 'r-')
-                ax.plot(x_fit, no3_fit(x_fit), 'b-')
-            else:
-                no2_fit = np.poly1d([regression_results[row_label]['NO2 Second Coef'], regression_results[row_label]['NO2 First Coef'], regression_results[row_label]['NO2 Zero Coef']])
-                no3_fit = np.poly1d([regression_results[row_label]['NO3 Second Ceof'], regression_results[row_label]['NO3 First Coef'], regression_results[row_label]['NO3 Zero Coef']])
-                ax.plot(x_fit, no2_fit(x_fit), 'r-')
-                ax.plot(x_fit, no3_fit(x_fit), 'b-')
-
-            #ax.set_xticks([0, 20, 40, 60, 80])
-            #ax.tick_params(axis='x', labelsize=25)
-            ax.set_ylim(y_min, y_max)
-            #ax.set_yticks([0, 1, 2, 3])
-            #ax.tick_params(axis='y', labelsize=25)
-        fig.text(0.55, 0.05, 'Time (hours)', ha='center', fontsize=30)
-        fig.text(0.145, 0.9, f'A(0) = 2.0 mM', fontsize=25)
-        fig.text(0.35, 0.9, f'A(0) = 1.4 mM', fontsize=25)
-        fig.text(0.55, 0.9, f'A(0) = 0.7 mM', fontsize=25)
-        fig.text(0.75, 0.9, f'A(0) = 0.0 mM', fontsize=25)
-        fig.text(0.08, 0.5, 'Concentration (mM)', va='center', rotation='vertical', fontsize=30)
-        fig.text(0.91, 0.77, f'I(0) =\n2.0 mM', fontsize=25)
-        fig.text(0.91, 0.575, f'I(0) =\n1.4 mM', fontsize=25)
-        fig.text(0.91, 0.37, f'I(0) =\n0.7 mM', fontsize=25)
-        fig.text(0.91, 0.165, f'I(0) =\n0.0 mM', fontsize=25)
-        handles = [plt.Line2D([0], [0], color='b', marker='o', label=f'$NO_3$ Cosumption'),
-                    plt.Line2D([0], [0], color='r', marker='o', label=f'$NO_2$ Consumption')]
-        fig.legend(handles=handles, loc='upper right', fontsize=20)
-        fig.suptitle(f'{id}, CHL-\nPolynomial Regression', fontsize=30, fontweight='bold')
-
-        plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
-        print(f'Saved plots/{output_fn}.png')
-        if show_plot:
-            plt.show()
-        plt.close()
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
@@ -434,8 +411,13 @@ if __name__ == "__main__":
         regressor = PolynomialRegressor(id)
         #regressor.fit_for_row('F01', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        regression_results = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
-        regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results=regression_results, output_fn=f'{id}.chl0_polynomial_regression_plots')
-        #regressor.heatmap_of_rates(regression_results, output_fn=f'{id}_chl0_rates_heatmap', show_plot=False)
+        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
+        # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
+        regressor.heatmaps_for_selected_columns(
+            input_fn=f'{id}.chl0_polynomial_regression_results',
+            col_labels=['NO2 Second Coefficient', 'NO2 First Coefficient', 'NO3 Second Coefficient', 'NO3 First Coefficient'],
+            output_fn=f'{id}.chl0',
+            show_plot=False
+        )
         
         
