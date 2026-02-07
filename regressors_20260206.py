@@ -163,8 +163,10 @@ class PolynomialRegressor:
     def _choose_columns_for_regression(
             self,
             row_label: str,
-            epsilon: float = 0.05
+            mask: Optional[List[int]] = None,
+            epsilon: float = 0.02
     ):
+        
         indices_for_no3_fit = np.where(self.no3_cons_df.loc[row_label].values.astype(float) < self.no3_total_cons[row_label] - epsilon)[0].tolist()            
         poly_deg_no3 = self.poly_deg_no3
         if 0 < len(indices_for_no3_fit) < 3:
@@ -183,14 +185,18 @@ class PolynomialRegressor:
             indices_for_no2_fit = [0]
             poly_deg_no2 = 0
         
+        if mask is not None:
+            indices_for_no2_fit = [idx for idx in indices_for_no2_fit if idx not in mask]
+            indices_for_no3_fit = [idx for idx in indices_for_no3_fit if idx not in mask]
         return indices_for_no2_fit, poly_deg_no2, indices_for_no3_fit, poly_deg_no3
     
     def fit_for_row(
             self,
             row_label: str,
+            mask: Optional[List[int]] = None,
             show_plot: bool = False
     ):
-        indices_for_no2_fit, poly_deg_no2, indices_for_no3_fit, poly_deg_no3 = self._choose_columns_for_regression(row_label)
+        indices_for_no2_fit, poly_deg_no2, indices_for_no3_fit, poly_deg_no3 = self._choose_columns_for_regression(row_label, mask)
         x_no2 = self.time[indices_for_no2_fit].flatten()
         no2_cons = self.no2_cons_df.loc[row_label].values.astype(float)[indices_for_no2_fit].flatten()
         x_no3 = self.time[indices_for_no3_fit].flatten()
@@ -261,12 +267,17 @@ class PolynomialRegressor:
     def fit_for_selected_rows(
             self,
             row_labels: List[str],
+            masks: Optional[Dict[str, List[int]]] = None,
             output_fn: Optional[str] = None,
             save_plot: bool = False
     ):
         regression_results = {}
         for row_label in row_labels:
-            no2_fit, no3_fit = self.fit_for_row(row_label)
+            mask = None
+            if masks is not None and row_label in masks:
+                mask = masks[row_label]
+
+            no2_fit, no3_fit = self.fit_for_row(row_label, mask)
             no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
             regression_results[row_label] = {
                 'NO2 Second Coefficient': no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0,
@@ -407,7 +418,7 @@ class PolynomialRegressor:
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    for id in ids[0:5]:
+    for id in ids[2:3]:
         #time_threshold=20
         # regressor = LinearRegressor(id)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
@@ -415,15 +426,16 @@ if __name__ == "__main__":
     
         regressor = PolynomialRegressor(id)
         #regressor.fit_for_row('F01', show_plot=True)
-        # rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
-        # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
-        regressor.heatmaps_for_selected_columns(
-            input_fn=f'{id}.chl0_polynomial_regression_results',
-            col_labels=['NO2 Second Coefficient', 'NO3 Second Coefficient'],
-            output_fn=f'{id}.chl0',
-            conv_factor=1000,
-            show_plot=False
-        )
+        rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+        masks_batch3 = 
+        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
+        regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
+        # regressor.heatmaps_for_selected_columns(
+        #     input_fn=f'{id}.chl0_polynomial_regression_results',
+        #     col_labels=['NO2 Second Coefficient', 'NO3 Second Coefficient'],
+        #     output_fn=f'{id}.chl0',
+        #     conv_factor=1000,
+        #     show_plot=False
+        # )
         
         

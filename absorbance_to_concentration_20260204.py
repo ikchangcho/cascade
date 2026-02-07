@@ -89,11 +89,14 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
     for i in range(0, len(rows_chunk), num_of_replicates):
         if i // num_of_replicates < len(axes):  # Ensure we don't exceed the number of subplots
             ax = axes[i // num_of_replicates]
+            marker_styles = ['o', 's', '^']
+
             for j in range(num_of_replicates):
                 if i + j < len(rows_chunk):
                     row = rows_chunk[i + j]
-                    ax.plot(times, no2_data.loc[row], 'r.-', label='NO2')
-                    ax.plot(times, no3_data.loc[row], 'b.-', label='NO3')
+                    marker = marker_styles[j]
+                    ax.plot(times, no2_data.loc[row], color='r', marker=marker, linestyle='-', label='NO2')
+                    ax.plot(times, no3_data.loc[row], color='b', marker=marker, linestyle='-', label='NO3')
                     if nh4_data is not None:
                         ax.plot(times, nh4_data.loc[row], 'g.-', label='NH4')
             ax.set_title(f'{rows_chunk[i:i+num_of_replicates]}')
@@ -197,7 +200,7 @@ datetime_arrays = [
 
 ################################################################################################################
 ################################################################################################################
-for i in [0, 1, 3, 4]:       # batch number - 1
+for i in [2]:       # batch number - 1
     exp_num = exp_nums[i]
     date = dates[i]
     id = ids[i]
@@ -211,9 +214,9 @@ for i in [0, 1, 3, 4]:       # batch number - 1
     [no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, exp_num, id)
     no2_conc = pd.concat([no2_conc1], axis=1)
     no3_conc = pd.concat([no3_conc1], axis=1)
-    # # For batch 3 data, multiply column 4 (index 4) by 24/15 for rows E01-E12
-    # no2_conc.loc['E01':'E12', 4] *= 24/15
-    # no3_conc.loc['E01':'E12', 4] *= 24/15
+    # For batch 3 data, multiply column 4 (index 4) by 24/15 for rows E01-E12
+    no2_conc.loc['E01':'E12', 4] *= 24/15
+    no3_conc.loc['E01':'E12', 4] *= 24/15
 
     no2_conc.columns = times
     no3_conc.columns = times
