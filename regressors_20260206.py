@@ -280,16 +280,16 @@ class PolynomialRegressor:
             no2_fit, no3_fit = self.fit_for_row(row_label, mask)
             no2_first_rate, no2_second_rate, no3_first_rate, no3_second_rate = self.rates_for_first_and_second_half(row_label, no2_fit, no3_fit)
             regression_results[row_label] = {
-                'NO2 Second Coefficient': no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0,
-                'NO2 First Coefficient': no2_fit.coef[-2] if len(no2_fit.coef) > 1 else 0.0,
-                'NO2 Zero Coefficient': no2_fit.coef[-1],
-                'NO2 First Rate': no2_first_rate,
-                'NO2 Second Rate': no2_second_rate,
-                'NO3 Second Coefficient': no3_fit.coef[-3] if len(no3_fit.coef) > 2 else 0.0,
-                'NO3 First Coefficient': no3_fit.coef[-2] if len(no3_fit.coef) > 1 else 0.0,
-                'NO3 Zero Coefficient': no3_fit.coef[-1],
-                'NO3 First Rate': no3_first_rate,
-                'NO3 Second Rate': no3_second_rate}
+                'no2_second_coef': no2_fit.coef[-3] if len(no2_fit.coef) > 2 else 0.0,
+                'no2_first_coef': no2_fit.coef[-2] if len(no2_fit.coef) > 1 else 0.0,
+                'no2_zeroth_coef': no2_fit.coef[-1],
+                'no2_rate_first_half': no2_first_rate,
+                'no2_rate_second_half': no2_second_rate,
+                'no3_second_coef': no3_fit.coef[-3] if len(no3_fit.coef) > 2 else 0.0,
+                'no3_first_coef': no3_fit.coef[-2] if len(no3_fit.coef) > 1 else 0.0,
+                'no3_zeroth_coef': no3_fit.coef[-1],
+                'no3_rate_first_half': no3_first_rate,
+                'no3_rate_second_half': no3_second_rate}
             
         regression_results_df = pd.DataFrame.from_dict(regression_results, orient='index').astype(float)
         regression_results_df = regression_results_df.join(self.meta_df.loc[regression_results_df.index])
@@ -336,8 +336,8 @@ class PolynomialRegressor:
                     ax.plot(x_fit, no2_fit(x_fit), 'r-')
                     ax.plot(x_fit, no3_fit(x_fit), 'b-')
                 else:
-                    no2_fit = np.poly1d([regression_results_df.loc[row_label]['NO2 Second Coefficient'], regression_results_df.loc[row_label]['NO2 First Coefficient'], regression_results_df.loc[row_label]['NO2 Zero Coefficient']])
-                    no3_fit = np.poly1d([regression_results_df.loc[row_label]['NO3 Second Coefficient'], regression_results_df.loc[row_label]['NO3 First Coefficient'], regression_results_df.loc[row_label]['NO3 Zero Coefficient']])
+                    no2_fit = np.poly1d([regression_results_df.loc[row_label]['no2_second_coef'], regression_results_df.loc[row_label]['no2_first_coef'], regression_results_df.loc[row_label]['no2_zeroth_coef']])
+                    no3_fit = np.poly1d([regression_results_df.loc[row_label]['no3_second_coef'], regression_results_df.loc[row_label]['no3_first_coef'], regression_results_df.loc[row_label]['no3_zeroth_coef']])
                     ax.plot(x_fit, no2_fit(x_fit), 'r-')
                     ax.plot(x_fit, no3_fit(x_fit), 'b-')
 
@@ -418,7 +418,7 @@ class PolynomialRegressor:
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    for id in ids[2:3]:
+    for id in ids[0:5]:
         #time_threshold=20
         # regressor = LinearRegressor(id)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
@@ -427,20 +427,17 @@ if __name__ == "__main__":
         regressor = PolynomialRegressor(id)
         #regressor.fit_for_row('F01', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        masks_batch3 = {
-            'E12': [9],
-            'F08': [9],
-            'H09': [9],
-            'H10': [9]
-        }
-        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks_batch3, output_fn=f'{id}.chl0_polynomial_regression_results')
-        regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
-        # regressor.heatmaps_for_selected_columns(
-        #     input_fn=f'{id}.chl0_polynomial_regression_results',
-        #     col_labels=['NO2 Second Coefficient', 'NO3 Second Coefficient'],
-        #     output_fn=f'{id}.chl0',
-        #     conv_factor=1000,
-        #     show_plot=False
-        # )
+        masks = None
+        if id == '4.2.batch3':
+            masks = {'E12': [9], 'F08': [9], 'H09': [9], 'H10': [9]}
+        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
+        # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
         
-        
+
+        regressor.heatmaps_for_selected_columns(
+            input_fn=f'{id}.chl0_polynomial_regression_results',
+            col_labels=['no2_second_coef', 'no3_second_coef'],
+            output_fn=f'{id}.chl0',
+            conv_factor=1000,
+            show_plot=False
+        )
