@@ -362,13 +362,14 @@ class PolynomialRegressor:
             input_fn: str,
             col_labels: List[str],
             output_fn: str,
+            conv_factor: float = 24.0,
             show_plot: bool = False
     ):
         file_path = os.path.join(self.results_dir, f'{input_fn}.csv')
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         regression_results_df = pd.read_csv(file_path, index_col=0)
-        regression_results_df.iloc[:, :-self.meta_col_num] = regression_results_df.iloc[:, :-self.meta_col_num] * 24    # Convert rates to mM/day
+        regression_results_df.iloc[:, :-self.meta_col_num] = regression_results_df.iloc[:, :-self.meta_col_num] * conv_factor    # Convert rates to mM/day
         
         # Group by and calculate mean/std
         groupby_cols = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol']
@@ -398,6 +399,10 @@ class PolynomialRegressor:
             plt.xticks(fontsize=12)
             plt.yticks(fontsize=12)
             plt.savefig(f'{self.plots_dir}/{output_fn}_{col_label}_heatmap.png', dpi=300, bbox_inches='tight')    
+            print(f'Saved {self.plots_dir}/{output_fn}_{col_label}_heatmap.png')
+            if show_plot:
+                plt.show()
+            plt.close()
 
 
 if __name__ == "__main__":
@@ -410,13 +415,14 @@ if __name__ == "__main__":
     
         regressor = PolynomialRegressor(id)
         #regressor.fit_for_row('F01', show_plot=True)
-        rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
+        # rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+        # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
         # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
         regressor.heatmaps_for_selected_columns(
             input_fn=f'{id}.chl0_polynomial_regression_results',
-            col_labels=['NO2 Second Coefficient', 'NO2 First Coefficient', 'NO3 Second Coefficient', 'NO3 First Coefficient'],
+            col_labels=['NO2 Second Coefficient', 'NO3 Second Coefficient'],
             output_fn=f'{id}.chl0',
+            conv_factor=1000,
             show_plot=False
         )
         
