@@ -427,8 +427,13 @@ if __name__ == "__main__":
         regressor = PolynomialRegressor(id)
         #regressor.fit_for_row('F01', show_plot=True)
         rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        masks_batch3 = 
-        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, output_fn=f'{id}.chl0_polynomial_regression_results')
+        masks_batch3 = {
+            'E12': [9],
+            'F08': [9],
+            'H09': [9],
+            'H10': [9]
+        }
+        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks_batch3, output_fn=f'{id}.chl0_polynomial_regression_results')
         regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
         # regressor.heatmaps_for_selected_columns(
         #     input_fn=f'{id}.chl0_polynomial_regression_results',

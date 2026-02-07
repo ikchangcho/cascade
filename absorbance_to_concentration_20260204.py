@@ -200,7 +200,7 @@ datetime_arrays = [
 
 ################################################################################################################
 ################################################################################################################
-for i in [2]:       # batch number - 1
+for i in [0, 1, 3, 4]:       # batch number - 1
     exp_num = exp_nums[i]
     date = dates[i]
     id = ids[i]
@@ -214,9 +214,9 @@ for i in [2]:       # batch number - 1
     [no2_conc1, no3_conc1] = no2_no3_abs_to_conc(date, exp_num, id)
     no2_conc = pd.concat([no2_conc1], axis=1)
     no3_conc = pd.concat([no3_conc1], axis=1)
-    # For batch 3 data, multiply column 4 (index 4) by 24/15 for rows E01-E12
-    no2_conc.loc['E01':'E12', 4] *= 24/15
-    no3_conc.loc['E01':'E12', 4] *= 24/15
+    # # For batch 3 data, multiply column 4 (index 4) by 24/15 for rows E01-E12
+    # no2_conc.loc['E01':'E12', 4] *= 24/15
+    # no3_conc.loc['E01':'E12', 4] *= 24/15
 
     no2_conc.columns = times
     no3_conc.columns = times
