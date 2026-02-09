@@ -134,9 +134,10 @@ class LinearRegressor:
 
         return self.regression_results
 
-    def heatmaps_for_selected_columns(
+    def heatmaps_for_selcted_columns(
             self,
             input_fn: str,
+            chl: int,
             col_labels: List[str],
             output_fn: str,
             conv_factor: float,
@@ -169,12 +170,12 @@ class LinearRegressor:
         for col_label in col_labels:
             if col_label not in regression_results_mean.columns:
                 raise ValueError(f"Column {col_label} not found in regression results.")
-            pivot_table_mean = create_pivot_table(regression_results_mean, 0, col_label)
-            pivot_table_std = create_pivot_table(regression_results_var, 0, col_label).pow(0.5)
+            pivot_table_mean = create_pivot_table(regression_results_mean, chl, col_label)
+            pivot_table_std = create_pivot_table(regression_results_var, chl, col_label).pow(0.5)
             pivot_table_annot = pivot_table_mean.round(2).astype(str) + "\n±" + pivot_table_std.round(2).astype(str)
 
             sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='binary')
-            plt.title(f'{col_label} ({id} CHL-)', fontsize=16)
+            plt.title(f'{id} chl{chl} {col_label}', fontsize=16)
             plt.xlabel('Nitrate Input (mM)', fontsize=14)
             plt.ylabel('Nitrite Input (mM)', fontsize=14)
             plt.xticks(fontsize=12)
@@ -432,6 +433,7 @@ class PolynomialRegressor:
     def heatmaps_for_selected_columns(
             self,
             input_fn: str,
+            chl: int,
             col_labels: List[str],
             output_fn: str,
             conv_factor: float,
@@ -464,12 +466,12 @@ class PolynomialRegressor:
         for col_label in col_labels:
             if col_label not in regression_results_mean.columns:
                 raise ValueError(f"Column {col_label} not found in regression results.")
-            pivot_table_mean = create_pivot_table(regression_results_mean, 0, col_label)
-            pivot_table_std = create_pivot_table(regression_results_var, 0, col_label).pow(0.5)
+            pivot_table_mean = create_pivot_table(regression_results_mean, chl, col_label)
+            pivot_table_std = create_pivot_table(regression_results_var, chl, col_label).pow(0.5)
             pivot_table_annot = pivot_table_mean.round(2).astype(str) + "\n±" + pivot_table_std.round(2).astype(str)
 
             sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='binary')
-            plt.title(f'{col_label} ({id} CHL-)', fontsize=16)
+            plt.title(f'{id} chl{chl} {col_label}', fontsize=16)
             plt.xlabel('Nitrate Input (mM)', fontsize=14)
             plt.ylabel('Nitrite Input (mM)', fontsize=14)
             plt.xticks(fontsize=12)
@@ -485,13 +487,15 @@ if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[0:5]:
         time_threshold=20
+        chl=0
         regressor = LinearRegressor(id)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
         #results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
-        regressor.heatmaps_for_selected_columns(
+        regressor.heatmaps_for_selcted_columns(
             input_fn=f'{id}_linear_regression_results',
+            chl=chl,
             col_labels=['no2_rate', 'no3_rate'],
-            output_fn=f'{id}_linear_regression',
+            output_fn=f'{id}.chl{chl}_linear_regression',
             conv_factor=24,
             show_plot=False
         )
