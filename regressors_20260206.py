@@ -16,11 +16,15 @@ class LinearRegressor:
             meta_col_num: int=4,
             input_dir: str="concentrations",
             results_dir: str="fitting_results",
+            plots_dir: str="plots",
             conc: bool=True
     ):
         print(f"Linear Regression on Exp {id} data")
+        self.meta_col_num = meta_col_num
         self.input_dir = input_dir
         self.results_dir = results_dir
+        self.plots_dir = plots_dir
+        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
         if conc:
             self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
             self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
@@ -74,11 +78,13 @@ class LinearRegressor:
         no2_fit.fit(x, no2)
         no3_fit.fit(x, no3)
         
-        no2_slope = no2_fit.coef_[0]
+        no2_slope = no2_fit.coef_[0] 
         no2_intercept = no2_fit.intercept_
         no3_slope = no3_fit.coef_[0]
         no3_intercept = no3_fit.intercept_
-        self.regression_results[row_label] = (no2_slope, no2_intercept, no3_slope, no3_intercept)
+        no2_rate = -no2_slope -no3_slope
+        no3_rate = -no3_slope
+        self.regression_results[row_label] = (no2_rate, no2_slope, no2_intercept, no3_rate, no3_slope, no3_intercept)
 
         print(f"Row {row_label} | NO2: ({no2_slope:.3g}, {no2_intercept:.3g}), NO3: ({no3_slope:.3g}, {no3_intercept:.3g}) | Fit on {column_indices}")
     
@@ -98,7 +104,7 @@ class LinearRegressor:
             plt.legend()
             plt.show()
         
-        return (no2_slope, no2_intercept, no3_slope, no3_intercept)
+        return (no2_rate, no2_slope, no2_intercept, no3_rate, no3_slope, no3_intercept)
     
     def fit_for_entire_data(
             self,
@@ -117,13 +123,67 @@ class LinearRegressor:
                 
         if filename is not None:
             output_path = os.path.join(self.results_dir, filename)
-            results_df = pd.DataFrame.from_dict(
+            regression_results_df = pd.DataFrame.from_dict(
                 self.regression_results, 
                 orient='index', 
-                columns=['NO2 Slope', 'NO2 Intercept', 'NO3 Slope', 'NO3 Intercept']
+                columns=['no2_rate', 'no2_slope', 'no2_intercept', 'no3_rate', 'no3_slope', 'no3_intercept']
             )
-            results_df.to_csv(output_path)
+            regression_results_df = regression_results_df.join(self.meta_df.loc[regression_results_df.index])
+            regression_results_df.to_csv(output_path)
             print(f"Linear regression results saved to {output_path}")
+
+        return self.regression_results
+
+    def heatmaps_for_selected_columns(
+            self,
+            input_fn: str,
+            col_labels: List[str],
+            output_fn: str,
+            conv_factor: float,
+            show_plot: bool = False
+    ):
+        file_path = os.path.join(self.results_dir, f'{input_fn}.csv')
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
+        regression_results_df = pd.read_csv(file_path, index_col=0)
+        regression_results_df.iloc[:, :-self.meta_col_num] = regression_results_df.iloc[:, :-self.meta_col_num] * conv_factor    # Convert rates to mM/day
+        
+        # Group by and calculate mean/std
+        groupby_cols = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol']
+        drop_cols = ['Sample_type']
+        regression_results_mean = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
+        regression_results_var = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
+        mean_and_var = regression_results_mean.merge(regression_results_var, on=groupby_cols, suffixes=('_mean', '_var'))
+        mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
+        mean_and_var.to_csv(f"{self.results_dir}/{output_fn}_mean_var.csv", index=False)
+
+        # Function to create pivot table
+        def create_pivot_table(df, chl, column_name):
+            return df.query(f'Chloramphenicol == {chl}').pivot(
+                index='Nitrite_input', 
+                columns='Nitrate_input', 
+                values=column_name
+            ).sort_index(ascending=False).sort_index(axis=1, ascending=False)
+
+        for col_label in col_labels:
+            if col_label not in regression_results_mean.columns:
+                raise ValueError(f"Column {col_label} not found in regression results.")
+            pivot_table_mean = create_pivot_table(regression_results_mean, 0, col_label)
+            pivot_table_std = create_pivot_table(regression_results_var, 0, col_label).pow(0.5)
+            pivot_table_annot = pivot_table_mean.round(2).astype(str) + "\n±" + pivot_table_std.round(2).astype(str)
+
+            sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='binary')
+            plt.title(f'{col_label} ({id} CHL-)', fontsize=16)
+            plt.xlabel('Nitrate Input (mM)', fontsize=14)
+            plt.ylabel('Nitrite Input (mM)', fontsize=14)
+            plt.xticks(fontsize=12)
+            plt.yticks(fontsize=12)
+            plt.savefig(f'{self.plots_dir}/{output_fn}_{col_label}_heatmap.png', dpi=300, bbox_inches='tight')    
+            print(f'Saved {self.plots_dir}/{output_fn}_{col_label}_heatmap.png')
+            if show_plot:
+                plt.show()
+            plt.close()
+    
                 
         return self.regression_results
     
@@ -373,7 +433,7 @@ class PolynomialRegressor:
             input_fn: str,
             col_labels: List[str],
             output_fn: str,
-            conv_factor: float = 24.0,
+            conv_factor: float,
             show_plot: bool = False
     ):
         file_path = os.path.join(self.results_dir, f'{input_fn}.csv')
@@ -389,7 +449,7 @@ class PolynomialRegressor:
         regression_results_var = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
         mean_and_var = regression_results_mean.merge(regression_results_var, on=groupby_cols, suffixes=('_mean', '_var'))
         mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
-        mean_and_var.to_csv(f"{self.results_dir}/{output_fn}_polynomial_regression_mean_var.csv", index=False)
+        mean_and_var.to_csv(f"{self.results_dir}/{output_fn}_mean_var.csv", index=False)
 
         # Function to create pivot table
         def create_pivot_table(df, chl, column_name):
@@ -422,25 +482,32 @@ class PolynomialRegressor:
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[0:5]:
-        #time_threshold=20
-        # regressor = LinearRegressor(id)
+        time_threshold=20
+        regressor = LinearRegressor(id)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        # results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
-    
-        regressor = PolynomialRegressor(id)
-        #regressor.fit_for_row('F01', show_plot=True)
-        rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        masks = None
-        if id == '4.2.batch3':
-            masks = {'E12': [9], 'F08': [9], 'H09': [9], 'H10': [9]}
-        regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
-        # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
-        
-
+        results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
         regressor.heatmaps_for_selected_columns(
-            input_fn=f'{id}.chl0_polynomial_regression_results',
-            col_labels=['no2_second_coef', 'no3_second_coef'],
-            output_fn=f'{id}.chl0',
+            input_fn=f'{id}_linear_regression_results',
+            col_labels=['no2_rate', 'no3_rate'],
+            output_fn=f'{id}_linear_regression',
             conv_factor=1000,
             show_plot=False
         )
+    
+        # regressor = PolynomialRegressor(id)
+        # #regressor.fit_for_row('F01', show_plot=True)
+        # rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+        # masks = None
+        # if id == '4.2.batch3':
+        #     masks = {'E12': [9], 'F08': [9], 'H09': [9], 'H10': [9]}
+        # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
+        # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
+        
+
+        # regressor.heatmaps_for_selected_columns(
+        #     input_fn=f'{id}.chl0_polynomial_regression_results',
+        #     col_labels=['no2_second_coef', 'no3_second_coef'],
+        #     output_fn=f'{id}.chl0_polynomial_regression',
+        #     conv_factor=1000,
+        #     show_plot=False
+        # )
