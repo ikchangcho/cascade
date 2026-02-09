@@ -147,7 +147,8 @@ class LinearRegressor:
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         regression_results_df = pd.read_csv(file_path, index_col=0)
         regression_results_df.iloc[:, :-self.meta_col_num] = regression_results_df.iloc[:, :-self.meta_col_num] * conv_factor    # Convert rates to mM/day
-        
+        regression_results_df = regression_results_df[regression_results_df['Sample_type'].isnull()]
+
         # Group by and calculate mean/std
         groupby_cols = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol']
         drop_cols = ['Sample_type']
@@ -441,7 +442,8 @@ class PolynomialRegressor:
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         regression_results_df = pd.read_csv(file_path, index_col=0)
         regression_results_df.iloc[:, :-self.meta_col_num] = regression_results_df.iloc[:, :-self.meta_col_num] * conv_factor    # Convert rates to mM/day
-        
+        regression_results_df = regression_results_df[regression_results_df['Sample_type'].isnull()]
+
         # Group by and calculate mean/std
         groupby_cols = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol']
         drop_cols = ['Sample_type']
@@ -485,12 +487,12 @@ if __name__ == "__main__":
         time_threshold=20
         regressor = LinearRegressor(id)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
+        #results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
         regressor.heatmaps_for_selected_columns(
             input_fn=f'{id}_linear_regression_results',
             col_labels=['no2_rate', 'no3_rate'],
             output_fn=f'{id}_linear_regression',
-            conv_factor=1000,
+            conv_factor=24,
             show_plot=False
         )
     
