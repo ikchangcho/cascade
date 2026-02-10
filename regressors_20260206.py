@@ -156,7 +156,7 @@ class LinearRegressor:
         regression_results_mean = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
         regression_results_var = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
         mean_and_var = regression_results_mean.merge(regression_results_var, on=groupby_cols, suffixes=('_mean', '_var'))
-        mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
+        mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False)
         mean_and_var.to_csv(f"{self.results_dir}/{output_fn}_mean_var.csv", index=False)
 
         # Function to create pivot table

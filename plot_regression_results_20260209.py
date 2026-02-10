@@ -31,7 +31,7 @@ def plot_regression_results(x, y, std_plot, x_label, y_label, x_fn, key, chl, sh
         plt.show()
     if save_plot:
         plt.savefig(f'plots/4.2.chl{chl}_{key}_vs_{x_fn}.png', dpi=300)
-        print(f'Plot saved as plots/4.2.chl{chl}_{key}.png')
+        print(f'Plot saved as plots/4.2.chl{chl}_{key}_vs_{x_fn}.png')
     plt.close()
 
 datetime_array = [
@@ -50,7 +50,9 @@ water_contents = [98.9, 62.5, 34.4, 7.10, 5.16]
 # Load all batch data files
 number_of_batches = 5
 linear_regression_results_dfs = [pd.read_csv(f'fitting_results/4.2.batch{i}_linear_regression_mean_var.csv') for i in range(1, number_of_batches + 1)]
+linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in linear_regression_results_dfs]
 poly_regression_results_dfs = [pd.read_csv(f'fitting_results/4.2.batch{i}.chl0_polynomial_regression_mean_var.csv') for i in range(1, number_of_batches + 1)]
+poly_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in poly_regression_results_dfs]
 
 for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water content (%whc)', 'water_content']]:
     for key, y_label in [['no2_rate', 'NO2 reduction rate (mM/day)'], ['no3_rate', 'NO3 reduction rate (mM/day)']]:
