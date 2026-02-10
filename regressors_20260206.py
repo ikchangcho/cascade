@@ -430,6 +430,13 @@ class PolynomialRegressor:
             plt.close()
 
 
+    def mean_and_var_of_entire_data(
+            self,
+            input_fn: str,
+    ):
+        
+        return
+
     def heatmaps_for_selected_columns(
             self,
             input_fn: str,
@@ -454,6 +461,7 @@ class PolynomialRegressor:
         mean_and_var = regression_results_mean.merge(regression_results_var, on=groupby_cols, suffixes=('_mean', '_var'))
         mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
         mean_and_var.to_csv(f"{self.results_dir}/{output_fn}_mean_var.csv", index=False)
+        print(f"Mean and variance of regression results saved to {self.results_dir}/{output_fn}_mean_var.csv")
 
         # Function to create pivot table
         def create_pivot_table(df, chl, column_name):
@@ -485,22 +493,22 @@ class PolynomialRegressor:
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    for id in ids[0:5]:
-        time_threshold=20
-        chl=0
-        regressor = LinearRegressor(id)
-        # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        #results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
-        regressor.heatmaps_for_selcted_columns(
-            input_fn=f'{id}_linear_regression_results',
-            chl=chl,
-            col_labels=['no2_rate', 'no3_rate'],
-            output_fn=f'{id}.chl{chl}_linear_regression',
-            conv_factor=24,
-            show_plot=False
-        )
+    for id in ids[4:5]:
+        # time_threshold=20
+        # chl=0
+        # regressor = LinearRegressor(id)
+        # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        # #results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
+        # regressor.heatmaps_for_selcted_columns(
+        #     input_fn=f'{id}_linear_regression_results',
+        #     chl=chl,
+        #     col_labels=['no2_rate', 'no3_rate'],
+        #     output_fn=f'{id}.chl{chl}_linear_regression',
+        #     conv_factor=24,
+        #     show_plot=False
+        # )
     
-        # regressor = PolynomialRegressor(id)
+        regressor = PolynomialRegressor(id)
         # #regressor.fit_for_row('F01', show_plot=True)
         # rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
         # masks = None
@@ -510,10 +518,11 @@ if __name__ == "__main__":
         # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
         
 
-        # regressor.heatmaps_for_selected_columns(
-        #     input_fn=f'{id}.chl0_polynomial_regression_results',
-        #     col_labels=['no2_second_coef', 'no3_second_coef'],
-        #     output_fn=f'{id}.chl0_polynomial_regression',
-        #     conv_factor=1000,
-        #     show_plot=False
-        # )
+        regressor.heatmaps_for_selected_columns(
+            input_fn=f'{id}.chl0_polynomial_regression_results',
+            chl=0,
+            col_labels=['no2_second_coef', 'no3_second_coef'],
+            output_fn=f'{id}.chl0_polynomial_regression',
+            conv_factor=1,
+            show_plot=False
+        )
