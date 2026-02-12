@@ -18,12 +18,12 @@ class LinearRegressor:
     def __init__(
             self,
             id: str,
+            time_threshold,
             meta_col_num: int=4,
-            time_threshold: float=20.0,
             input_dir: str="concentrations",
             results_dir: str="fitting_results",
             plots_dir: str="plots",
-            conc: bool=True
+            use_conc_data: bool=True
     ):
         self.meta_col_num = meta_col_num
         self.time_threshold = time_threshold
@@ -31,7 +31,7 @@ class LinearRegressor:
         self.results_dir = results_dir
         self.plots_dir = plots_dir
         self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
-        if conc:
+        if use_conc_data:
             self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
             self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
         else:
@@ -46,7 +46,7 @@ class LinearRegressor:
             raise ValueError(f"NO3 data could not be loaded from {self.input_dir}/{id}_no3_conc.csv or is empty.")
         
         print(f"======Linear Regression on Exp {id} data======")
-        self.rows = self.no2_df.index.tolist()
+        self.row_labels = self.no2_df.index.tolist()
         self.time = self.no2_df.columns.values.astype(float)
         self.regression_results = {}
 
@@ -89,9 +89,9 @@ class LinearRegressor:
         no2_intercept = no2_fit.intercept_
         no3_slope = no3_fit.coef_[0]
         no3_intercept = no3_fit.intercept_
-        no2_rate = -no2_slope -no3_slope
-        no3_rate = -no3_slope
-        self.regression_results[row_label] = (no2_rate, no2_slope, no2_intercept, no3_rate, no3_slope, no3_intercept)
+        no2_init_rate = -no2_slope -no3_slope
+        no3_init_rate = -no3_slope
+        self.regression_results[row_label] = (no2_init_rate, no2_slope, no2_intercept, no3_init_rate, no3_slope, no3_intercept)
 
         print(f"Row {row_label} | NO2: ({no2_slope:.3g}, {no2_intercept:.3g}), NO3: ({no3_slope:.3g}, {no3_intercept:.3g}) | Fit on {column_indices}")
     
@@ -111,37 +111,82 @@ class LinearRegressor:
             plt.legend()
             plt.show()
         
-        return (no2_rate, no2_slope, no2_intercept, no3_rate, no3_slope, no3_intercept)
+        return (no2_init_rate, no2_slope, no2_intercept, no3_init_rate, no3_slope, no3_intercept)
     
     def fit_entire_data(
             self,
-            conc_threshold: float = 0.001,
-            filename: Optional[str] = None
+            output_fn: Optional[str] = None,
+            conc_threshold: float = 0.1            
     ):                
         self.regression_results = {}
-        for row_label in self.rows:
+        for row_label in self.row_labels:
             no3_values = self.no3_df.loc[row_label].values.astype(float)
-            indices_no3_below_threshold = np.where(no3_values <= conc_threshold)[0]
-            index_no3_become_zero = indices_no3_below_threshold[0] if len(indices_no3_below_threshold) > 0 else len(no3_values) - 1
-            max_time_no3_nonzero = min(self.time[index_no3_become_zero], self.time_threshold) if index_no3_become_zero > 0 else self.time_threshold
-            column_indices = np.where(self.time <= max_time_no3_nonzero)[0].tolist()
+            if no3_values[0] > 0.3:
+                indices_no3_below_threshold = np.where(no3_values <= conc_threshold)[0]
+                index_no3_become_zero = indices_no3_below_threshold[0] if len(indices_no3_below_threshold) > 0 else len(no3_values) - 1
+                max_time_no3_nonzero = min(self.time[index_no3_become_zero], self.time_threshold) if index_no3_become_zero > 0 else self.time_threshold
+                column_indices = np.where(self.time <= max_time_no3_nonzero)[0].tolist()
+            else:
+                no2_values = self.no2_df.loc[row_label].values.astype(float)
+                indices_no2_below_threshold = np.where(no2_values <= conc_threshold)[0]
+                index_no2_become_zero = indices_no2_below_threshold[0] if len(indices_no2_below_threshold) > 0 else len(no2_values) - 1
+                max_time_no2_nonzero = min(self.time[index_no2_become_zero], self.time_threshold) if index_no2_become_zero > 0 else self.time_threshold
+                column_indices = np.where(self.time <= max_time_no2_nonzero)[0].tolist()
             self.fit_for_row(row_label, column_indices)
                 
-        if filename is not None:
-            output_path = os.path.join(self.results_dir, filename)
+        if output_fn is not None:
             regression_results_df = pd.DataFrame.from_dict(
                 self.regression_results, 
                 orient='index', 
                 columns=['no2_initial_rate', 'no2_slope', 'no2_intercept', 'no3_initial_rate', 'no3_slope', 'no3_intercept']
             )
             regression_results_df = regression_results_df.join(self.meta_df.loc[regression_results_df.index])
-            regression_results_df.to_csv(output_path)
-            print(f"Linear regression results saved to {output_path}")
+            regression_results_df.to_csv(f'{self.results_dir}/{output_fn}_linear_regression_results.csv')
+            print(f"Linear regression results saved to {self.results_dir}/{output_fn}_linear_regression_results.csv")
 
         return self.regression_results
 
     
-    def plot_selected_rows():
+    def plot_entire_data(
+            self,
+            title: str,
+            output_fn: str,
+            show_plot: bool = False
+    ):
+        num_rpl = 3
+        num_col = 4
+        num_row = int(np.ceil(len(self.row_labels) / num_col / num_rpl))
+        fig, axes = plt.subplots(num_row, num_col, figsize=(1.5*num_row, 6*num_col))
+        axes = axes.flatten()
+        
+        time = self.time.flatten()
+        time_array = np.linspace(np.min(time), np.max(time), 100)
+        
+        excluded_rows = ['A01', 'A02', 'A03', 'E01', 'E02', 'E03']
+        all_values = pd.concat([self.no2_df.drop(excluded_rows, errors='ignore'), self.no3_df.drop(excluded_rows, errors='ignore')])
+        y_min = all_values.min().min()
+        y_max = all_values.max().max()
+
+        for i, row in enumerate(self.row_labels):
+            ax = axes[i // num_rpl]
+            marker_styles = ['o', 's', '^']
+            marker = marker_styles[i % num_rpl]
+            ax.scatter(time, self.no2_df.loc[row], color='r', marker=marker)
+            ax.scatter(time, self.no3_df.loc[row], color='b', marker=marker)
+            
+            no2_init_rate, no2_slope, no2_intercept, no3_init_rate, no3_slope, no3_intercept = self.regression_results[row]
+            ax.plot(time_array, no2_slope * time_array + no2_intercept, 'r-')
+            ax.plot(time_array, no3_slope * time_array + no3_intercept, 'b-')
+            ax.set_ylim(y_min, y_max)
+        handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
+                    plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
+        fig.legend(handles=handles, loc='upper right', fontsize=20)
+        fig.suptitle(f'{title}\nLinear Regression on Early Time Points', fontsize=30, fontweight='bold')
+        plt.savefig(f'{self.plots_dir}/{output_fn}_linear_regression.png', dpi=300, bbox_inches='tight')
+        print(f'Saved {self.plots_dir}/{output_fn}_linear_regression.png')
+        if show_plot:
+            plt.show()
+        plt.close()
 
         return
 
@@ -377,8 +422,8 @@ class PolynomialRegressor:
             fig.legend(handles=handles, loc='upper right', fontsize=20)
             fig.suptitle(f'{id}, CHL-\nPolynomial Regression', fontsize=30, fontweight='bold')
 
-            plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
-            print(f'Saved plots/{output_fn}.png')
+            plt.savefig(f'plots/{output_fn}_polynomial_regression.png', dpi=300, bbox_inches='tight')
+            print(f'Saved plots/{output_fn}_polynomial_regression.png')
             if show_plot:
                 plt.show()
             plt.close()
@@ -439,19 +484,15 @@ def heatmap_for_col(
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[0:5]:
-        # time_threshold=20
-        # chl=0
-        # regressor = LinearRegressor(id)
-        # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        # #results = regressor.fit_for_entire_data(time_threshold, filename=f'{id}_linear_regression_results.csv')
-        # regressor.heatmaps_for_selcted_columns(
-        #     input_fn=f'{id}_linear_regression_results',
-        #     chl=chl,
-        #     col_labels=['no2_rate', 'no3_rate'],
-        #     output_fn=f'{id}.chl{chl}_linear_regression',
-        #     conv_factor=24,
-        #     show_plot=False
-        # )
+        time_threshold=40
+        regressor = LinearRegressor(id, time_threshold)
+        # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        regressor.fit_entire_data(output_fn=f'{id}_conc')
+        regressor.plot_entire_data(
+            title=f'{id} concentration',
+            output_fn=f'{id}_conc',
+            show_plot=False
+        )
     
         # regressor = PolynomialRegressor(id)
         # #regressor.fit_for_row('F01', show_plot=True)
@@ -460,21 +501,22 @@ if __name__ == "__main__":
         # if id == '4.2.batch3':
         #     masks = {'E12': [9], 'F08': [9], 'H09': [9], 'H10': [9]}
         # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
-        # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
+        # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0')
 
-        input_fn = f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv'
-        chl = 0
-        for col_label in ['no2_second_coef', 'no2_first_coef', 'no2_rate_first_half', 'no2_rate_second_half', 'no3_second_coef', 'no3_first_coef', 'no3_rate_first_half', 'no3_rate_second_half']:
-            if col_label in ['no2_second_coef', 'no3_second_coef']:
-                conv_factor = 1000
-            else:
-                conv_factor = 24
-            heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
-                output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+        # # Create heatmaps
+        # input_fn = f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv'
+        # chl = 0
+        # for col_label in ['no2_second_coef', 'no2_first_coef', 'no2_rate_first_half', 'no2_rate_second_half', 'no3_second_coef', 'no3_first_coef', 'no3_rate_first_half', 'no3_rate_second_half']:
+        #     if col_label in ['no2_second_coef', 'no3_second_coef']:
+        #         conv_factor = 1000
+        #     else:
+        #         conv_factor = 24
+        #     heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+        #         output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
         
-        input_fn = f'fitting_results/{id}_linear_regression_results_mean_var.csv'
-        conv_factor=24
-        for col_label in ['no2_rate', 'no3_rate']:
-            for chl in [0, 1]:
-                heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
-                    output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+        # input_fn = f'fitting_results/{id}_linear_regression_results_mean_var.csv'
+        # conv_factor=24
+        # for col_label in ['no2_rate', 'no3_rate']:
+        #     for chl in [0, 1]:
+        #         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+        #             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
