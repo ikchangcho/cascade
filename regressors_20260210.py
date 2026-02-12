@@ -409,7 +409,7 @@ def heatmap_for_col(
         y_axis: str = 'Nitrite_input',
         show_plot: bool = False
         ):
-    regression_results_df = pd.read_csv(input_fn, index_col=0)
+    regression_results_df = pd.read_csv(input_fn)
 
     # Function to create pivot table
     def create_pivot_table(df, chl, col_label, conv_factor, suffix):
@@ -423,8 +423,8 @@ def heatmap_for_col(
     pivot_table_std = create_pivot_table(regression_results_df, chl, col_label, conv_factor, suffix='var').pow(0.5)
     pivot_table_annot = pivot_table_mean.round(2).astype(str) + "\n±" + pivot_table_std.round(2).astype(str)
 
-    sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='binary')
-    plt.title(f'{output_fn}', fontsize=16)
+    sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='PiYG')
+    plt.title(f'{output_fn} x {conv_factor}', fontsize=16)
     plt.xlabel('Nitrate Input (mM)', fontsize=14)
     plt.ylabel('Nitrite Input (mM)', fontsize=14)
     plt.xticks(fontsize=12)
@@ -462,15 +462,19 @@ if __name__ == "__main__":
         # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
         # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0_polynomial_regression_plots')
 
+        input_fn = f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv'
+        chl = 0
+        for col_label in ['no2_second_coef', 'no2_first_coef', 'no2_rate_first_half', 'no2_rate_second_half', 'no3_second_coef', 'no3_first_coef', 'no3_rate_first_half', 'no3_rate_second_half']:
+            if col_label in ['no2_second_coef', 'no3_second_coef']:
+                conv_factor = 1000
+            else:
+                conv_factor = 24
+            heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+                output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+        
         input_fn = f'fitting_results/{id}_linear_regression_results_mean_var.csv'
+        conv_factor=24
         for col_label in ['no2_rate', 'no3_rate']:
-            col_label = col_label  # Ensure col_label is passed as a single string
             for chl in [0, 1]:
-                heatmap_for_col(
-                    input_fn=input_fn,
-                    chl=0,
-                    col_label=col_label,
-                    conv_factor=24,
-                    output_fn=f'{id}.chl{chl}_{col_label}',
-                    show_plot=True
-                )
+                heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+                    output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
