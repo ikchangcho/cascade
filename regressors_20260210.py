@@ -138,7 +138,7 @@ class LinearRegressor:
             regression_results_df = pd.DataFrame.from_dict(
                 self.regression_results, 
                 orient='index', 
-                columns=['no2_initial_rate', 'no2_slope', 'no2_intercept', 'no3_initial_rate', 'no3_slope', 'no3_intercept']
+                columns=['no2_init_rate', 'no2_slope', 'no2_intercept', 'no3_init_rate', 'no3_slope', 'no3_intercept']
             )
             regression_results_df = regression_results_df.join(self.meta_df.loc[regression_results_df.index])
             regression_results_df.to_csv(f'{self.results_dir}/{output_fn}_linear_regression_results.csv')
@@ -484,15 +484,14 @@ def heatmap_for_col(
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[0:5]:
-        time_threshold=40
-        regressor = LinearRegressor(id, time_threshold)
+        regressor = LinearRegressor(id, time_threshold=40)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
         regressor.fit_entire_data(output_fn=f'{id}_conc')
-        regressor.plot_entire_data(
-            title=f'{id} concentration',
-            output_fn=f'{id}_conc',
-            show_plot=False
-        )
+        # regressor.plot_entire_data(
+        #     title=f'{id} concentration',
+        #     output_fn=f'{id}_conc',
+        #     show_plot=False
+        # )
     
         # regressor = PolynomialRegressor(id)
         # #regressor.fit_for_row('F01', show_plot=True)
@@ -502,6 +501,9 @@ if __name__ == "__main__":
         #     masks = {'E12': [9], 'F08': [9], 'H09': [9], 'H10': [9]}
         # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
         # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0')
+
+        # Create mean and variance file
+        calculate_mean_and_var(filepath=f'fitting_results/{id}_conc_linear_regression_results')
 
         # # Create heatmaps
         # input_fn = f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv'
@@ -514,9 +516,9 @@ if __name__ == "__main__":
         #     heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
         #         output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
         
-        # input_fn = f'fitting_results/{id}_linear_regression_results_mean_var.csv'
-        # conv_factor=24
-        # for col_label in ['no2_rate', 'no3_rate']:
-        #     for chl in [0, 1]:
-        #         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
-        #             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+        input_fn = f'fitting_results/{id}_conc_linear_regression_results_mean_var.csv'
+        conv_factor=24
+        for col_label in ['no2_init_rate', 'no3_init_rate']:
+            for chl in [0, 1]:
+                heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+                    output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
