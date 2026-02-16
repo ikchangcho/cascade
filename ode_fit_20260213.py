@@ -4,6 +4,7 @@ from scipy.integrate import solve_ivp
 from scipy.integrate import odeint
 from scipy.optimize import minimize
 from typing import Callable, Dict, List, Tuple
+import matplotlib.pyplot as plt
 
 class ODEfitter:
     """
@@ -15,10 +16,15 @@ class ODEfitter:
             id: str, 
             model: Callable,
             input_dir: str = 'concentrations',
+            result_dir: str = 'fitting_results',
+            plot_dir: str = 'plots',
             meta_col_num: int = 4,
             use_conc_data: bool = True,
     ):
         self.model = model
+        self.input_dir = input_dir
+        self.result_dir = result_dir
+        self.plot_dir = plot_dir
         self.meta_df = pd.read_csv(f'{input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, -meta_col_num:]
         if use_conc_data:
             self.no2_df = pd.read_csv(f'{input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
@@ -42,6 +48,18 @@ class ODEfitter:
                         t_eval=self.time, args=(params,), 
                         method='BDF', rtol=1e-6)        # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
         return sol.y.T
+
+    def _solve_ode_for_plot(
+            self,
+            params,
+            init_cond
+    ):
+        t_span = (self.time[0], self.time[-1])
+        t_eval = np.linspace(self.time[0], self.time[-1], 100)
+        sol = solve_ivp(self.model, t_span, init_cond, 
+                        t_eval=t_eval, args=(params,), 
+                        method='BDF', rtol=1e-6)        # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
+        return sol.t, sol.y.T
     
     def _residual(
             self,
@@ -64,7 +82,9 @@ class ODEfitter:
             self,
             row_labels: List[str],
             initial_guess: Dict[str, float],
-            bounds: List[Tuple[float, float]]
+            bounds: List[Tuple[float, float]],
+            result_fn: str = None,
+            plot_fn: str = None
     ):
         def objective(param_values):
             # Convert array back to dictionary
@@ -72,18 +92,45 @@ class ODEfitter:
             
             total_error = 0
             for row_label in row_labels:
-                init_cond = [
-                    1.0, 
-                    self.no3_init_df.loc[row_label], 
-                    self.no2_init_df.loc[row_label], 
-                    1.0]
+                init_cond = [1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0]
                 residual_no2, residual_no3 = self._residual(row_label, params, init_cond)
                 total_error += np.sum(residual_no2**2) + np.sum(residual_no3**2)
             
             return total_error
 
         result = minimize(objective, list(initial_guess.values()), method='Nelder-Mead', bounds=bounds)
+        # Print optimization progress
+        print(f"Optimization completed. Success: {result.success}")
+        print(f"Number of iterations: {result.nit}")
+        print(f"Final objective value: {result.fun}")
+
+
         optimized_params = dict(zip(initial_guess.keys(), result.x))
+        
+        if result_fn is not None:
+            optimized_params_df = pd.DataFrame([optimized_params])
+            optimized_params_df.to_csv(f'{self.result_dir}/{id}_{result_fn}.csv', index=False)
+            print(f'Saved optimized parameters to {self.result_dir}/{id}_{result_fn}.csv')
+
+        if plot_fn is not None:
+            for row_label in row_labels:
+                time = self.time
+                no2 = self.no2_df.loc[row_label].values
+                no3 = self.no3_df.loc[row_label].values
+
+                init_cond = [1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0]
+                t, y = self._solve_ode_for_plot(optimized_params, init_cond)
+                plt.figure(figsize=(10, 5))
+                plt.plot(t, y[:, 2], label='Fitted NO2', color='red')
+                plt.plot(t, y[:, 3], label='Fitted NO3', color='blue')
+                plt.scatter(time, no2, label='Data NO2', color='red')
+                plt.scatter(time, no3, label='Data NO3', color='blue')
+                plt.title(f'Model Fit for {row_label}')
+                plt.xlabel('Time (hours)')
+                plt.ylabel('Concentration (mM)')
+                plt.legend()
+                plt.savefig(f'{self.plot_dir}/{id}.{row_label}_{plot_fn}.png')
+                print(f'Saved {self.plot_dir}/{id}.{row_label}_{plot_fn}.png')
 
         return optimized_params
 
@@ -132,5 +179,9 @@ if __name__ == "__main__":
         (0.0, 1.0),  # K_C
     ]
     row_labels = ['A04', 'A05', 'A06']  # Example row labels to fit
-    optimized_params = fitter.fit_for_selected_rows(row_labels, initial_guess, bounds)
-    print(optimized_params)
+    optimized_params = fitter.fit_for_selected_rows(
+        row_labels, 
+        initial_guess, 
+        bounds,
+        result_fn=None,
+        plot_fn='model1_fit')
