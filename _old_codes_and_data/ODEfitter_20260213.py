@@ -160,10 +160,6 @@ def model1(t, y, params):
 if __name__ == "__main__":
     id = '4.2.batch1'
     fitter = ODEfitter(id, model1)
-
-    
-
-
     initial_guess = {
         'gamma': 1e-2,
         'r_A': 0.5,
@@ -173,18 +169,6 @@ if __name__ == "__main__":
         'K_I': 0.1,
         'K_C': 0.1
     }
-
-        # Note: Using lmfit.Parameters would require refactoring the code.
-        # The current implementation uses scipy.optimize.minimize which expects:
-        # 1. initial_guess as a dict with parameter names and values
-        # 2. bounds as a list of tuples
-        # 
-        # If you want to use lmfit.Parameters, you would need to:
-        # - Import from lmfit import Parameters, minimize as lmfit_minimize
-        # - Replace scipy's minimize with lmfit's minimize
-        # - Modify the objective function to work with lmfit's parameter object
-        # 
-        # Current code structure is not compatible with lmfit.Parameters without modifications.
     bounds = [
         (0.0, 1.0),  # gamma
         (0.0, 10.0),  # r_A
