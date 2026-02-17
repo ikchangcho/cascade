@@ -11,12 +11,16 @@ class ODEfitter:
             self,
             id: str, 
             model: Callable,
+            no3_index: int,
+            no2_index: int,
             input_dir: str = 'concentrations',
             result_dir: str = 'fitting_results',
             plot_dir: str = 'plots',
             meta_col_num: int = 4,
     ):
         self.model = model
+        self.no3_index = no3_index
+        self.no2_index = no2_index
         self.input_dir = input_dir
         self.result_dir = result_dir
         self.plot_dir = plot_dir
@@ -64,8 +68,6 @@ class ODEfitter:
             row_label,
             params,
             init_cond,
-            no3_index = 1,
-            no2_index = 2
     ):
         no2_conc = self.no2_conc_df.loc[row_label].values
         no3_conc = self.no3_conc_df.loc[row_label].values
@@ -75,8 +77,8 @@ class ODEfitter:
             sol = np.vstack([sol, padding])
             print(f"    Warning: ODE solver returned fewer time points than expected. Appending last solution value to match the length of time points.")
         
-        residual_no2 = sol[:, no2_index] - no2_conc
-        residual_no3 = sol[:, no3_index] - no3_conc
+        residual_no2 = sol[:, self.no2_index] - no2_conc
+        residual_no3 = sol[:, self.no3_index] - no3_conc
         
         return residual_no2, residual_no3
     
@@ -85,11 +87,11 @@ class ODEfitter:
             row_labels: List[str],
             params: Parameters,
             skip_fine_tuning: bool = False,
-            result_fn: str = None,
-            plot_fn: str = None,
+            result_fn: str = '',
+            plot_fn: str = '',
             show_plot: bool = False,
-            no3_index: int = 1,
-            no2_index: int = 2
+            num_rpl: int = 1,
+            num_col: int = 3
     ):
         def _residuals(params):
             max_eval = 1000
@@ -99,7 +101,12 @@ class ODEfitter:
 
             residuals = []
             for row_label in row_labels:
-                init_cond = [1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0]
+                if self.model == model1:
+                    init_cond = np.array([1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
+                if self.model == model2:
+                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
+                if self.model == model3:
+                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label]])
                 residual_no2, residual_no3 = self._residual(row_label, params, init_cond)
                 residuals.extend(residual_no2)
                 residuals.extend(residual_no3)
@@ -126,16 +133,14 @@ class ODEfitter:
         print(f"Fitting result for {row_labels}:")
         print(best_result.params.pretty_print())
         
-        if result_fn is not None:
+        if result_fn != '':
             result_dict = {name: param.value for name, param in best_result.params.items()}
-            pd.Series(result_dict).to_csv(f'{self.result_dir}/{id}_{result_fn}.csv')
-            print(f'Saved {self.result_dir}/{id}_{result_fn}.csv')
+            pd.Series(result_dict).to_csv(f'{self.result_dir}/{id}{result_fn}.csv')
+            print(f'Saved {self.result_dir}/{id}{result_fn}.csv')
 
-        if plot_fn is not None or show_plot:
-            num_rpl = 1
-            num_col = 3 
+        if plot_fn != '' or show_plot:
             num_row = int(np.ceil(len(row_labels) / num_col / num_rpl))
-            fig, axes = plt.subplots(num_row, num_col)
+            fig, axes = plt.subplots(num_row, num_col, squeeze=False)
             axes = axes.flatten()
 
             for i, row_label in enumerate(row_labels):
@@ -146,10 +151,16 @@ class ODEfitter:
                 ax.scatter(time, no2_cons, color='red')
                 ax.scatter(time, no3_cons, color='blue')
 
-                init_cond = [1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0]
+                
+                if self.model == model1:
+                    init_cond = np.array([1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
+                if self.model == model2:
+                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
+                if self.model == model3:
+                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label]])
                 t, y = self._solve_ode_for_plot(best_result.params, init_cond)
-                no3_cons_fit = y[0, no3_index] - y[:, no3_index]
-                no2_cons_fit = y[0, no2_index] - y[:, no2_index] + no3_cons_fit
+                no3_cons_fit = y[0, self.no3_index] - y[:, self.no3_index]
+                no2_cons_fit = y[0, self.no2_index] - y[:, self.no2_index] + no3_cons_fit
                 ax.plot(t, no3_cons_fit, color='blue')
                 ax.plot(t, no2_cons_fit, color='red')
             handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
@@ -157,9 +168,9 @@ class ODEfitter:
             fig.legend(handles=handles, loc='upper right')
             fig.suptitle(f'Model Fit for {row_labels}')
             fig.tight_layout()
-            if plot_fn is not None:
-                plt.savefig(f'{self.plot_dir}/{id}_{plot_fn}.png', dpi=300)
-                print(f'Saved {self.plot_dir}/{id}_{plot_fn}.png')
+            if plot_fn != '':
+                plt.savefig(f'{self.plot_dir}/{id}{plot_fn}.png', dpi=300)
+                print(f'Saved {self.plot_dir}/{id}{plot_fn}.png')
             if show_plot:
                 plt.show()
 
@@ -187,44 +198,89 @@ def model1(t, y, params):
     
     return [dXdt,dAdt,dIdt,dCdt]
 
+def model2(t, y, params):
+    X_A, X_I, A, I, C = y
+    gamma_A = params['gamma_A'].value
+    gamma_I = params['gamma_I'].value
+    r_A = params['r_A'].value
+    r_I = params['r_I'].value
+    r_C = params['r_C'].value
+    K_A = params['K_A'].value
+    K_I = params['K_I'].value
+    K_C = params['K_C'].value
+
+    monod_AC = A / (K_A + A) * C / (K_C + C)
+    monod_IC = I / (K_I + I) * C / (K_C + C)
+
+    dX_Adt = monod_AC * gamma_A * X_A
+    dX_Idt = monod_IC * gamma_I * X_I
+    dAdt = -monod_AC * r_A * X_A
+    dIdt = -monod_IC * r_I * X_I + monod_AC * r_A * X_A
+    dCdt = -(monod_AC * r_C * X_A + monod_IC * r_C * X_I)
+
+    return [dX_Adt, dX_Idt, dAdt, dIdt, dCdt]
+
+def model3(t, y, params):
+    X_A, X_I, A, I = y
+    gamma_A = params['gamma_A'].value
+    gamma_I = params['gamma_I'].value
+    r_A = params['r_A'].value
+    r_I = params['r_I'].value
+    K_A = params['K_A'].value
+    K_I = params['K_I'].value
+
+    monod_A = A / (K_A + A)
+    monod_I = I / (K_I + I)
+
+    dX_Adt = monod_A * gamma_A * X_A
+    dX_Idt = monod_I * gamma_I * X_I
+    dAdt = -monod_A * r_A * X_A
+    dIdt = -monod_I * r_I * X_I + monod_A * r_A * X_A
+
+    return [dX_Adt, dX_Idt, dAdt, dIdt]
 
 if __name__ == "__main__":
-    id = '4.2.batch1'
-    fitter = ODEfitter(id, model1)
-    
-    params_chl1 = Parameters()
-    params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
-    params_chl1.add('r_A', value=1e-2, min=0.02, max=0.05, brute_step=0.05)
-    params_chl1.add('r_I', value=1e-2, min=0.02, max=0.05, brute_step=0.05)
-    params_chl1.add('r_C', value=1e-2, min=0.02, max=0.05, brute_step=0.05)
-    params_chl1.add('K_A', value=0.1, min=1e-3, max=0.5, vary=False)
-    params_chl1.add('K_I', value=0.1, min=1e-3, max=0.5, brute_step=0.2)
-    params_chl1.add('K_C', value=0.1, min=1e-3, max=0.5, vary=False)
+    ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
+    for id in ids[:]:
+        fitter = ODEfitter(id, model3, no3_index=2, no2_index=3)
+        
+        params_chl1 = Parameters()
+        params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
+        params_chl1.add('gamma_A', value=0.0, min=0.0, max=1.0, vary=False)
+        params_chl1.add('gamma_I', value=0.0, min=0.0, max=1.0, vary=False)
+        params_chl1.add('r_A', value=1e-2, min=0.0, max=0.10, brute_step=0.02)
+        params_chl1.add('r_I', value=1e-2, min=0.0, max=0.10, brute_step=0.02)
+        params_chl1.add('r_C', value=1e-2, min=0.0, max=0.05, vary=False)
+        params_chl1.add('K_A', value=0.1, min=1e-3, max=1.0, vary=False)
+        params_chl1.add('K_I', value=0.1, min=1e-3, max=1.0, vary=False)
+        params_chl1.add('K_C', value=0.1, min=1e-3, max=1.0, vary=False)
 
-    row_labels_chl1 = ['A04', 'A05', 'A06', 'B07', 'B08', 'B09', 'C10', 'C11', 'C12']  
-    fitting_result_chl1 = fitter.fit_for_selected_rows(
-        row_labels_chl1, 
-        params_chl1,
-        skip_fine_tuning=False,
-        result_fn=None,
-        plot_fn='global_fit_fails_in_chl1',
-        show_plot=False)
+        row_labels_chl1 = ['A04', 'A05', 'A06']
+        print(f'Fitting for {id} {row_labels_chl1}:')
+        fitting_result_chl1 = fitter.fit_for_selected_rows(
+            row_labels_chl1, 
+            params_chl1,
+            skip_fine_tuning=True,
+            result_fn='',
+            plot_fn='',
+            show_plot=True)
+            
+        # params_chl0 = Parameters()
+        # params_chl0.add('gamma', value=0.1, min=0.0, max=1.0, vary=False)
+        # params_chl0.add('gamma_A', value=0.1, min=0.0, max=0.2, brute_step=0.05)
+        # params_chl0.add('gamma_I', value=0.1, min=0.0, max=0.2, brute_step=0.05)
+        # params_chl0.add('r_A', value=fitting_result_chl1['r_A'].value, min=1e-3, max=10.0, vary=False)
+        # params_chl0.add('r_I', value=fitting_result_chl1['r_I'].value, min=1e-3, max=10.0, vary=False)
+        # params_chl0.add('r_C', value=fitting_result_chl1['r_C'].value, min=1e-3, max=10.0, vary=False)
+        # params_chl0.add('K_A', value=0.1, min=1e-3, max=1.0, vary=False)
+        # params_chl0.add('K_I', value=fitting_result_chl1['K_I'], min=1e-3, max=1.0, vary=False)
+        # params_chl0.add('K_C', value=0.1, min=1e-3, max=1.0, vary=False)
 
-    params_chl0 = Parameters()
-    params_chl0.add('gamma', value=1e-2, min=0.0, max=1.0)
-    params_chl0.add('r_A', value=0.5, min=1e-3, max=10.0)
-    params_chl0.add('r_A', value=fitting_result_chl1['r_A'].value, min=1e-3, max=10.0, vary=False)
-    params_chl0.add('r_I', value=fitting_result_chl1['r_I'].value, min=1e-3, max=10.0, vary=False)
-    params_chl0.add('r_C', value=fitting_result_chl1['r_C'].value, min=1e-3, max=10.0, vary=False)
-    params_chl0.add('K_A', value=0.1, min=1e-3, max=1.0)
-    params_chl0.add('K_I', value=0.1, min=1e-3, max=1.0)
-    params_chl0.add('K_C', value=0.1, min=1e-3, max=1.0)
-
-    row_labels_chl0 = ['E04', 'E05', 'E06', 'F07', 'F08', 'F09', 'G10', 'G11', 'G12']
-    fitting_result_chl0 = fitter.fit_for_selected_rows(
-        row_labels_chl0, 
-        params_chl0,
-        skip_fine_tuning=True,
-        result_fn=None,
-        plot_fn=None,
-        show_plot=True)
+        # row_labels_chl0 = ['E04', 'E05', 'E06']
+        # fitting_result_chl0 = fitter.fit_for_selected_rows(
+        #     row_labels_chl0, 
+        #     params_chl0,
+        #     skip_fine_tuning=False,
+        #     result_fn='',
+        #     plot_fn='',
+        #     show_plot=True)
