@@ -84,6 +84,7 @@ class ODEfitter:
             self,
             row_labels: List[str],
             params: Parameters,
+            skip_fine_tuning: bool = False,
             result_fn: str = None,
             plot_fn: str = None,
             show_plot: bool = False,
@@ -93,7 +94,7 @@ class ODEfitter:
         def _residuals(params):
             max_eval = 1000
             _residuals.call_count += 1
-            if _residuals.call_count % 20 == 0:
+            if _residuals.call_count % 100 == 0:
                 print(f"Residuals function called {_residuals.call_count} times")
 
             residuals = []
@@ -108,21 +109,25 @@ class ODEfitter:
         print(f'=====Brute fitting started=====')
         _residuals.call_count = 0
         results_brute = optimizer.minimize(method='brute')
-
         best_result = copy.deepcopy(results_brute)
-        num_iterations = 1
-        for candidate in results_brute.candidates:
-            print(f'=====Searching candidates {num_iterations}=====')
-            _residuals.call_count = 0
-            trial = optimizer.minimize(method='leastsq', params=candidate.params)
-            if trial.chisqr < best_result.chisqr:
-                best_result = trial
-            num_iterations += 1
+
+        if not skip_fine_tuning:
+            num_iterations = 1
+            for candidate in results_brute.candidates:
+                print(f'=====Searching candidates {num_iterations}=====')
+                _residuals.call_count = 0
+                trial = optimizer.minimize(method='leastsq', params=candidate.params)
+                if _residuals.call_count > 1000:
+                    print(f"    Iteration limit reached ({_residuals.call_count} calls), skipping to next candidate")
+                    continue
+                if trial.chisqr < best_result.chisqr:
+                    best_result = trial
+                num_iterations += 1
         print(f"Fitting result for {row_labels}:")
         print(best_result.params.pretty_print())
         
         if result_fn is not None:
-            result_dict = {name: param.value for name, param in fitting_result.params.items()}
+            result_dict = {name: param.value for name, param in best_result.params.items()}
             pd.Series(result_dict).to_csv(f'{self.result_dir}/{id}_{result_fn}.csv')
             print(f'Saved {self.result_dir}/{id}_{result_fn}.csv')
 
@@ -153,7 +158,7 @@ class ODEfitter:
             fig.suptitle(f'Model Fit for {row_labels}')
             fig.tight_layout()
             if plot_fn is not None:
-                plt.savefig(f'{self.plot_dir}/{id}_{plot_fn}.png')
+                plt.savefig(f'{self.plot_dir}/{id}_{plot_fn}.png', dpi=300)
                 print(f'Saved {self.plot_dir}/{id}_{plot_fn}.png')
             if show_plot:
                 plt.show()
@@ -189,20 +194,21 @@ if __name__ == "__main__":
     
     params_chl1 = Parameters()
     params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
-    params_chl1.add('r_A', value=1e-2, min=1e-3, max=0.1)
-    params_chl1.add('r_I', value=1e-2, min=1e-3, max=0.1)
-    params_chl1.add('r_C', value=1e-2, min=1e-3, max=0.1)
-    params_chl1.add('K_A', value=1e-3, min=1e-3, max=1.0, vary=False)
-    params_chl1.add('K_I', value=0.1, min=1e-3, max=1.0, brute_step=0.5)
-    params_chl1.add('K_C', value=1e-3, min=1e-3, max=1.0, vary=False)
+    params_chl1.add('r_A', value=1e-2, min=0.02, max=0.05, brute_step=0.05)
+    params_chl1.add('r_I', value=1e-2, min=0.02, max=0.05, brute_step=0.05)
+    params_chl1.add('r_C', value=1e-2, min=0.02, max=0.05, brute_step=0.05)
+    params_chl1.add('K_A', value=0.1, min=1e-3, max=0.5, vary=False)
+    params_chl1.add('K_I', value=0.1, min=1e-3, max=0.5, brute_step=0.2)
+    params_chl1.add('K_C', value=0.1, min=1e-3, max=0.5, vary=False)
 
     row_labels_chl1 = ['A04', 'A05', 'A06', 'B07', 'B08', 'B09', 'C10', 'C11', 'C12']  
     fitting_result_chl1 = fitter.fit_for_selected_rows(
         row_labels_chl1, 
         params_chl1,
+        skip_fine_tuning=False,
         result_fn=None,
-        plot_fn=None,
-        show_plot=True)
+        plot_fn='global_fit_fails_in_chl1',
+        show_plot=False)
 
     params_chl0 = Parameters()
     params_chl0.add('gamma', value=1e-2, min=0.0, max=1.0)
@@ -218,6 +224,7 @@ if __name__ == "__main__":
     fitting_result_chl0 = fitter.fit_for_selected_rows(
         row_labels_chl0, 
         params_chl0,
+        skip_fine_tuning=True,
         result_fn=None,
         plot_fn=None,
         show_plot=True)
