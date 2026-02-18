@@ -239,8 +239,9 @@ def model3(t, y, params):
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    global_fit = False
-    for id in ids[0:1]:
+    global_fit = True
+    test = False
+    for id in ids[:]:
         fitter = ODEfitter(id, model3, no3_index=2, no2_index=3)
         
         if global_fit:      # Global Fitting
@@ -260,28 +261,28 @@ if __name__ == "__main__":
             params_chl1_df = fitter.fit_for_selected_rows(
                 row_labels_chl1, 
                 params_chl1,
-                skip_fine_tuning=True,
+                skip_fine_tuning=test,
                 result_fn='.chl1_model3_four_cond',
                 plot_fn='.chl1_model3_four_cond',
-                show_plot=False)
+                show_plot=test)
                 
             params_chl0 = Parameters()
             params_chl0.add('gamma_A', value=0.1, min=0.0, max=10.0, brute_step=1.0)
             params_chl0.add('gamma_I', value=0.1, min=0.0, max=10.0, brute_step=1.0)
-            params_chl0.add('r_A', value=params_chl1_df.loc[row_label_chl1, 'r_A'], min=1e-3, max=10.0, vary=False)
-            params_chl0.add('r_I', value=params_chl1_df.loc[row_label_chl1, 'r_I'], min=1e-3, max=10.0, vary=False)
-            params_chl0.add('K_A', value=params_chl1_df.loc[row_label_chl1, 'K_A'], min=1e-3, max=1.0, vary=False)
-            params_chl0.add('K_I', value=params_chl1_df.loc[row_label_chl1, 'K_I'], min=1e-3, max=1.0, vary=False)
+            params_chl0.add('r_A', value=params_chl1_df.iloc[0]['r_A'], min=1e-3, max=10.0, vary=False)
+            params_chl0.add('r_I', value=params_chl1_df.iloc[0]['r_I'], min=1e-3, max=10.0, vary=False)
+            params_chl0.add('K_A', value=params_chl1_df.iloc[0]['K_A'], min=1e-3, max=1.0, vary=False)
+            params_chl0.add('K_I', value=params_chl1_df.iloc[0]['K_I'], min=1e-3, max=1.0, vary=False)
 
             row_labels_chl0 = ['E04', 'E05', 'E06', 'F04', 'F05', 'F06', 'G04', 'G05', 'G06', 'H04', 'H05', 'H06']
             print(f'Fitting for {id} {row_labels_chl0}:')
             fitting_result_chl0 = fitter.fit_for_selected_rows(
                 row_labels_chl0, 
                 params_chl0,
-                skip_fine_tuning=False,
+                skip_fine_tuning=test,
                 result_fn='.chl0_model3_four_cond',
                 plot_fn='.chl0_model3_four_cond',
-                show_plot=False)
+                show_plot=test)
         
         if not global_fit:      # Individual Fitting
             row_labels_pairs = [('A04', 'E04'), ('A05', 'E05'), ('A06', 'E06'), ('A07', 'E07'), ('A08', 'E08'), ('A09', 'E09'), ('A10', 'E10'), ('A11', 'E11'), ('A12', 'E12'),
@@ -302,10 +303,10 @@ if __name__ == "__main__":
                 params_chl1_df = fitter.fit_for_selected_rows(
                     [row_label_chl1], 
                     params_chl1,
-                    skip_fine_tuning=False,
+                    skip_fine_tuning=test,
                     result_fn=f'',
                     plot_fn=f'',
-                    show_plot=False,
+                    show_plot=test,
                     num_col=1)
                 
                 params_chl0 = Parameters()
@@ -320,14 +321,15 @@ if __name__ == "__main__":
                 params_chl0_df = fitter.fit_for_selected_rows(
                     [row_label_chl0], 
                     params_chl0,
-                    skip_fine_tuning=False,
+                    skip_fine_tuning=test,
                     result_fn=f'',
                     plot_fn=f'',
-                    show_plot=False,
+                    show_plot=test,
                     num_col=1)
                 
-                all_params_df = pd.concat([all_params_df, params_chl0_df])
-            all_params_df.to_csv(f'{fitter.result_dir}/{id}_model3_individual_fit.csv')
+                all_params_df = pd.concat([all_params_df, params_chl1_df, params_chl0_df])
+            all_params_df.sort_index().to_csv(f'{fitter.result_dir}/{id}_model3_individual_fit.csv')
+            print(f'Saved {fitter.result_dir}/{id}_model3_individual_fit.csv')
                 
 
 
