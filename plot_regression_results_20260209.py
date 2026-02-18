@@ -34,6 +34,59 @@ def plot_regression_results(x, y, std_plot, x_label, y_label, x_fn, color, key, 
         print(f'Plot saved as plots/4.2.chl{chl}_{key}_vs_{x_fn}.png')
     plt.close()
 
+def calculate_mean_and_var(
+        filepath: str,
+        groupby_cols: List[str] = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol'],
+        drop_cols: List[str] = ['Sample_type'],
+        ):
+    regression_results_df = pd.read_csv(f'{filepath}.csv', index_col=0)
+    # Consider only rows where all drop_cols are NaN (i.e., exclude rows with specific Sample_type)
+    regression_results_df = regression_results_df[regression_results_df[drop_cols].isnull().all(axis=1)]
+    mean_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
+    var_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
+    mean_and_var = mean_df.merge(var_df, on=groupby_cols, suffixes=('_mean', '_var'))
+    mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
+    mean_and_var.to_csv(f"{filepath}_mean_var.csv", index=False)
+    print(f"Mean and variance of regression results saved to {filepath}_mean_var.csv")
+
+def heatmap_for_col(
+        input_fn: str,
+        chl: int,
+        col_label: str,
+        conv_factor: float,
+        output_fn: str,
+        x_axis: str = 'Nitrate_input',
+        y_axis: str = 'Nitrite_input',
+        show_plot: bool = False
+        ):
+    regression_results_df = pd.read_csv(input_fn)
+
+    # Function to create pivot table
+    def create_pivot_table(df, chl, col_label, conv_factor, suffix):
+        return df.query(f'Chloramphenicol == {chl}').pivot(
+            index=y_axis, 
+            columns=x_axis, 
+            values=f'{col_label}_{suffix}'
+        ).sort_index(ascending=False).sort_index(axis=1, ascending=False) * conv_factor
+    
+    pivot_table_mean = create_pivot_table(regression_results_df, chl, col_label, conv_factor, suffix='mean')
+    pivot_table_std = create_pivot_table(regression_results_df, chl, col_label, conv_factor, suffix='var').pow(0.5)
+    pivot_table_annot = pivot_table_mean.round(2).astype(str) + "\n±" + pivot_table_std.round(2).astype(str)
+
+    sns.heatmap(pivot_table_mean, annot=pivot_table_annot, fmt='', cmap='PiYG')
+    plt.title(f'{output_fn} x {conv_factor}', fontsize=16)
+    plt.xlabel('Nitrate Input (mM)', fontsize=14)
+    plt.ylabel('Nitrite Input (mM)', fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.savefig(f'plots/{output_fn}_heatmap.png', dpi=300, bbox_inches='tight')    
+    print(f'Saved plots/{output_fn}_heatmap.png')
+    if show_plot:
+        plt.show()
+    plt.close()
+
+
+
 datetime_array = [
     datetime(2024, 11, 24, 12, 56),
     datetime(2024, 12, 1, 13, 0),
@@ -73,4 +126,25 @@ for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water 
     #         mean_plot[time[i]] = dfs[i][f'{key}_mean']
     #         std_plot[time[i]] = dfs[i][f'{key}_var']
     #     plot_regression_results(x, mean_plot, std_plot, x_label, y_label, x_fn, key, chl, show_plot=False, save_plot=True)
-        
+
+
+# # Create mean and variance file
+# calculate_mean_and_var(filepath=f'fitting_results/{id}_conc_linear_regression_results')
+
+# # Create heatmaps
+# input_fn = f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv'
+# chl = 0
+# for col_label in ['no2_second_coef', 'no2_first_coef', 'no2_rate_first_half', 'no2_rate_second_half', 'no3_second_coef', 'no3_first_coef', 'no3_rate_first_half', 'no3_rate_second_half']:
+#     if col_label in ['no2_second_coef', 'no3_second_coef']:
+#         conv_factor = 1000
+#     else:
+#         conv_factor = 24
+#     heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+#         output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+
+# input_fn = f'fitting_results/{id}_conc_linear_regression_results_mean_var.csv'
+# conv_factor=24
+# for col_label in ['no2_init_rate', 'no3_init_rate']:
+#     for chl in [0, 1]:
+#         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
+#             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
