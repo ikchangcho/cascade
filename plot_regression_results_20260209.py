@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-def plot_regression_results(x, y, std_plot, x_label, y_label, x_fn, key, chl, show_plot=False, save_plot=False):
+def plot_regression_results(x, y, std_plot, x_label, y_label, x_fn, color, key, chl, show_plot=False, save_plot=False):
     y_max = max(y.iloc[:, 2:].max())
     y_min = min(y.iloc[:, 2:].min())
 
@@ -11,8 +11,8 @@ def plot_regression_results(x, y, std_plot, x_label, y_label, x_fn, key, chl, sh
     axes = axes.flatten()
     for i in range(len(y)):
         ax = axes[i+1]
-        ax.plot(x, y.iloc[i, 2:], 'o-')
-        ax.errorbar(x, y.iloc[i, 2:], yerr=np.sqrt(std_plot.iloc[i, 2:]), fmt='o-', capsize=3)
+        ax.plot(x, y.iloc[i, 2:], 'o-', color=color)
+        ax.errorbar(x, y.iloc[i, 2:], yerr=np.sqrt(std_plot.iloc[i, 2:]), fmt='o-', capsize=3, color=color)
         ax.set_ylim(y_min - 0.1 * abs(y_min), y_max + 0.1 * abs(y_max))
     fontsize = 20
     fig.text(0.55, 0.05, f'{x_label}', ha='center', fontsize=fontsize)
@@ -55,7 +55,7 @@ poly_regression_results_dfs = [pd.read_csv(f'fitting_results/4.2.batch{i}.chl0_p
 poly_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in poly_regression_results_dfs]
 
 for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water content (%whc)', 'water_content']]:
-    for key, y_label in [['no2_init_rate', 'NO2 reduction rate (mM/day)'], ['no3_init_rate', 'NO3 reduction rate (mM/day)']]:
+    for key, y_label, color in [['no2_init_rate', 'NO2 reduction rate (mM/hour)', 'red'], ['no3_init_rate', 'NO3 reduction rate (mM/hour)', 'blue']]:
         for chl in [0, 1]:
             dfs = [linear_regression_results_dfs[i][linear_regression_results_dfs[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(linear_regression_results_dfs))]
             mean_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].copy()
@@ -63,7 +63,7 @@ for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water 
             for i in range(len(dfs)):
                 mean_plot[time[i]] = dfs[i][f'{key}_mean']
                 std_plot[time[i]] = dfs[i][f'{key}_var']
-            plot_regression_results(x, mean_plot, std_plot, x_label, y_label, x_fn, key, chl, show_plot=False, save_plot=True)
+            plot_regression_results(x, mean_plot, std_plot, x_label, y_label, x_fn, color, key, chl, show_plot=False, save_plot=True)
     # for key, y_label in [['no2_second_coef', 'mM/hour^2'], ['no2_first_coef', 'mM/hour'], ['no2_rate_first_half', 'mM/hour'], ['no2_rate_second_half', 'mM/hour'], ['no3_second_coef', 'mM/hour^2'], ['no3_first_coef', 'mM/hour'], ['no3_rate_first_half', 'mM/hour'], ['no3_rate_second_half', 'mM/hour']]:
     #     chl = 0
     #     dfs = [poly_regression_results_dfs[i][poly_regression_results_dfs[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(poly_regression_results_dfs))]
