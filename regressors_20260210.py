@@ -527,7 +527,11 @@ if __name__ == "__main__":
     for id in ids[0:]:
         interpolator = Interpolator(id)
         row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        half_life_df = interpolator.half_life_for_selected_rows(row_labels=row_labels_chl0, output_fn=f'{id}.chl0_half_life')
+        half_life_df = interpolator.half_life_for_selected_rows(row_labels=row_labels_chl0)
+        half_life_reciprocal_df = half_life_df.iloc[:, :-interpolator.meta_col_num].add_suffix('_reciprocal')
+        half_life_reciprocal_df = 1 / half_life_reciprocal_df
+        half_life_reciprocal_df = half_life_reciprocal_df.join(half_life_df.iloc[:, -interpolator.meta_col_num:])
+        half_life_reciprocal_df.to_csv(f'{interpolator.results_dir}/{id}.chl0_half_life_reciprocal.csv')
 
         # regressor = LinearRegressor(id, time_threshold=50)
         # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
