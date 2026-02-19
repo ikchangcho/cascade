@@ -105,8 +105,8 @@ water_contents = [98.9, 62.5, 34.4, 7.10, 5.16]
 number_of_batches = 5
 linear_regression_results_dfs = [pd.read_csv(f'fitting_results/4.2.batch{i}_conc_linear_regression_results_mean_var.csv') for i in range(1, number_of_batches + 1)]
 linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in linear_regression_results_dfs]
-poly_regression_results_dfs = [pd.read_csv(f'fitting_results/4.2.batch{i}.chl0_polynomial_regression_results_mean_var.csv') for i in range(1, number_of_batches + 1)]
-poly_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in poly_regression_results_dfs]
+# poly_regression_results_dfs = [pd.read_csv(f'fitting_results/4.2.batch{i}.chl0_polynomial_regression_results_mean_var.csv') for i in range(1, number_of_batches + 1)]
+# poly_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in poly_regression_results_dfs]
 
 
 model_fit_results_df = pd.concat([pd.read_csv(f'fitting_results/4.2.batch{i}.chl0_model3_four_cond.csv') for i in range(1, number_of_batches + 1)])

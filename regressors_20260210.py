@@ -9,6 +9,98 @@ from numpy.polynomial import polynomial as P
 import pickle
 import seaborn as sns
 
+class Interpolator:
+    def __init__(
+            self,
+            id: str,
+            meta_col_num: int=4,
+            input_dir: str="concentrations",
+            results_dir: str="fitting_results",
+            plots_dir: str="plots"
+    ):
+        self.meta_col_num = meta_col_num
+        self.input_dir = input_dir
+        self.results_dir = results_dir
+        self.plots_dir = plots_dir
+        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, -meta_col_num:]
+        self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+        
+        if not os.path.exists(self.results_dir):
+            raise ValueError(f"Output directory {self.results_dir} does not exist.")
+        if self.no2_df is None or self.no2_df.empty:
+            raise ValueError(f"NO2 data could not be loaded from {self.input_dir} or is empty.")
+        if self.no3_df is None or self.no3_df.empty:
+            raise ValueError(f"NO3 data could not be loaded from {self.input_dir} or is empty.")
+        
+        self.row_labels = self.no2_df.index.tolist()
+        self.time = self.no2_df.columns.values.astype(float)
+
+    def half_life_for_row(
+            self,
+            row_label: str,
+            half: float = 0.5,
+            epsilon: float = 0.01,
+            show_plot: bool = False
+    ):
+        time = self.time
+        no2 = self.no2_df.loc[row_label].values.astype(float)
+        no3 = self.no3_df.loc[row_label].values.astype(float)
+        no2_half = np.max(no2) * half - epsilon
+        no3_half = np.max(no3) * half - epsilon
+        
+
+        smallest_index_no2_above_half = np.where(no2 > no2_half)[0][0]
+        smallest_index_no3_above_half = np.where(no3 > no3_half)[0][0]
+        
+        if smallest_index_no2_above_half == 0:
+            no2_half_life = time[0]
+        else:
+            no2_half_life = np.interp(no2_half, [no2[smallest_index_no2_above_half - 1], no2[smallest_index_no2_above_half]], [time[smallest_index_no2_above_half - 1], time[smallest_index_no2_above_half]])
+        if smallest_index_no3_above_half == 0:
+            no3_half_life = time[0]
+        else:
+            no3_half_life = np.interp(no3_half, [no3[smallest_index_no3_above_half - 1], no3[smallest_index_no3_above_half]], [time[smallest_index_no3_above_half - 1], time[smallest_index_no3_above_half]])
+
+        time_interp = np.linspace(np.min(time), np.max(time), 100)
+        no2_interp = np.interp(time_interp, time, no2)
+        no3_interp = np.interp(time_interp, time, no3)
+        if show_plot:
+            plt.scatter(time, no2, color='red', marker='o', label='NO2 Data')
+            plt.plot(time_interp, no2_interp, color='red', linestyle='-')
+            plt.axhline(no2_half, color='red', linestyle='--', label='NO2 Half Level')
+            plt.axvline(no2_half_life, color='red', linestyle=':', label=f'NO2 Half Time: {no2_half_life:.2f} hrs')
+            plt.scatter(time, no3, color='blue', marker='o', label='NO3 Data')
+            plt.plot(time_interp, no3_interp, color='blue', linestyle='-')
+            plt.axhline(no3_half, color='blue', linestyle='--', label='NO3 Half Level')
+            plt.axvline(no3_half_life, color='blue', linestyle=':', label=f'NO3 Half Time: {no3_half_life:.2f} hrs')
+            plt.xlabel('Time (hours)')
+            plt.ylabel('Concentration (mM)')
+            plt.legend()
+            plt.show()
+        
+        return no2_half_life, no3_half_life
+    
+    def half_life_for_selected_rows(
+            self,
+            row_labels: List[str],
+            half: float = 0.5,
+            output_fn: Optional[str] = None
+    ):
+        half_life_data = []
+        for row_label in row_labels:
+            no2_half_life, no3_half_life = self.half_life_for_row(row_label, half)
+            half_life_data.append({'row_label': row_label, 'no2_half_life': no2_half_life, 'no3_half_life': no3_half_life})
+        half_life_df = pd.DataFrame(half_life_data).set_index('row_label')
+        half_life_df = half_life_df.join(self.meta_df.loc[half_life_df.index])
+
+        if output_fn is not None:
+            half_life_df.to_csv(f'{self.results_dir}/{output_fn}.csv')
+            print(f"Half-life results saved to {self.results_dir}/{output_fn}.csv")
+        
+        return half_life_df
+
+
 class LinearRegressor:
     '''
     Fits a linear model on early time points of concentration data for each row. The time points used for fitting are determined by the time when NO3 concentration becomes zero or
@@ -30,7 +122,7 @@ class LinearRegressor:
         self.input_dir = input_dir
         self.results_dir = results_dir
         self.plots_dir = plots_dir
-        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
+        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, -meta_col_num:]  # Load metadata columns only
         if use_conc_data:
             self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
             self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
@@ -432,7 +524,11 @@ class PolynomialRegressor:
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    for id in ids[0:5]:
+    for id in ids[0:]:
+        interpolator = Interpolator(id)
+        row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
+        half_life_df = interpolator.half_life_for_selected_rows(row_labels=row_labels_chl0, output_fn=f'{id}.chl0_half_life')
+
         # regressor = LinearRegressor(id, time_threshold=50)
         # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
         # regressor.fit_entire_data(output_fn=f'{id}_conc')
