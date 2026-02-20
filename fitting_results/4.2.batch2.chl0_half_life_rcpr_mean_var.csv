@@ -1,4 +1,4 @@
-Nitrite_input,Nitrate_input,Chloramphenicol,no2_half_life_reciprocal_mean,no3_half_life_reciprocal_mean,no2_half_life_reciprocal_var,no3_half_life_reciprocal_var
+Nitrite_input,Nitrate_input,Chloramphenicol,no2_half_life_rcpr_mean,no3_half_life_rcpr_mean,no2_half_life_rcpr_var,no3_half_life_rcpr_var
 1.4,2.0,0,0.06289817235752457,0.05827765848323241,0.00011850280728722941,0.0003021148956295074
 0.7,2.0,0,0.05189699180210647,0.04409476880139287,3.0681016784717116e-05,1.6213391003096046e-05
 0.0,2.0,0,0.06885491635033947,0.0691299161233327,0.0007726180695596262,0.0007888898602715143

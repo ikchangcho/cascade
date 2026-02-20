@@ -1,4 +1,4 @@
-row_label,no2_half_life_reciprocal,no3_half_life_reciprocal,Nitrite_input,Nitrate_input,Chloramphenicol,Sample_type
+row_label,no2_half_life_rcpr,no3_half_life_rcpr,Nitrite_input,Nitrate_input,Chloramphenicol,Sample_type
 E04,0.05486570186997825,0.14370876376719308,2.0,1.4,0,
 E05,0.05548910982503078,0.17355610820241404,2.0,1.4,0,
 E06,0.05386993547085079,0.15110050147091839,2.0,1.4,0,
