@@ -576,6 +576,21 @@ class PolynomialRegressor:
             plt.close()
 
 
+def calculate_mean_and_var(
+        filepath: str,
+        groupby_cols: List[str] = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol'],
+        drop_cols: List[str] = ['Sample_type'],
+        ):
+    regression_results_df = pd.read_csv(f'{filepath}.csv', index_col=0)
+    # Consider only rows where all drop_cols are NaN (i.e., exclude rows with specific Sample_type)
+    regression_results_df = regression_results_df[regression_results_df[drop_cols].isnull().all(axis=1)]
+    mean_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
+    var_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
+    mean_and_var = mean_df.merge(var_df, on=groupby_cols, suffixes=('_mean', '_var'))
+    mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
+    mean_and_var.to_csv(f"{filepath}_mean_var.csv", index=False)
+    print(f"Mean and variance of regression results saved to {filepath}_mean_var.csv")
+
 
 if __name__ == "__main__":
     row_labels_chl1 = ['A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
@@ -601,6 +616,7 @@ if __name__ == "__main__":
         regressor = LinearRegressor(id, time_threshold, time_interval)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
         regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
+        calculate_mean_and_var(f'{regressor.results_dir}/{id}.chl1_linear_regression_results')
         regressor.plot_selected_rows(
             title=f'{id} Concentration CHL+',
             output_fn=f'{id}.chl1_linear_regression',

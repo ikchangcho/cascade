@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from typing import List
 import seaborn as sns
 
-def plot_regression_results_for_all_batches(x, y, std_plot, x_label, y_label, x_fn, color, key, chl, show_plot=False, save_plot=False):
+def plot_regression_results_for_all_batches(x, y, std_plot, x_label, y_label, x_fn, color, key, chl, fontsize = 15, show_plot=False, save_plot=False):
     # Calculate y limits excluding outliers
     y_data = y.iloc[:, 2:]
     y_flat = y_data.values.flatten()
@@ -47,19 +47,18 @@ def plot_regression_results_for_all_batches(x, y, std_plot, x_label, y_label, x_
         ax.set_ylim(y_min - 0.1 * abs(y_min), y_max + 0.15 * abs(y_max))  # Extra space for annotations
         ax.set_xlim(x.min() - 0.01 * (x.max() - x.min()), x.max() + 0.01 * (x.max() - x.min()))
 
-    fontsize = 20
     fig.text(0.55, 0.05, f'{x_label}', ha='center', fontsize=fontsize)
-    fig.text(0.145, 0.9, f'A(0) = 2.0 mM', fontsize=fontsize)
-    fig.text(0.35, 0.9, f'A(0) = 1.4 mM', fontsize=fontsize)
-    fig.text(0.55, 0.9, f'A(0) = 0.7 mM', fontsize=fontsize)
-    fig.text(0.75, 0.9, f'A(0) = 0.0 mM', fontsize=fontsize)
+    fig.text(0.145, 0.9, f'A_add = 2.0 mM', fontsize=fontsize)
+    fig.text(0.35, 0.9, f'A_add = 1.4 mM', fontsize=fontsize)
+    fig.text(0.55, 0.9, f'A_add = 0.7 mM', fontsize=fontsize)
+    fig.text(0.75, 0.9, f'A_add = 0.0 mM', fontsize=fontsize)
     fig.text(0.08, 0.5, f'{y_label}', va='center', rotation='vertical', fontsize=fontsize)
-    fig.text(0.91, 0.77, f'I(0) =\n2.0 mM', fontsize=fontsize)
-    fig.text(0.91, 0.575, f'I(0) =\n1.4 mM', fontsize=fontsize)
-    fig.text(0.91, 0.37, f'I(0) =\n0.7 mM', fontsize=fontsize)
-    fig.text(0.91, 0.165, f'I(0) =\n0.0 mM', fontsize=fontsize)
+    fig.text(0.91, 0.77, f'I_add =\n2.0 mM', fontsize=fontsize)
+    fig.text(0.91, 0.575, f'I_add =\n1.4 mM', fontsize=fontsize)
+    fig.text(0.91, 0.37, f'I_add =\n0.7 mM', fontsize=fontsize)
+    fig.text(0.91, 0.165, f'I_add =\n0.0 mM', fontsize=fontsize)
     fig.suptitle(f'Mean values of {key} (chl{chl})', fontsize=fontsize+4)
-    plt.tight_layout(rect=[0.11, 0.1, 0.9, 0.9])
+    #plt.tight_layout(rect=[0.11, 0.1, 0.9, 0.9])
     
     if show_plot:
         plt.show()
@@ -134,39 +133,40 @@ for i in range(1, len(datetime_array)):
 
 time = np.array(time)
 water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16])
-
-# Load all batch data files
 ids = [f'4.2.batch{i}' for i in range(1, 6)]
 
+# Caculate mean and variance
 for id in ids:
-    calculate_mean_and_var(f'fitting_results/{id}.chl0_half_life_rcpr')
+    calculate_mean_and_var(f'fitting_results/{id}.chl1_linear_regression_results')
 
-# linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}_conc_linear_regression_results_mean_var.csv') for id in ids]
-# linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in linear_regression_results_dfs]
+# Load mean and variance dataframes
+linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_linear_regression_results_mean_var.csv') for id in ids]
+linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in linear_regression_results_dfs]
 # poly_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv') for id in ids]
 # poly_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in poly_regression_results_dfs]
-half_life_rcpr_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_half_life_rcpr_mean_var.csv') for id in ids]
-half_life_rcpr_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in half_life_rcpr_dfs]
+# half_life_rcpr_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_half_life_rcpr_mean_var.csv') for id in ids]
+# half_life_rcpr_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in half_life_rcpr_dfs]
 
-
+dfs_to_plot = linear_regression_results_dfs
 for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water content (%whc)', 'water_content']]:
-    for key, y_label, color in [['no2_half_life_rcpr', '1 / NO2 half life (1/hour)', 'red'], ['no3_half_life_rcpr', '1 / NO3 half life (1/hour)', 'blue']]:
-        for chl in [0]:
-            dfs = [half_life_rcpr_dfs[i][half_life_rcpr_dfs[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(half_life_rcpr_dfs))]
+    for key, y_label, color in [['no3_rate_early', 'Reduction Rate (mM/hour)', 'blue'], ['no3_rate_late', 'Reduction Rate (mM/hour)', 'blue'], ['no2_rate_early', 'Reduction Rate (mM/hour)', 'red'], ['no2_rate_late', 'Reduction Rate (mM/hour)', 'red']]:
+        for chl in [1]:
+            dfs = [dfs_to_plot[i][dfs_to_plot[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(dfs_to_plot))]
             mean_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].copy()
             std_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].pow(0.5).copy()
             for i in range(len(dfs)):
                 mean_plot[time[i]] = dfs[i][f'{key}_mean']
                 std_plot[time[i]] = dfs[i][f'{key}_var']
-            plot_regression_results_for_all_batches(x, mean_plot, std_plot, x_label, y_label, x_fn, color, key, chl, show_plot=False, save_plot=True)
+            plot_regression_results_for_all_batches(x, mean_plot, std_plot, x_label, y_label, x_fn, color, key, chl, 
+                                                    show_plot=False, save_plot=True)
 
-# Create heatmaps
-for id in ids:
-    input_fn = f'fitting_results/{id}.chl0_half_life_rcpr_mean_var.csv'
-    chl = 0
-    for col_label in ['no2_half_life_rcpr', 'no3_half_life_rcpr']:
-        heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=24,
-            output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+# # Create heatmaps
+# for id in ids:
+#     input_fn = f'fitting_results/{id}.chl0_half_life_rcpr_mean_var.csv'
+#     chl = 0
+#     for col_label in ['no2_half_life_rcpr', 'no3_half_life_rcpr']:
+#         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=24,
+#             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
 
 # input_fn = f'fitting_results/{id}_conc_linear_regression_results_mean_var.csv'
 # conv_factor=24
