@@ -302,24 +302,35 @@ class LinearRegressor:
         y_min = all_values.min().min()
         y_max = all_values.max().max()
 
+        marker_styles = ['o', 's', '^']
         for i, row in enumerate(row_labels):
-            ax = axes[i // num_rpl]
-            marker_styles = ['o', 's', '^']
             marker = marker_styles[i % num_rpl]
+            ax = axes[i // num_rpl]
+            ax.set_ylim(y_min, y_max)
             ax.scatter(time, self.no2_df.loc[row], color='r', marker=marker)
             ax.scatter(time, self.no3_df.loc[row], color='b', marker=marker)
             
             if self.time_interval is None:
-                no2_rate_early, no2_slope, no2_intercept, no3_rate_early, no3_slope, no3_intercept = self.regression_results[row]
-                ax.plot(time_array, no2_slope * time_array + no2_intercept, 'r-')
-                ax.plot(time_array, no3_slope * time_array + no3_intercept, 'b-')
-                ax.set_ylim(y_min, y_max)
+                _, no3_slope_early, no3_intercept_early, _, no2_slope_early, no2_intercept_early = self.regression_results[row]
+                ax.plot(time_array, no2_slope_early * time_array + no2_intercept_early, 'r-')
+                ax.plot(time_array, no3_slope_early * time_array + no3_intercept_early, 'b-')
+                suptitle = f'{title}\nLinear Regression on (0, {self.time_threshold})'
+            
+            else:
+                _, no3_slope_early, no3_intercept_early, _, no2_slope_early, no2_intercept_early, _, no3_slope_late, no3_intercept_late, _, no2_slope_late, no2_intercept_late = self.regression_results[row]
+                ax.plot(time_array, no2_slope_early * time_array + no2_intercept_early, 'r-')
+                ax.plot(time_array, no3_slope_early * time_array + no3_intercept_early, 'b-')
+                ax.plot(time_array, no2_slope_late * time_array + no2_intercept_late, 'r--')
+                ax.plot(time_array, no3_slope_late * time_array + no3_intercept_late, 'b--')
+                suptitle = f'{title}\nLinear Regression on (0, {self.time_threshold}) and ({self.time_interval[0]}, {self.time_interval[1]})'
+
+
         handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
-        fig.legend(handles=handles, loc='upper right', fontsize=20)
-        fig.suptitle(f'{title}\nLinear Regression on Early Time Points', fontsize=30, fontweight='bold')
-        plt.savefig(f'{self.plots_dir}/{output_fn}_linear_regression.png', dpi=300, bbox_inches='tight')
-        print(f'Saved {self.plots_dir}/{output_fn}_linear_regression.png')
+        fig.legend(handles=handles, loc='upper right', fontsize=15)
+        fig.suptitle(suptitle, fontsize=20, fontweight='bold')
+        plt.savefig(f'{self.plots_dir}/{output_fn}.png', dpi=300, bbox_inches='tight')
+        print(f'Saved {self.plots_dir}/{output_fn}.png')
         if show_plot:
             plt.show()
         plt.close()
@@ -570,7 +581,7 @@ if __name__ == "__main__":
     row_labels_chl1 = ['A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
     row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    for id in ids[0:]:
+    for id in ids[4:]:
         # interpolator = Interpolator(id)
         # interpolator.half_life_for_row('E10', show_plot=True)
         
@@ -582,14 +593,20 @@ if __name__ == "__main__":
         # half_life_rcpr_df.to_csv(f'{interpolator.results_dir}/{id}.chl0_half_life_rcpr.csv')
         # print(f"Saved {interpolator.results_dir}/{id}.chl0_half_life_rcpr.csv")
 
-        regressor = LinearRegressor(id, time_threshold=25, time_interval=(40, 60))
+
+        time_threshold = 20
+        if id == '4.2.batch5':
+            time_threshold = 40
+        time_interval = (40, 80)
+        regressor = LinearRegressor(id, time_threshold, time_interval)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
         regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
-        # regressor.plot_entire_data(
-        #     title=f'{id} concentration',
-        #     output_fn=f'{id}_conc',
-        #     show_plot=False
-        # )
+        regressor.plot_selected_rows(
+            title=f'{id} Concentration CHL+',
+            output_fn=f'{id}.chl1_linear_regression',
+            row_labels=row_labels_chl1,
+            show_plot=True
+        )
     
         # regressor = PolynomialRegressor(id)
         # #regressor.fit_for_row('F01', show_plot=True)
