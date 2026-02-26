@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_fifteen_conditions(x, no3_df, no2_df, row_labels, title, y_label, num_rpl=3, num_col=4, fontsize=15, output_fn='', show_plot=False):
+def plot_fifteen_conditions(x, no3_df, no2_df, row_labels, title, y_label, num_rpl=3, num_col=4, fontsize=25, output_fn='', show_plot=False):
     all_values = pd.concat([no3_df.loc[row_labels], no2_df.loc[row_labels]])
     y_min = all_values.min().min()
     y_max = all_values.max().max()
@@ -17,9 +17,9 @@ def plot_fifteen_conditions(x, no3_df, no2_df, row_labels, title, y_label, num_r
         ax = axes[i // num_rpl + 1]
         ax.plot(x, no3_df.loc[row], marker, color='b', linestyle='-')
         ax.plot(x, no2_df.loc[row], marker, color='r', linestyle='-')
-        #ax.tick_params(axis='x', labelsize=fontsize)
+        ax.tick_params(axis='x', labelsize=fontsize - 5)
         ax.set_ylim(y_min, y_max)
-        #ax.tick_params(axis='y', labelsize=fontsize)
+        ax.tick_params(axis='y', labelsize=fontsize - 5)
     fig.text(0.55, 0.05, 'Time (hours)', ha='center', fontsize=fontsize)
     fig.text(0.145, 0.9, f'A_add = 2.0 mM', fontsize=fontsize)
     fig.text(0.35, 0.9, f'A_add = 1.4 mM', fontsize=fontsize)
