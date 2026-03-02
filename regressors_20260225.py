@@ -291,7 +291,7 @@ class LinearRegressor:
         num_rpl = 3
         num_col = 4
         num_row = int(np.ceil(len(row_labels) / num_col / num_rpl))
-        fig, axes = plt.subplots(num_row, num_col, figsize=(1.5*num_row, 6*num_col))
+        fig, axes = plt.subplots(num_row, num_col, figsize=(4*num_row, 4*num_col))
         axes = axes.flatten()
         
         time = self.time.flatten()
@@ -616,12 +616,12 @@ if __name__ == "__main__":
         regressor = LinearRegressor(id, time_threshold, time_interval)
         # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
         regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
-        calculate_mean_and_var(f'{regressor.results_dir}/{id}.chl1_linear_regression_results')
+        # calculate_mean_and_var(f'{regressor.results_dir}/{id}.chl1_linear_regression_results')
         regressor.plot_selected_rows(
             title=f'{id} Concentration CHL+',
             output_fn=f'{id}.chl1_linear_regression',
             row_labels=row_labels_chl1,
-            show_plot=True
+            show_plot=False
         )
     
         # regressor = PolynomialRegressor(id)
