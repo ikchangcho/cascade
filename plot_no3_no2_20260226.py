@@ -39,6 +39,34 @@ def plot_no3_no2(x, no3_df, no2_df, row_labels, title, y_label, num_rpl=3, num_c
     if show_plot:
         plt.show()
 
+def plot_combined_data(row_labels, dfs_to_plot, output_fn='', show_plot=False):
+    fig, axes = plt.subplots(4, 5, figsize=(20, 15))
+    axes = axes.flatten()
+    markers = ['o', 's', '^']
+    num_rpl, num_col = 3, 4
+    for i, row in enumerate(row_labels):
+        marker = markers[i % num_rpl]
+        q, r = divmod(i // 3 + 1, num_col)
+        axes[5*q + r + 1].plot(dfs_to_plot[0].columns.astype(float).tolist(), dfs_to_plot[0].loc[row], marker, markersize=3, color='red', linestyle='--', alpha=0.5)
+        axes[5*q + r + 1].plot(dfs_to_plot[1].columns.astype(float).tolist(), dfs_to_plot[1].loc[row], marker, markersize=3, color='darkorange', linestyle='--', alpha=0.5)
+        axes[5*q + r].plot(dfs_to_plot[2].columns.astype(float).tolist(), dfs_to_plot[2].loc[row], marker, markersize=3, color='green', linestyle='--', alpha=0.5)
+        axes[5*q + r].plot(dfs_to_plot[3].columns.astype(float).tolist(), dfs_to_plot[3].loc[row], marker, markersize=3, color='blue', linestyle='--', alpha=0.5)
+        axes[5*q + r].plot(dfs_to_plot[4].columns.astype(float).tolist(), dfs_to_plot[4].loc[row], marker, markersize=3, color='purple', linestyle='--', alpha=0.5)
+
+    handles = [plt.Line2D([0], [0], color='red', linestyle='-', label=f'batch 1'),
+                plt.Line2D([0], [0], color='darkorange', linestyle='-', label=f'batch 2'),
+                plt.Line2D([0], [0], color='green', linestyle='-', label=f'batch 3'),
+                plt.Line2D([0], [0], color='blue', linestyle='-', label=f'batch 4'),
+                plt.Line2D([0], [0], color='purple', linestyle='-', label=f'batch 5')]
+    fig.legend(handles=handles, loc='upper right')
+    if output_fn != '':
+        plt.suptitle(f'{output_fn}', fontsize=20, fontweight='bold')
+        plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
+        print(f'Saved plots/{output_fn}.png')
+    if show_plot:
+        plt.show()
+
+
 def load_csv(id, meta_col_num=4):
     no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
     no2_conc_df = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
@@ -71,19 +99,9 @@ for id in ids[0:]:
         no3_cons_dfs.append(no3_cons_df)
         no2_cons_dfs.append(no2_cons_df)
     
-row_labels = meta_df[(meta_df['Chloramphenicol'] == 1) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
-dfs_to_plot = no3_conc_dfs
 
-fig, axes = plt.subplots(4, 5, figsize=(20, 15))
-axes = axes.flatten()
-markers = ['o', 's', '^']
-num_rpl, num_col = 3, 4
-for i, row in enumerate(row_labels):
-    marker = markers[i % num_rpl]
-    q, r = divmod(i // 3 + 1, num_col)
-    axes[5*q + r + 2].plot(dfs_to_plot[0].columns.astype(float).tolist(), dfs_to_plot[0].loc[row], marker, color='b', linestyle='-')
-plt.show()
-
-
-
+for chl in [1, 0]:
+    row_labels = meta_df[(meta_df['Chloramphenicol'] == chl) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
+    for dfs_to_plot, output_fn in [[no3_conc_dfs, f'4.2.chl{chl}_no3_conc_combined'], [no2_conc_dfs, f'4.2.chl{chl}_no2_conc_combined'], [no3_cons_dfs, f'4.2.chl{chl}_no3_cons_combined'], [no2_cons_dfs, f'4.2.chl{chl}_no2_cons_combined']]:
+        plot_combined_data(row_labels, dfs_to_plot, output_fn)     
 
