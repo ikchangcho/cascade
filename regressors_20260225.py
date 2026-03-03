@@ -18,13 +18,14 @@ class Interpolator:
             results_dir: str="fitting_results",
             plots_dir: str="plots"
     ):
+        self.id = id
         self.meta_col_num = meta_col_num
         self.input_dir = input_dir
         self.results_dir = results_dir
         self.plots_dir = plots_dir
-        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, -meta_col_num:]
-        self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]
         self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
         
         if not os.path.exists(self.results_dir):
             raise ValueError(f"Output directory {self.results_dir} does not exist.")
@@ -109,16 +110,53 @@ class Interpolator:
     def auc_for_row(
             self,
             row_label: str,
-            time_range: Tuple[float, float],
+            time_range: float,
             show_plot: bool = False
     ):
         time = self.time
-        no2 = self.no2_df.loc[row_label].values.astype(float)
         no3 = self.no3_df.loc[row_label].values.astype(float)
-        time_min, time_max = time_range
+        no2 = self.no2_df.loc[row_label].values.astype(float)
 
+        mask = np.where(time <= time_range)[0]
+        next_indices = np.where(time > time_range)[0]
+        if len(next_indices) > 0:
+            mask = np.append(mask, next_indices[0])
         
+        time_interp = np.linspace(0, time_range, 100)
+        no3_interp = np.interp(time_interp, time, no3)
+        no2_interp = np.interp(time_interp, time, no2)
         
+        no3_auc = np.trapz(no3_interp, time_interp)
+        no2_auc = np.trapz(no2_interp, time_interp)
+
+        if show_plot:
+            plt.scatter(time, no3, color='blue', marker='o', label='NO3')
+            plt.plot(time_interp, no3_interp, color='blue', linestyle='-')
+            plt.scatter(time, no2, color='red', marker='o', label='NO2')
+            plt.plot(time_interp, no2_interp, color='red', linestyle='-')
+            plt.axvline(time_range, color='green', linestyle='--')
+            plt.fill_between(time_interp, no3_interp, where=(time_interp <= time_range), alpha=0.3, color='blue')
+            plt.fill_between(time_interp, no2_interp, where=(time_interp <= time_range), alpha=0.3, color='red')
+            plt.xlabel('Time (hours)')
+            plt.ylabel('Consumption (mM)')
+            plt.title(f'AUC for {self.id} {row_label} data up to {time_range} hours \nNO3 AUC: {no3_auc:.2f}, NO2 AUC: {no2_auc:.2f}')
+            plt.legend()
+            plt.show()
+
+        return no3_auc, no2_auc
+
+    def auc_for_selected_rows(
+        self,
+        row_labels: List[str],
+        time_ranges: List[float],
+        output_fn: str = ''
+    ):
+        auc_dict = {}
+        for row_label in row_labels:
+            for time_range in time_ranges:
+                no3_auc, no2_auc = self.auc_for_row(row_label, time_range)
+                auc_dict[row_label] = {f'no3_auc_{time_range}': no3_auc, f'no2_auc_{time_range}': no2_auc}
+        auc_df = pd.DataFrame.from_dict(auc_dict, orient='index')
 
 
 
@@ -612,38 +650,20 @@ if __name__ == "__main__":
     row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[4:]:
-        # interpolator = Interpolator(id)
-        # interpolator.half_life_for_row('E10', show_plot=True)
-        
+        interpolator = Interpolator(id)
+        interpolator.auc_for_row('E04', 25, True)
 
-        # half_life_df = interpolator.half_life_for_selected_rows(row_labels=row_labels_chl0)
-        # half_life_rcpr_df = half_life_df.iloc[:, :-interpolator.meta_col_num].add_suffix('_rcpr')
-        # half_life_rcpr_df = 1 / half_life_rcpr_df
-        # half_life_rcpr_df = half_life_rcpr_df.join(half_life_df.iloc[:, -interpolator.meta_col_num:])
-        # half_life_rcpr_df.to_csv(f'{interpolator.results_dir}/{id}.chl0_half_life_rcpr.csv')
-        # print(f"Saved {interpolator.results_dir}/{id}.chl0_half_life_rcpr.csv")
-
-
-        time_threshold = 20
-        if id == '4.2.batch5':
-            time_threshold = 40
-        time_interval = (40, 80)
-        regressor = LinearRegressor(id, time_threshold, time_interval)
-        # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
-        # calculate_mean_and_var(f'{regressor.results_dir}/{id}.chl1_linear_regression_results')
-        regressor.plot_selected_rows(
-            title=f'{id} Concentration CHL+',
-            output_fn=f'{id}.chl1_linear_regression',
-            row_labels=row_labels_chl1,
-            show_plot=False
-        )
-    
-        # regressor = PolynomialRegressor(id)
-        # #regressor.fit_for_row('F01', show_plot=True)
-        # rows_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-        # masks = None
-        # if id == '4.2.batch3':
-        #     masks = {'E12': [9], 'F08': [9], 'H09': [9], 'H10': [9]}
-        # regression_results_df = regressor.fit_for_selected_rows(row_labels=rows_chl0, masks=masks, output_fn=f'{id}.chl0_polynomial_regression_results')
-        # # regressor.consumption_plot_for_selected_rows(row_labels=rows_chl0, regression_results_df=regression_results_df, output_fn=f'{id}.chl0')
+        # time_threshold = 20
+        # if id == '4.2.batch5':
+        #     time_threshold = 40
+        # time_interval = (40, 80)
+        # regressor = LinearRegressor(id, time_threshold, time_interval)
+        # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        # regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
+        # # calculate_mean_and_var(f'{regressor.results_dir}/{id}.chl1_linear_regression_results')
+        # regressor.plot_selected_rows(
+        #     title=f'{id} Concentration CHL+',
+        #     output_fn=f'{id}.chl1_linear_regression',
+        #     row_labels=row_labels_chl1,
+        #     show_plot=False
+        # )
