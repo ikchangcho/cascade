@@ -105,6 +105,21 @@ class Interpolator:
             print(f"Half-life results saved to {self.results_dir}/{output_fn}.csv")
         
         return half_life_df
+    
+    def auc_for_row(
+            self,
+            row_label: str,
+            time_range: Tuple[float, float],
+            show_plot: bool = False
+    ):
+        time = self.time
+        no2 = self.no2_df.loc[row_label].values.astype(float)
+        no3 = self.no3_df.loc[row_label].values.astype(float)
+        time_min, time_max = time_range
+
+        
+        
+
 
 
 class LinearRegressor:
