@@ -102,6 +102,7 @@ for id in ids[0:]:
 
 for chl in [1, 0]:
     row_labels = meta_df[(meta_df['Chloramphenicol'] == chl) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
-    for dfs_to_plot, output_fn in [[no3_conc_dfs, f'4.2.chl{chl}_no3_conc_combined'], [no2_conc_dfs, f'4.2.chl{chl}_no2_conc_combined'], [no3_cons_dfs, f'4.2.chl{chl}_no3_cons_combined'], [no2_cons_dfs, f'4.2.chl{chl}_no2_cons_combined']]:
-        plot_combined_data(row_labels, dfs_to_plot, output_fn)     
+    for dfs_to_plot, output_fn in [[no3_conc_dfs, f'4.2.chl{chl}_no3_conc'], [no2_conc_dfs, f'4.2.chl{chl}_no2_conc'], [no3_cons_dfs, f'4.2.chl{chl}_no3_cons'], [no2_cons_dfs, f'4.2.chl{chl}_no2_cons']]:
+        plot_combined_data(row_labels, dfs_to_plot, output_fn)
+
 
