@@ -120,26 +120,19 @@ time = np.array(time)
 water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16])
 ids = [f'4.2.batch{i}' for i in range(1, 6)]
 
-# Load mean and variance dataframes
-linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_linear_regression_results_mean_var.csv') for id in ids]
-linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in linear_regression_results_dfs]
-# poly_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_polynomial_regression_results_mean_var.csv') for id in ids]
-# poly_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in poly_regression_results_dfs]
-# half_life_rcpr_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_half_life_rcpr_mean_var.csv') for id in ids]
-# half_life_rcpr_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in half_life_rcpr_dfs]
 
-dfs_to_plot = linear_regression_results_dfs
-for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water content (%whc)', 'water_content']]:
-    for key, y_label, color in [['no3_rate_early', 'Reduction Rate (mM/hour)', 'blue'], ['no3_rate_late', 'Reduction Rate (mM/hour)', 'blue'], ['no2_rate_early', 'Reduction Rate (mM/hour)', 'red'], ['no2_rate_late', 'Reduction Rate (mM/hour)', 'red']]:
-        for chl in [1]:
-            dfs = [dfs_to_plot[i][dfs_to_plot[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(dfs_to_plot))]
-            mean_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].copy()
-            std_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].pow(0.5).copy()
-            for i in range(len(dfs)):
-                mean_plot[time[i]] = dfs[i][f'{key}_mean']
-                std_plot[time[i]] = dfs[i][f'{key}_var']
-            plot_regression_results_for_all_batches(x, mean_plot, std_plot, x_label, y_label, x_fn, color, key, chl, 
-                                                    show_plot=False, save_plot=True)
+# dfs_to_plot = linear_regression_results_dfs
+# for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water content (%whc)', 'water_content']]:
+#     for key, y_label, color in [['no3_rate_early', 'Reduction Rate (mM/hour)', 'blue'], ['no3_rate_late', 'Reduction Rate (mM/hour)', 'blue'], ['no2_rate_early', 'Reduction Rate (mM/hour)', 'red'], ['no2_rate_late', 'Reduction Rate (mM/hour)', 'red']]:
+#         for chl in [1]:
+#             dfs = [dfs_to_plot[i][dfs_to_plot[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(dfs_to_plot))]
+#             mean_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].copy()
+#             std_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].pow(0.5).copy()
+#             for i in range(len(dfs)):
+#                 mean_plot[time[i]] = dfs[i][f'{key}_mean']
+#                 std_plot[time[i]] = dfs[i][f'{key}_var']
+#             plot_regression_results_for_all_batches(x, mean_plot, std_plot, x_label, y_label, x_fn, color, key, chl, 
+#                                                     show_plot=False, save_plot=True)
 
 # # Create heatmaps
 # for id in ids:
@@ -155,3 +148,55 @@ for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water 
 #     for chl in [0, 1]:
 #         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
 #             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
+
+chl0_cons_interp_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_cons_interp_mean_var.csv') for id in ids]
+chl0_cons_interp_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl0_cons_interp_dfs]
+chl0_cons_auc_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_cons_auc_mean_var.csv') for id in ids]
+chl0_cons_auc_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl0_cons_auc_dfs]
+chl1_cons_interp_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_cons_interp_mean_var.csv') for id in ids]
+chl1_cons_interp_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_cons_interp_dfs]
+chl1_cons_auc_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_cons_auc_mean_var.csv') for id in ids]
+chl1_cons_auc_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_cons_auc_dfs]
+chl1_linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_linear_regression_results_mean_var.csv') for id in ids]
+chl1_linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_linear_regression_results_dfs]
+
+def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_label, color, show_plot=False, output_fn=''):
+    lengths = [len(df) for df in dfs_to_plot]
+    if len(set(lengths)) != 1:
+        print(f"Dataframe lengths: {lengths}")
+        raise ValueError(f"All dataframes in dfs_to_plot must have the same length, but got lengths: {lengths}")
+    
+    mean_dfs_to_plot = [df.loc[:, f'{y_label}_mean'] for df in dfs_to_plot]
+    var_dfs_to_plot = [df.loc[:, f'{y_label}_var'] for df in dfs_to_plot]
+
+    fig, axes = plt.subplots(4, 5, figsize=(25, 15))
+    axes = axes.flatten()
+    for i in range(len(dfs_to_plot[0])):        # Condition
+        ax = axes[i+1]
+        q, r = divmod(i + 1, 5)
+        mean, var = [], []
+        for j in range(2):      # Batch 1 and 2
+            mean.append(mean_dfs_to_plot[j].iloc[])
+            var.append(var_dfs_to_plot[j].iloc[i])
+        for j in range(2, 5):   # Batch 3, 4, 5
+            mean.append(mean_dfs_to_plot[j].iloc[i])
+            var.append(var_dfs_to_plot[j].iloc[i])
+        ax.plot(x, mean, 'o-', color=color)
+        ax.errorbar(x, mean, yerr=np.sqrt(var), fmt='o-', capsize=3, color=color)
+    
+    if show_plot:
+        plt.show()
+    if output_fn != '':
+        fig.suptitle(f'{output_fn}', fontsize=20, fontweight='bold')
+        plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
+        print(f'Saved plots/{output_fn}.png')
+
+plot_regression_results_in_four_by_five_grid(
+    x=time, 
+    x_label='Time (days)', 
+    dfs_to_plot=chl1_linear_regression_results_dfs, 
+    y_label='no3_rate_early', 
+    color='blue', 
+    show_plot=True, 
+    output_fn=''
+)

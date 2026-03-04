@@ -22,7 +22,7 @@ def calculate_mean_and_var(
     mean_and_var = mean_df.merge(var_df, on=groupby_cols, suffixes=('_mean', '_var'))
     mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False)
     mean_and_var.to_csv(f"{filepath}_mean_var.csv", index=False)
-    print(f"Mean and variance of regression results saved to {filepath}_mean_var.csv")
+    print(f"Saved {filepath}_mean_var.csv")
 
 
 class Interpolator:
@@ -108,7 +108,7 @@ class Interpolator:
 
         if output_fn != '':
             values_df.to_csv(f'{self.results_dir}/{output_fn}.csv')
-            print(f"Values at time points saved to {self.results_dir}/{output_fn}.csv")
+            print(f"Saved {self.results_dir}/{output_fn}.csv")
             calculate_mean_and_var(f'{self.results_dir}/{output_fn}')
         
         return values_df
@@ -179,7 +179,7 @@ class Interpolator:
 
         if output_fn is not None:
             half_life_df.to_csv(f'{self.results_dir}/{output_fn}.csv')
-            print(f"Half-life results saved to {self.results_dir}/{output_fn}.csv")
+            print(f"Saved {self.results_dir}/{output_fn}.csv")
         
         return half_life_df
     
@@ -202,8 +202,8 @@ class Interpolator:
         no3_interp = np.interp(time_interp, time, no3)
         no2_interp = np.interp(time_interp, time, no2)
         
-        no3_auc = np.trapz(no3_interp, time_interp)
-        no2_auc = np.trapz(no2_interp, time_interp)
+        no3_auc = np.trapezoid(no3_interp, time_interp)
+        no2_auc = np.trapezoid(no2_interp, time_interp)
 
         if show_plot:
             plt.scatter(time, no3, color='blue', marker='o', label='NO3')
@@ -733,11 +733,11 @@ if __name__ == "__main__":
     for id in ids[0:]:
         interpolator = Interpolator(id)
         # interpolator.values_at_time_points_for_row('E04', [5, 10, 15], [10, 20, 30], show_plot=True)
-        values_df = interpolator.values_at_time_points_for_selected_rows(
-            row_labels=row_labels_chl0,
-            time_points_no3=[5, 10, 15],
-            time_points_no2=[10, 20, 30],
-            output_fn=f'{id}.chl0_cons_interp'
+        auc_df = interpolator.auc_for_selected_rows(
+            row_labels=row_labels_chl1,
+            time_ranges_no3=[10, 20, 40, 60],
+            time_ranges_no2=[10, 20, 40, 60],
+            output_fn=f'{id}.chl1_cons_auc'
         )
 
         # time_threshold = 20
