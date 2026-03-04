@@ -20,7 +20,7 @@ def calculate_mean_and_var(
     mean_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
     var_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
     mean_and_var = mean_df.merge(var_df, on=groupby_cols, suffixes=('_mean', '_var'))
-    mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
+    mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False)
     mean_and_var.to_csv(f"{filepath}_mean_var.csv", index=False)
     print(f"Mean and variance of regression results saved to {filepath}_mean_var.csv")
 
@@ -733,11 +733,11 @@ if __name__ == "__main__":
     for id in ids[0:]:
         interpolator = Interpolator(id)
         # interpolator.values_at_time_points_for_row('E04', [5, 10, 15], [10, 20, 30], show_plot=True)
-        auc_df = interpolator.auc_for_selected_rows(
-            row_labels=row_labels_chl0, 
-            time_ranges_no3=[5, 10, 15], 
-            time_ranges_no2=[10, 20, 30], 
-            output_fn=f'{id}.chl0_cons_auc'
+        values_df = interpolator.values_at_time_points_for_selected_rows(
+            row_labels=row_labels_chl0,
+            time_points_no3=[5, 10, 15],
+            time_points_no2=[10, 20, 30],
+            output_fn=f'{id}.chl0_cons_interp'
         )
 
         # time_threshold = 20

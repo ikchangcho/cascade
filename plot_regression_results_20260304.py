@@ -67,21 +67,6 @@ def plot_regression_results_for_all_batches(x, y, std_plot, x_label, y_label, x_
         print(f'Plot saved as plots/4.2.chl{chl}_{key}_vs_{x_fn}.png')
     plt.close()
 
-def calculate_mean_and_var(
-        filepath: str,
-        groupby_cols: List[str] = ['Nitrite_input', 'Nitrate_input', 'Chloramphenicol'],
-        drop_cols: List[str] = ['Sample_type'],
-        ):
-    regression_results_df = pd.read_csv(f'{filepath}.csv', index_col=0)
-    # Consider only rows where all drop_cols are NaN (i.e., exclude rows with specific Sample_type)
-    regression_results_df = regression_results_df[regression_results_df[drop_cols].isnull().all(axis=1)]
-    mean_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).mean()
-    var_df = regression_results_df.drop(drop_cols, axis=1).groupby(groupby_cols, as_index=False).var()
-    mean_and_var = mean_df.merge(var_df, on=groupby_cols, suffixes=('_mean', '_var'))
-    mean_and_var = mean_and_var.sort_values(['Chloramphenicol', 'Nitrate_input', 'Nitrite_input'], ascending=False)
-    mean_and_var.to_csv(f"{filepath}_mean_var.csv", index=False)
-    print(f"Mean and variance of regression results saved to {filepath}_mean_var.csv")
-
 def heatmap_for_col(
         input_fn: str,
         chl: int,
@@ -134,10 +119,6 @@ for i in range(1, len(datetime_array)):
 time = np.array(time)
 water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16])
 ids = [f'4.2.batch{i}' for i in range(1, 6)]
-
-# Caculate mean and variance
-for id in ids:
-    calculate_mean_and_var(f'fitting_results/{id}.chl1_linear_regression_results')
 
 # Load mean and variance dataframes
 linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_linear_regression_results_mean_var.csv') for id in ids]
