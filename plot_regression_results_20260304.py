@@ -5,6 +5,52 @@ import matplotlib.pyplot as plt
 from typing import List
 import seaborn as sns
 
+def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_label, color, show_plot=False, output_fn=''):
+    lengths = [len(df) for df in dfs_to_plot]
+    if len(set(lengths)) != 1:
+        print(f"Dataframe lengths: {lengths}")
+        raise ValueError(f"All dataframes in dfs_to_plot must have the same length, but got lengths: {lengths}")
+    
+    mean_dfs_to_plot = [df.loc[:, f'{y_label}_mean'] for df in dfs_to_plot]
+    var_dfs_to_plot = [df.loc[:, f'{y_label}_var'] for df in dfs_to_plot]
+
+    fig, axes = plt.subplots(4, 5, figsize=(25, 15))
+    axes = axes.flatten()
+    for i in range(1, 20):
+        ax = axes[i]
+        q, r = divmod(i, 5)
+        mean, var = [], []
+        
+        if r == 0:
+            for j in range(2, 5):
+                mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 1])
+                var.append(var_dfs_to_plot[j].iloc[4*q + r - 1])
+            x_plot = x[2:5]
+        elif r == 4:
+            for j in range(2):
+                mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 2])
+                var.append(var_dfs_to_plot[j].iloc[4*q + r - 2])
+            x_plot = x[:2]
+        else:
+            for j in range(2):
+                mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 2])
+                var.append(var_dfs_to_plot[j].iloc[4*q + r - 2])
+            for j in range(2, 5):
+                mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 1])
+                var.append(var_dfs_to_plot[j].iloc[4*q + r - 1])
+            x_plot = x
+
+        ax.plot(x_plot, mean, 'o-', color=color)
+        ax.errorbar(x_plot, mean, yerr=np.sqrt(var), fmt='o-', capsize=3, color=color)
+        ax.set_xlim(x.min() - 0.05 * (x.max() - x.min()), x.max() + 0.05 * (x.max() - x.min()))
+    
+    if show_plot:
+        plt.show()
+    if output_fn != '':
+        fig.suptitle(f'{output_fn}', fontsize=20, fontweight='bold')
+        plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
+        print(f'Saved plots/{output_fn}.png')
+
 def plot_regression_results_for_all_batches(x, y, std_plot, x_label, y_label, x_fn, color, key, chl, fontsize = 15, show_plot=False, save_plot=False):
     # Calculate y limits excluding outliers
     y_data = y.iloc[:, 2:]
@@ -160,37 +206,14 @@ chl1_cons_auc_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrat
 chl1_linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_linear_regression_results_mean_var.csv') for id in ids]
 chl1_linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_linear_regression_results_dfs]
 
-def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_label, color, show_plot=False, output_fn=''):
-    lengths = [len(df) for df in dfs_to_plot]
-    if len(set(lengths)) != 1:
-        print(f"Dataframe lengths: {lengths}")
-        raise ValueError(f"All dataframes in dfs_to_plot must have the same length, but got lengths: {lengths}")
-    
-    mean_dfs_to_plot = [df.loc[:, f'{y_label}_mean'] for df in dfs_to_plot]
-    var_dfs_to_plot = [df.loc[:, f'{y_label}_var'] for df in dfs_to_plot]
 
-    fig, axes = plt.subplots(4, 5, figsize=(25, 15))
-    axes = axes.flatten()
-    for i in range(len(dfs_to_plot[0])):        # Condition
-        ax = axes[i+1]
-        q, r = divmod(i + 1, 5)
-        mean, var = [], []
-        for j in range(2):      # Batch 1 and 2
-            mean.append(mean_dfs_to_plot[j].iloc[])
-            var.append(var_dfs_to_plot[j].iloc[i])
-        for j in range(2, 5):   # Batch 3, 4, 5
-            mean.append(mean_dfs_to_plot[j].iloc[i])
-            var.append(var_dfs_to_plot[j].iloc[i])
-        ax.plot(x, mean, 'o-', color=color)
-        ax.errorbar(x, mean, yerr=np.sqrt(var), fmt='o-', capsize=3, color=color)
-    
-    if show_plot:
-        plt.show()
-    if output_fn != '':
-        fig.suptitle(f'{output_fn}', fontsize=20, fontweight='bold')
-        plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
-        print(f'Saved plots/{output_fn}.png')
+dfs_to_plot = chl0_cons_interp_dfs
+for x, x_label in [[time, 'Time (days)'], [water_contents, 'Water content (%whc)']]:
+    for y_label, color, output_fn in [
 
+    ]:
+    
+            
 plot_regression_results_in_four_by_five_grid(
     x=time, 
     x_label='Time (days)', 
