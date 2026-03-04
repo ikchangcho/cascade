@@ -52,6 +52,66 @@ class Interpolator:
         
         self.row_labels = self.no2_df.index.tolist()
         self.time = self.no2_df.columns.values.astype(float)
+    
+    def values_at_time_points_for_row(
+        self,
+        row_label: str,
+        time_points_no3: List[float],
+        time_points_no2: List[float],
+        show_plot: bool = False
+    ):
+        time = self.time
+        no3 = self.no3_df.loc[row_label].values.astype(float)
+        no2 = self.no2_df.loc[row_label].values.astype(float)
+
+        values_at_time_points_no3 = np.interp(time_points_no3, time, no3)
+        values_at_time_points_no2 = np.interp(time_points_no2, time, no2)
+
+        if show_plot:
+            plt.plot(time, no3, color='blue', marker='o', s=10, linestyle='--', label='NO3')
+            plt.plot(time, no2, color='red', marker='o', s=10, linestyle='--', label='NO2')
+            plt.scatter(time_points_no3, values_at_time_points_no3, color='green', marker='+', s=100)
+            plt.scatter(time_points_no2, values_at_time_points_no2, color='black', marker='+', s=100)
+            plt.xlabel('Time (hours)')
+            plt.ylabel('Consumption (mM)')
+            plt.title(f'Consumption at Time Points for {self.id} {row_label}')
+            plt.legend()
+            plt.show()
+        
+        return values_at_time_points_no3, values_at_time_points_no2
+        
+    def values_at_time_points_for_selected_rows(
+        self,
+        row_labels: List[str],
+        time_points_no3: List[float],
+        time_points_no2: List[float],
+        output_fn: str = ''
+    ):
+        values_dict = {
+            'row_label': []
+        }
+        for time_point in time_points_no3:
+            values_dict[f'no3_cons_{time_point}hrs'] = []
+        for time_point in time_points_no2:
+            values_dict[f'no2_cons_{time_point}hrs'] = []
+        
+        for row_label in row_labels:
+            values_dict['row_label'].append(row_label)
+            values_at_time_points_no3, values_at_time_points_no2 = self.values_at_time_points_for_row(row_label, time_points_no3, time_points_no2)
+            for i, time_point in enumerate(time_points_no3):
+                values_dict[f'no3_cons_{time_point}hrs'].append(values_at_time_points_no3[i])
+            for i, time_point in enumerate(time_points_no2):
+                values_dict[f'no2_cons_{time_point}hrs'].append(values_at_time_points_no2[i])
+        
+        values_df = pd.DataFrame(values_dict).set_index('row_label')
+        values_df = values_df.join(self.meta_df.loc[values_df.index])
+
+        if output_fn != '':
+            values_df.to_csv(f'{self.results_dir}/{output_fn}.csv')
+            print(f"Values at time points saved to {self.results_dir}/{output_fn}.csv")
+            calculate_mean_and_var(f'{self.results_dir}/{output_fn}')
+        
+        return values_df
 
     def half_life_for_row(
             self,
@@ -172,18 +232,18 @@ class Interpolator:
             'row_label': []
         }
         for time_range in time_ranges_no3:
-            auc_dict[f'no3_auc_{time_range}'] = []
+            auc_dict[f'no3_auc_{time_range}hrs'] = []
         for time_range in time_ranges_no2:
-            auc_dict[f'no2_auc_{time_range}'] = []
+            auc_dict[f'no2_auc_{time_range}hrs'] = []
 
         for row_label in row_labels:
             auc_dict['row_label'].append(row_label)
             for time_range in time_ranges_no3:
                 no3_auc, _ = self.auc_for_row(row_label, time_range)
-                auc_dict[f'no3_auc_{time_range}'].append(no3_auc)
+                auc_dict[f'no3_auc_{time_range}hrs'].append(no3_auc)
             for time_range in time_ranges_no2:
                 _, no2_auc = self.auc_for_row(row_label, time_range)
-                auc_dict[f'no2_auc_{time_range}'].append(no2_auc)
+                auc_dict[f'no2_auc_{time_range}hrs'].append(no2_auc)
         
         auc_df = pd.DataFrame(auc_dict).set_index('row_label')
         auc_df = auc_df.join(self.meta_df.loc[auc_df.index])
@@ -672,11 +732,13 @@ if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
     for id in ids[0:]:
         interpolator = Interpolator(id)
-        # interpolator.auc_for_row('E04', 25, True)
-        auc_df = interpolator.auc_for_selected_rows(row_labels_chl0, 
-                                                    time_ranges_no3 = [5, 10], 
-                                                    time_ranges_no2 = [10, 20],
-                                                    output_fn=f'{id}.chl0_area_under_curve')
+        # interpolator.values_at_time_points_for_row('E04', [5, 10, 15], [10, 20, 30], show_plot=True)
+        auc_df = interpolator.auc_for_selected_rows(
+            row_labels=row_labels_chl0, 
+            time_ranges_no3=[5, 10, 15], 
+            time_ranges_no2=[10, 20, 30], 
+            output_fn=f'{id}.chl0_cons_auc'
+        )
 
         # time_threshold = 20
         # if id == '4.2.batch5':
