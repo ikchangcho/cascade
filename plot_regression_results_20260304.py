@@ -213,13 +213,15 @@ chl1_linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_li
 chl1_linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_linear_regression_results_dfs]
 
 
-dfs_to_plot = chl1_linear_regression_results_dfs
+dfs_to_plot = chl0_cons_interp_dfs
 for x, x_label, suffix in [(time, 'Time (days)', 'vs_time'), (water_contents, 'Water content (%whc)', 'vs_water_content')]:
     for y_label, color, output_fn in [
-        ('no3_rate_early', 'blue', f'4.2.chl1_no3_rate_early_{suffix}'),
-        ('no3_rate_late', 'blue', f'4.2.chl1_no3_rate_late_{suffix}'),
-        ('no2_rate_early', 'red', f'4.2.chl1_no2_rate_early_{suffix}'),
-        ('no2_rate_late', 'red', f'4.2.chl1_no2_rate_late_{suffix}')
+        ('no3_cons_5hrs', 'blue', f'4.2.chl0_no3_cons_5hrs_{suffix}'),
+        ('no3_cons_10hrs', 'blue', f'4.2.chl0_no3_cons_10hrs_{suffix}'),
+        ('no3_cons_15hrs', 'blue', f'4.2.chl0_no3_cons_15hrs_{suffix}'),
+        ('no2_cons_10hrs', 'red', f'4.2.chl0_no2_cons_10hrs_{suffix}'),
+        ('no2_cons_20hrs', 'red', f'4.2.chl0_no2_cons_20hrs_{suffix}'),
+        ('no2_cons_30hrs', 'red', f'4.2.chl0_no2_cons_30hrs_{suffix}')
     ]:        
         plot_regression_results_in_four_by_five_grid(
             x=x, 
