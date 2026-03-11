@@ -729,27 +729,43 @@ class PolynomialRegressor:
 if __name__ == "__main__":
     row_labels_chl1 = ['A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
     row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-    ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5']
-    for id in ids[0:]:
+    ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
+    for id in ids[5:6]:
         interpolator = Interpolator(id)
         # interpolator.values_at_time_points_for_row('E04', [5, 10, 15], [10, 20, 30], show_plot=True)
-        auc_df = interpolator.auc_for_selected_rows(
-            row_labels=row_labels_chl1,
-            time_ranges_no3=[10, 20, 40, 60],
-            time_ranges_no2=[10, 20, 40, 60],
-            output_fn=f'{id}.chl1_cons_auc'
-        )
+        for row_labels, output_fn in [
+            (row_labels_chl1, f'{id}.chl1_cons_auc'),
+            (row_labels_chl0, f'{id}.chl0_cons_auc')
+        ]:
+            auc_df = interpolator.auc_for_selected_rows(
+                row_labels=row_labels,
+                time_ranges_no3=[],
+                time_ranges_no2=[],
+                output_fn=output_fn
+            )
+        
+        for row_labels, output_fn in [
+            (row_labels_chl1, f'{id}.chl1_cons_interp'),
+            (row_labels_chl0, f'{id}.chl0_cons_interp')
+        ]:
+            interp_df = interpolator.values_at_time_points_for_selected_rows(
+                row_labels=row_labels,
+                time_points=time_points,
+                output_fn=output_fn,
+                show_plot=True
+            )
 
-        # time_threshold = 20
-        # if id == '4.2.batch5':
-        #     time_threshold = 40
-        # time_interval = (40, 80)
-        # regressor = LinearRegressor(id, time_threshold, time_interval)
-        # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        # regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
-        # regressor.plot_selected_rows(
-        #     title=f'{id} Concentration CHL+',
-        #     output_fn=f'{id}.chl1_linear_regression',
-        #     row_labels=row_labels_chl1,
-        #     show_plot=False
-        # )
+
+        time_threshold = 20
+        if id == '4.2.batch5':
+            time_threshold = 40
+        time_interval = (40, 80)
+        regressor = LinearRegressor(id, time_threshold, time_interval)
+        # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
+        regressor.plot_selected_rows(
+            title=f'{id} Concentration CHL+',
+            output_fn=f'{id}.chl1_linear_regression',
+            row_labels=row_labels_chl1,
+            show_plot=True
+        )

@@ -152,19 +152,20 @@ def heatmap_for_col(
 
 
 datetime_array = [
-    datetime(2024, 11, 24, 12, 56),
-    datetime(2024, 12, 1, 13, 0),
-    datetime(2024, 12, 8, 9, 35),
-    datetime(2024, 12, 19, 11, 0),
-    datetime(2025, 1, 14, 11, 15)]
+    datetime(2025, 11, 24, 12, 56),
+    datetime(2025, 12, 1, 13, 0),
+    datetime(2025, 12, 8, 9, 35),
+    datetime(2025, 12, 19, 11, 0),
+    datetime(2026, 1, 14, 11, 15),
+    datetime(2026, 2, 23, 11, 37)]
 time = [0]
 for i in range(1, len(datetime_array)):
     time_diff = datetime_array[i] - datetime_array[0]
     time.append(time_diff.total_seconds() / 3600 / 24)
 
 time = np.array(time)
-water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16])
-ids = [f'4.2.batch{i}' for i in range(1, 6)]
+water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16, 4.74])
+ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
 
 # dfs_to_plot = linear_regression_results_dfs
@@ -208,18 +209,19 @@ chl1_linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrit
 
 
 dfs_to_plot = chl0_cons_interp_dfs
-for x, x_label in [[time, 'Time (days)'], [water_contents, 'Water content (%whc)']]:
+for x, x_label in [(time, 'Time (days)'), (water_contents, 'Water content (%whc)')]:
     for y_label, color, output_fn in [
+        
 
     ]:
     
             
-plot_regression_results_in_four_by_five_grid(
-    x=time, 
-    x_label='Time (days)', 
-    dfs_to_plot=chl1_linear_regression_results_dfs, 
-    y_label='no3_rate_early', 
-    color='blue', 
-    show_plot=True, 
-    output_fn=''
-)
+    plot_regression_results_in_four_by_five_grid(
+        x=x, 
+        x_label=x_label, 
+        dfs_to_plot=chl1_linear_regression_results_dfs, 
+        y_label='no3_rate_early', 
+        color='blue', 
+        show_plot=True, 
+        output_fn=''
+    )
