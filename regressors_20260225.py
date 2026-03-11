@@ -425,6 +425,7 @@ class LinearRegressor:
                 regression_results_df = regression_results_df.join(self.meta_df.loc[regression_results_df.index])
                 regression_results_df.to_csv(f'{self.results_dir}/{output_fn}.csv')
                 print(f"Linear regression results saved to {self.results_dir}/{output_fn}.csv")
+            calculate_mean_and_var(f'{self.results_dir}/{output_fn}')
 
         return self.regression_results
 
@@ -733,26 +734,26 @@ if __name__ == "__main__":
     for id in ids[5:6]:
         interpolator = Interpolator(id)
         # interpolator.values_at_time_points_for_row('E04', [5, 10, 15], [10, 20, 30], show_plot=True)
-        for row_labels, output_fn in [
-            (row_labels_chl1, f'{id}.chl1_cons_auc'),
-            (row_labels_chl0, f'{id}.chl0_cons_auc')
+        for row_labels, time_ranges_no3, time_ranges_no2, output_fn in [
+            (row_labels_chl1, [20, 40, 60], [20, 40, 60], f'{id}.chl1_cons_auc'),
+            (row_labels_chl0, [5, 10, 15], [10, 20, 30], f'{id}.chl0_cons_auc')
         ]:
             auc_df = interpolator.auc_for_selected_rows(
                 row_labels=row_labels,
-                time_ranges_no3=[],
-                time_ranges_no2=[],
+                time_ranges_no3=time_ranges_no3,
+                time_ranges_no2=time_ranges_no2,
                 output_fn=output_fn
             )
         
-        for row_labels, output_fn in [
-            (row_labels_chl1, f'{id}.chl1_cons_interp'),
-            (row_labels_chl0, f'{id}.chl0_cons_interp')
+        for row_labels, time_points_no3, time_points_no2, output_fn in [
+            (row_labels_chl1, [10, 20, 40, 60], [10, 20, 40, 60], f'{id}.chl1_cons_interp'),
+            (row_labels_chl0, [5, 10, 15], [10, 20, 30], f'{id}.chl0_cons_interp')
         ]:
             interp_df = interpolator.values_at_time_points_for_selected_rows(
                 row_labels=row_labels,
-                time_points=time_points,
-                output_fn=output_fn,
-                show_plot=True
+                time_points_no3=time_points_no3,
+                time_points_no2=time_points_no2,
+                output_fn=output_fn
             )
 
 
@@ -767,5 +768,5 @@ if __name__ == "__main__":
             title=f'{id} Concentration CHL+',
             output_fn=f'{id}.chl1_linear_regression',
             row_labels=row_labels_chl1,
-            show_plot=True
+            show_plot=False
         )

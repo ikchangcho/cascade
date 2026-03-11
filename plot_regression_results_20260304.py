@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from typing import List
 import seaborn as sns
 
-def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_label, color, show_plot=False, output_fn=''):
+def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_label, color, show_plot=False, output_fn='', fontsize=15):
     lengths = [len(df) for df in dfs_to_plot]
     if len(set(lengths)) != 1:
         print(f"Dataframe lengths: {lengths}")
@@ -22,10 +22,10 @@ def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_labe
         mean, var = [], []
         
         if r == 0:
-            for j in range(2, 5):
+            for j in range(2, len(dfs_to_plot)):
                 mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 1])
                 var.append(var_dfs_to_plot[j].iloc[4*q + r - 1])
-            x_plot = x[2:5]
+            x_plot = x[2:len(dfs_to_plot)]
         elif r == 4:
             for j in range(2):
                 mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 2])
@@ -35,7 +35,7 @@ def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_labe
             for j in range(2):
                 mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 2])
                 var.append(var_dfs_to_plot[j].iloc[4*q + r - 2])
-            for j in range(2, 5):
+            for j in range(2, len(dfs_to_plot)):
                 mean.append(mean_dfs_to_plot[j].iloc[4*q + r - 1])
                 var.append(var_dfs_to_plot[j].iloc[4*q + r - 1])
             x_plot = x
@@ -44,12 +44,17 @@ def plot_regression_results_in_four_by_five_grid(x, x_label, dfs_to_plot, y_labe
         ax.errorbar(x_plot, mean, yerr=np.sqrt(var), fmt='o-', capsize=3, color=color)
         ax.set_xlim(x.min() - 0.05 * (x.max() - x.min()), x.max() + 0.05 * (x.max() - x.min()))
     
-    if show_plot:
-        plt.show()
+    fig.text(0.55, 0.05, f'{x_label}', ha='center', fontsize=fontsize)
+    fig.text(0.08, 0.5, f'{y_label}', va='center', rotation='vertical', fontsize=fontsize)
+    fig.suptitle(f'{output_fn}', fontsize=fontsize+4)
+    
     if output_fn != '':
         fig.suptitle(f'{output_fn}', fontsize=20, fontweight='bold')
         plt.savefig(f'plots/{output_fn}.png', dpi=300, bbox_inches='tight')
         print(f'Saved plots/{output_fn}.png')
+    if show_plot:
+        plt.show()
+    
 
 def plot_regression_results_for_all_batches(x, y, std_plot, x_label, y_label, x_fn, color, key, chl, fontsize = 15, show_plot=False, save_plot=False):
     # Calculate y limits excluding outliers
@@ -208,20 +213,20 @@ chl1_linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_li
 chl1_linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_linear_regression_results_dfs]
 
 
-dfs_to_plot = chl0_cons_interp_dfs
-for x, x_label in [(time, 'Time (days)'), (water_contents, 'Water content (%whc)')]:
+dfs_to_plot = chl1_linear_regression_results_dfs
+for x, x_label, suffix in [(time, 'Time (days)', 'vs_time'), (water_contents, 'Water content (%whc)', 'vs_water_content')]:
     for y_label, color, output_fn in [
-        
-
-    ]:
-    
-            
-    plot_regression_results_in_four_by_five_grid(
-        x=x, 
-        x_label=x_label, 
-        dfs_to_plot=chl1_linear_regression_results_dfs, 
-        y_label='no3_rate_early', 
-        color='blue', 
-        show_plot=True, 
-        output_fn=''
-    )
+        ('no3_rate_early', 'blue', f'4.2.chl1_no3_rate_early_{suffix}'),
+        ('no3_rate_late', 'blue', f'4.2.chl1_no3_rate_late_{suffix}'),
+        ('no2_rate_early', 'red', f'4.2.chl1_no2_rate_early_{suffix}'),
+        ('no2_rate_late', 'red', f'4.2.chl1_no2_rate_late_{suffix}')
+    ]:        
+        plot_regression_results_in_four_by_five_grid(
+            x=x, 
+            x_label=x_label, 
+            dfs_to_plot=dfs_to_plot, 
+            y_label=y_label, 
+            color=color, 
+            show_plot=False, 
+            output_fn=output_fn
+        )

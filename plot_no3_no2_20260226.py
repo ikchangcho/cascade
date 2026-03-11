@@ -52,7 +52,7 @@ def plot_combined_data(row_labels, dfs_to_plot, output_fn='', show_plot=False):
         axes[5*q + r].plot(dfs_to_plot[2].columns.astype(float).tolist(), dfs_to_plot[2].loc[row], marker, markersize=3, color='green', linestyle='--', alpha=0.5)
         axes[5*q + r].plot(dfs_to_plot[3].columns.astype(float).tolist(), dfs_to_plot[3].loc[row], marker, markersize=3, color='blue', linestyle='--', alpha=0.5)
         axes[5*q + r].plot(dfs_to_plot[4].columns.astype(float).tolist(), dfs_to_plot[4].loc[row], marker, markersize=3, color='purple', linestyle='--', alpha=0.5)
-        axes[5*q + r].plot(dfs_to_plot[4].columns.astype(float).tolist(), dfs_to_plot[4].loc[row], marker, markersize=3, color='black', linestyle='--', alpha=0.5)
+        axes[5*q + r].plot(dfs_to_plot[5].columns.astype(float).tolist(), dfs_to_plot[4].loc[row], marker, markersize=3, color='black', linestyle='--', alpha=0.5)
 
 
     handles = [plt.Line2D([0], [0], color='red', linestyle='-', label=f'batch 1'),
@@ -80,19 +80,19 @@ def load_csv(id, meta_col_num=4):
 
 ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
 for id in ids[0:]:
-    no3_conc_df, no2_conc_df, no3_cons_df, no2_cons_df, meta_df = load_csv(id)
-    x = no3_conc_df.columns.astype(float).tolist()
-    row_labels_chl1 = meta_df[(meta_df['Chloramphenicol'] == 1) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
-    row_labels_chl0 = meta_df[(meta_df['Chloramphenicol'] == 0) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
+    # no3_conc_df, no2_conc_df, no3_cons_df, no2_cons_df, meta_df = load_csv(id)
+    # x = no3_conc_df.columns.astype(float).tolist()
+    # row_labels_chl1 = meta_df[(meta_df['Chloramphenicol'] == 1) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
+    # row_labels_chl0 = meta_df[(meta_df['Chloramphenicol'] == 0) & (meta_df['Sample_type'] != 'Blank')].index.tolist()
     
-    for no3_df, no2_df, row_labels, title, y_label, output_fn in [
-        (no3_conc_df, no2_conc_df, row_labels_chl1, f'{id} CHL+ Concentration', 'Concentration (mM)', f'{id}.chl1_no3_no2_conc.png'),
-        (no3_cons_df, no2_cons_df, row_labels_chl1, f'{id} CHL+ Consumption', 'Consumption (mM)', f'{id}.chl1_no3_no2_cons.png'),
-        (no3_conc_df, no2_conc_df, row_labels_chl0, f'{id} CHL- Concentration', 'Concentration (mM)', f'{id}.chl0_no3_no2_conc.png'),
-        (no3_cons_df, no2_cons_df, row_labels_chl0, f'{id} CHL- Consumption', 'Consumption (mM)', f'{id}.chl0_no3_no2_cons.png')
-    ]:
-        plot_no3_no2(x, no3_df, no2_df, row_labels, title, y_label, 
-                                output_fn=output_fn, show_plot=False)
+    # for no3_df, no2_df, row_labels, title, y_label, output_fn in [
+    #     (no3_conc_df, no2_conc_df, row_labels_chl1, f'{id} CHL+ Concentration', 'Concentration (mM)', f'{id}.chl1_no3_no2_conc.png'),
+    #     (no3_cons_df, no2_cons_df, row_labels_chl1, f'{id} CHL+ Consumption', 'Consumption (mM)', f'{id}.chl1_no3_no2_cons.png'),
+    #     (no3_conc_df, no2_conc_df, row_labels_chl0, f'{id} CHL- Concentration', 'Concentration (mM)', f'{id}.chl0_no3_no2_conc.png'),
+    #     (no3_cons_df, no2_cons_df, row_labels_chl0, f'{id} CHL- Consumption', 'Consumption (mM)', f'{id}.chl0_no3_no2_cons.png')
+    # ]:
+    #     plot_no3_no2(x, no3_df, no2_df, row_labels, title, y_label, 
+    #                             output_fn=output_fn, show_plot=False)
 
     no3_conc_dfs, no2_conc_dfs, no3_cons_dfs, no2_cons_dfs = [], [], [], []
     for id in ids:
