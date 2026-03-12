@@ -174,13 +174,16 @@ ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
 dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_data_for_phase_diagram.csv') for id in ids]
 
-x_label = 'chl0_no3_cons_10hrs'
-y_label = 'chl0_no2_cons_10hrs'
+x_label = 'chl1_no3_cons_25hrs'
+y_label = 'chl1_no2_cons_25hrs'
 colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
 
-fig, axes = plt.subplots(2, 1)
-for i, df in enumerate(dfs_to_plot):
-    for j, (x, y) in enumerate(zip(df[x_label], df[y_label])):
+fig, axes = plt.subplots(2, 1, figsize=(5, 10))
+for i, df in enumerate(dfs_to_plot[:]):
+    mask = (df['chl1_init_no3'] > 1.0) & (df['chl1_init_no3'] < 1.5)
+    x_values = df[x_label][mask]
+    y_values = df[y_label][mask]
+    for j, (x, y) in enumerate(zip(x_values, y_values)):
         init_no3 = float((df['chl1_init_no3'].iloc[j] + df['chl0_init_no3'].iloc[j]) / 
                         np.max(df['chl1_init_no3'] + df['chl0_init_no3'])) * 0.9 + 0.1
         axes[0].plot(
@@ -215,6 +218,6 @@ handles = [plt.Line2D([0], [0], color='red', marker='o', label=f'batch 1'),
             plt.Line2D([0], [0], color='purple', marker='o', label=f'batch 5'),
             plt.Line2D([0], [0], color='black', marker='o', label=f'batch 6')]
 fig.legend(handles=handles)
-fig.suptitle(r'$\frac{A^-_{cons}-I^-_{cons}}{A^+_{cons}-I^+_{cons}}$', fontsize = 15)
+fig.suptitle(f'{y_label} vs {x_label}')
 
 plt.show()
