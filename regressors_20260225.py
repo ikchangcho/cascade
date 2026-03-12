@@ -102,7 +102,7 @@ class Interpolator:
                 values_dict[f'no3_cons_{time_point}hrs'].append(values_at_time_points_no3[i])
             for i, time_point in enumerate(time_points_no2):
                 values_dict[f'no2_cons_{time_point}hrs'].append(values_at_time_points_no2[i])
-        
+
         values_df = pd.DataFrame(values_dict).set_index('row_label')
         values_df = values_df.join(self.meta_df.loc[values_df.index])
 
@@ -731,42 +731,83 @@ if __name__ == "__main__":
     row_labels_chl1 = ['A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
     row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
-    for id in ids[5:6]:
+    for id in ids[:]:
         interpolator = Interpolator(id)
-        # interpolator.values_at_time_points_for_row('E04', [5, 10, 15], [10, 20, 30], show_plot=True)
-        for row_labels, time_ranges_no3, time_ranges_no2, output_fn in [
-            (row_labels_chl1, [20, 40, 60], [20, 40, 60], f'{id}.chl1_cons_auc'),
-            (row_labels_chl0, [5, 10, 15], [10, 20, 30], f'{id}.chl0_cons_auc')
-        ]:
-            auc_df = interpolator.auc_for_selected_rows(
-                row_labels=row_labels,
-                time_ranges_no3=time_ranges_no3,
-                time_ranges_no2=time_ranges_no2,
-                output_fn=output_fn
-            )
-        
-        for row_labels, time_points_no3, time_points_no2, output_fn in [
-            (row_labels_chl1, [10, 20, 40, 60], [10, 20, 40, 60], f'{id}.chl1_cons_interp'),
-            (row_labels_chl0, [5, 10, 15], [10, 20, 30], f'{id}.chl0_cons_interp')
-        ]:
-            interp_df = interpolator.values_at_time_points_for_selected_rows(
-                row_labels=row_labels,
-                time_points_no3=time_points_no3,
-                time_points_no2=time_points_no2,
-                output_fn=output_fn
-            )
-
-
-        time_threshold = 20
-        if id == '4.2.batch5':
-            time_threshold = 40
-        time_interval = (40, 80)
-        regressor = LinearRegressor(id, time_threshold, time_interval)
-        # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
-        regressor.plot_selected_rows(
-            title=f'{id} Concentration CHL+',
-            output_fn=f'{id}.chl1_linear_regression',
+        chl1_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
             row_labels=row_labels_chl1,
-            show_plot=False
+            time_points_no3=[15, 25, 40, 60],
+            time_points_no2=[15, 25, 40, 60]
         )
+        no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
+        chl1_init_no3 = no3_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
+        no2_conc_df = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0)
+        chl1_init_no2 = no2_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
+        chl1_cons_interp_df['init_no3'] = chl1_init_no3
+        chl1_cons_interp_df['init_no2'] = chl1_init_no2
+        chl1_cons_interp_df.to_csv(f'fitting_results/{id}.chl1_cons_interp_for_phase_diagram.csv')
+        
+        chl0_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
+            row_labels=row_labels_chl0,
+            time_points_no3=[5, 10, 15],
+            time_points_no2=[5, 10, 15]
+        )
+        chl0_init_no3 = no3_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
+        chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
+        chl0_cons_interp_df['init_no3'] = chl0_init_no3
+        chl0_cons_interp_df['init_no2'] = chl0_init_no2
+        chl0_cons_interp_df.to_csv(f'fitting_results/{id}.chl0_cons_interp_for_phase_diagram.csv')
+
+        no3_no2_ratio_df = pd.DataFrame()
+        chl1_cons_interp_df = chl1_cons_interp_df.reset_index(drop=True)
+        chl0_cons_interp_df = chl0_cons_interp_df.reset_index(drop=True)
+
+        chl1_no3_minus_no2 = chl1_cons_interp_df['no3_cons_25hrs'] - chl1_cons_interp_df['no2_cons_25hrs']
+        chl1_no3_minus_no2[chl1_cons_interp_df['init_no3'] < 0.01] = np.nan
+        no3_no2_ratio_df['chl1_no3_minus_no2'] = chl1_no3_minus_no2
+
+        chl0_no3_minus_no2 = chl0_cons_interp_df['no3_cons_10hrs'] - chl0_cons_interp_df['no2_cons_10hrs']
+        chl0_mask = chl0_cons_interp_df['init_no3'] < 0.01
+        chl0_no3_minus_no2[chl0_mask] = np.nan
+        no3_no2_ratio_df['chl0_no3_minus_no2'] = chl0_no3_minus_no2
+
+        frac_chl0_chl1 = chl0_no3_minus_no2 / chl1_no3_minus_no2
+        no3_no2_ratio_df['frac_chl0_chl1'] = frac_chl0_chl1
+
+        chl1_log_no3_no2 = np.log(chl1_cons_interp_df['no3_cons_25hrs'] / chl1_cons_interp_df['no2_cons_25hrs'])
+        chl1_log_no3_no2[chl1_cons_interp_df['init_no3'] < 0.01] = np.nan
+        no3_no2_ratio_df['chl1_log_no3_no2'] = chl1_log_no3_no2
+
+        chl0_log_no3_no2 = np.log(chl0_cons_interp_df['no3_cons_10hrs'] / chl0_cons_interp_df['no2_cons_10hrs'])
+        chl0_log_no3_no2[chl0_cons_interp_df['init_no3'] < 0.01] = np.nan
+        no3_no2_ratio_df['chl0_log_no3_no2'] = chl0_log_no3_no2
+
+        frac_log_chl0_chl1 = chl0_log_no3_no2 / chl1_log_no3_no2
+        no3_no2_ratio_df['frac_log_chl0_chl1'] = frac_log_chl0_chl1
+
+        no3_no2_ratio_df['init_no3'] = (chl1_cons_interp_df['init_no3'] + chl0_cons_interp_df['init_no3']) / 2
+        no3_no2_ratio_df['init_no2'] = (chl1_cons_interp_df['init_no2'] + chl0_cons_interp_df['init_no2']) / 2
+        
+        no3_no2_ratio_df.to_csv(f'fitting_results/{id}.no3_no2_ratio_for_phase_diagram.csv')
+
+
+        
+
+        
+
+        
+
+
+
+        # time_threshold = 20
+        # if id == '4.2.batch5':
+        #     time_threshold = 40
+        # time_interval = (40, 80)
+        # regressor = LinearRegressor(id, time_threshold, time_interval)
+        # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
+        # regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
+        # regressor.plot_selected_rows(
+        #     title=f'{id} Concentration CHL+',
+        #     output_fn=f'{id}.chl1_linear_regression',
+        #     row_labels=row_labels_chl1,
+        #     show_plot=False
+        # )
