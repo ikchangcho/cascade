@@ -733,61 +733,63 @@ if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
     for id in ids[:]:
         interpolator = Interpolator(id)
+        chl1_time_points = [15, 25, 40, 60]
         chl1_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
             row_labels=row_labels_chl1,
-            time_points_no3=[15, 25, 40, 60],
-            time_points_no2=[15, 25, 40, 60]
+            time_points_no3=chl1_time_points,
+            time_points_no2=chl1_time_points
         )
-        no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
-        chl1_init_no3 = no3_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
-        no2_conc_df = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0)
-        chl1_init_no2 = no2_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
-        chl1_cons_interp_df['init_no3'] = chl1_init_no3
-        chl1_cons_interp_df['init_no2'] = chl1_init_no2
-        chl1_cons_interp_df.to_csv(f'fitting_results/{id}.chl1_cons_interp_for_phase_diagram.csv')
+        chl1_cons_interp_df = chl1_cons_interp_df.reset_index(drop=True)
         
+        chl0_time_points = [5, 10, 15]
         chl0_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
             row_labels=row_labels_chl0,
-            time_points_no3=[5, 10, 15],
-            time_points_no2=[5, 10, 15]
+            time_points_no3=chl0_time_points,
+            time_points_no2=chl0_time_points
         )
-        chl0_init_no3 = no3_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
-        chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
-        chl0_cons_interp_df['init_no3'] = chl0_init_no3
-        chl0_cons_interp_df['init_no2'] = chl0_init_no2
-        chl0_cons_interp_df.to_csv(f'fitting_results/{id}.chl0_cons_interp_for_phase_diagram.csv')
-
-        no3_no2_ratio_df = pd.DataFrame()
-        chl1_cons_interp_df = chl1_cons_interp_df.reset_index(drop=True)
         chl0_cons_interp_df = chl0_cons_interp_df.reset_index(drop=True)
 
+        no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
+        chl1_init_no3 = no3_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
+        chl0_init_no3 = no3_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
+        no2_conc_df = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0)
+        chl1_init_no2 = no2_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
+        chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
+
+        df_for_phase_diagram = pd.DataFrame()
+        df_for_phase_diagram['chl1_init_no3'] = chl1_init_no3
+        df_for_phase_diagram['chl1_init_no2'] = chl1_init_no2
+        df_for_phase_diagram['chl1_no3_cons_25hrs'] = chl1_cons_interp_df['no3_cons_25hrs']
+        df_for_phase_diagram['chl1_no2_cons_25hrs'] = chl1_cons_interp_df['no2_cons_25hrs']
+        df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
+        df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
+        df_for_phase_diagram['chl0_no3_cons_10hrs'] = chl0_cons_interp_df['no3_cons_10hrs']
+        df_for_phase_diagram['chl0_no2_cons_10hrs'] = chl0_cons_interp_df['no2_cons_10hrs']
+        
         chl1_no3_minus_no2 = chl1_cons_interp_df['no3_cons_25hrs'] - chl1_cons_interp_df['no2_cons_25hrs']
-        chl1_no3_minus_no2[chl1_cons_interp_df['init_no3'] < 0.01] = np.nan
-        no3_no2_ratio_df['chl1_no3_minus_no2'] = chl1_no3_minus_no2
+        chl1_no3_minus_no2[df_for_phase_diagram['chl1_init_no3'] < 0.01] = np.nan
+        df_for_phase_diagram['chl1_no3_minus_no2'] = chl1_no3_minus_no2
 
         chl0_no3_minus_no2 = chl0_cons_interp_df['no3_cons_10hrs'] - chl0_cons_interp_df['no2_cons_10hrs']
-        chl0_mask = chl0_cons_interp_df['init_no3'] < 0.01
+        chl0_mask = df_for_phase_diagram['chl0_init_no3'] < 0.01
         chl0_no3_minus_no2[chl0_mask] = np.nan
-        no3_no2_ratio_df['chl0_no3_minus_no2'] = chl0_no3_minus_no2
+        df_for_phase_diagram['chl0_no3_minus_no2'] = chl0_no3_minus_no2
 
         frac_chl0_chl1 = chl0_no3_minus_no2 / chl1_no3_minus_no2
-        no3_no2_ratio_df['frac_chl0_chl1'] = frac_chl0_chl1
+        df_for_phase_diagram['frac_chl0_chl1'] = frac_chl0_chl1
 
         chl1_log_no3_no2 = np.log(chl1_cons_interp_df['no3_cons_25hrs'] / chl1_cons_interp_df['no2_cons_25hrs'])
-        chl1_log_no3_no2[chl1_cons_interp_df['init_no3'] < 0.01] = np.nan
-        no3_no2_ratio_df['chl1_log_no3_no2'] = chl1_log_no3_no2
+        chl1_log_no3_no2[df_for_phase_diagram['chl1_init_no3'] < 0.01] = np.nan
+        df_for_phase_diagram['chl1_log_no3_no2'] = chl1_log_no3_no2
 
         chl0_log_no3_no2 = np.log(chl0_cons_interp_df['no3_cons_10hrs'] / chl0_cons_interp_df['no2_cons_10hrs'])
-        chl0_log_no3_no2[chl0_cons_interp_df['init_no3'] < 0.01] = np.nan
-        no3_no2_ratio_df['chl0_log_no3_no2'] = chl0_log_no3_no2
+        chl0_log_no3_no2[df_for_phase_diagram['chl0_init_no3'] < 0.01] = np.nan
+        df_for_phase_diagram['chl0_log_no3_no2'] = chl0_log_no3_no2
 
         frac_log_chl0_chl1 = chl0_log_no3_no2 / chl1_log_no3_no2
-        no3_no2_ratio_df['frac_log_chl0_chl1'] = frac_log_chl0_chl1
+        df_for_phase_diagram['frac_log_chl0_chl1'] = frac_log_chl0_chl1
 
-        no3_no2_ratio_df['init_no3'] = (chl1_cons_interp_df['init_no3'] + chl0_cons_interp_df['init_no3']) / 2
-        no3_no2_ratio_df['init_no2'] = (chl1_cons_interp_df['init_no2'] + chl0_cons_interp_df['init_no2']) / 2
-        
-        no3_no2_ratio_df.to_csv(f'fitting_results/{id}.no3_no2_ratio_for_phase_diagram.csv')
+        df_for_phase_diagram.to_csv(f'fitting_results/{id}_data_for_phase_diagram.csv')
 
 
         
