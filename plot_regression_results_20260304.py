@@ -172,63 +172,44 @@ time = np.array(time)
 water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16, 4.74])
 ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
+dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_data_for_phase_diagram.csv') for id in ids]
 
-# dfs_to_plot = linear_regression_results_dfs
-# for x, x_label, x_fn in [[time, 'Time (days)', 'time'], [water_contents, 'Water content (%whc)', 'water_content']]:
-#     for key, y_label, color in [['no3_rate_early', 'Reduction Rate (mM/hour)', 'blue'], ['no3_rate_late', 'Reduction Rate (mM/hour)', 'blue'], ['no2_rate_early', 'Reduction Rate (mM/hour)', 'red'], ['no2_rate_late', 'Reduction Rate (mM/hour)', 'red']]:
-#         for chl in [1]:
-#             dfs = [dfs_to_plot[i][dfs_to_plot[i]['Chloramphenicol'] == chl][['Nitrite_input', 'Nitrate_input', f'{key}_mean', f'{key}_var']] for i in range(len(dfs_to_plot))]
-#             mean_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].copy()
-#             std_plot = dfs[0][['Nitrite_input', 'Nitrate_input']].pow(0.5).copy()
-#             for i in range(len(dfs)):
-#                 mean_plot[time[i]] = dfs[i][f'{key}_mean']
-#                 std_plot[time[i]] = dfs[i][f'{key}_var']
-#             plot_regression_results_for_all_batches(x, mean_plot, std_plot, x_label, y_label, x_fn, color, key, chl, 
-#                                                     show_plot=False, save_plot=True)
+y_label = 'frac_log_chl0_chl1'
+colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
+y_lim = (-5, 6)
 
-# # Create heatmaps
-# for id in ids:
-#     input_fn = f'fitting_results/{id}.chl0_half_life_rcpr_mean_var.csv'
-#     chl = 0
-#     for col_label in ['no2_half_life_rcpr', 'no3_half_life_rcpr']:
-#         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=24,
-#             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
-
-# input_fn = f'fitting_results/{id}_conc_linear_regression_results_mean_var.csv'
-# conv_factor=24
-# for col_label in ['no2_init_rate', 'no3_init_rate']:
-#     for chl in [0, 1]:
-#         heatmap_for_col(input_fn=input_fn, chl=chl, col_label=col_label, conv_factor=conv_factor,
-#             output_fn=f'{id}.chl{chl}_{col_label}',show_plot=False)
-
-chl0_cons_interp_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_cons_interp_mean_var.csv') for id in ids]
-chl0_cons_interp_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl0_cons_interp_dfs]
-chl0_cons_auc_dfs = [pd.read_csv(f'fitting_results/{id}.chl0_cons_auc_mean_var.csv') for id in ids]
-chl0_cons_auc_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl0_cons_auc_dfs]
-chl1_cons_interp_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_cons_interp_mean_var.csv') for id in ids]
-chl1_cons_interp_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_cons_interp_dfs]
-chl1_cons_auc_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_cons_auc_mean_var.csv') for id in ids]
-chl1_cons_auc_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_cons_auc_dfs]
-chl1_linear_regression_results_dfs = [pd.read_csv(f'fitting_results/{id}.chl1_linear_regression_results_mean_var.csv') for id in ids]
-chl1_linear_regression_results_dfs = [df.sort_values(['Chloramphenicol', 'Nitrite_input', 'Nitrate_input'], ascending=False) for df in chl1_linear_regression_results_dfs]
-
-
-dfs_to_plot = chl0_cons_interp_dfs
-for x, x_label, suffix in [(time, 'Time (days)', 'vs_time'), (water_contents, 'Water content (%whc)', 'vs_water_content')]:
-    for y_label, color, output_fn in [
-        ('no3_cons_5hrs', 'blue', f'4.2.chl0_no3_cons_5hrs_{suffix}'),
-        ('no3_cons_10hrs', 'blue', f'4.2.chl0_no3_cons_10hrs_{suffix}'),
-        ('no3_cons_15hrs', 'blue', f'4.2.chl0_no3_cons_15hrs_{suffix}'),
-        ('no2_cons_10hrs', 'red', f'4.2.chl0_no2_cons_10hrs_{suffix}'),
-        ('no2_cons_20hrs', 'red', f'4.2.chl0_no2_cons_20hrs_{suffix}'),
-        ('no2_cons_30hrs', 'red', f'4.2.chl0_no2_cons_30hrs_{suffix}')
-    ]:        
-        plot_regression_results_in_four_by_five_grid(
-            x=x, 
-            x_label=x_label, 
-            dfs_to_plot=dfs_to_plot, 
-            y_label=y_label, 
-            color=color, 
-            show_plot=False, 
-            output_fn=output_fn
+fig, axes = plt.subplots(2, 1)
+for i, df in enumerate(dfs_to_plot):
+    for j, y in enumerate(df[y_label]):
+        init_no3 = float((df['chl1_init_no3'].iloc[j] + df['chl0_init_no3'].iloc[j]) / 
+                        np.max(df['chl1_init_no3'] + df['chl0_init_no3'])) * 0.9 + 0.1
+        axes[0].plot(
+            time[i], y,
+            color=colors[i],
+            marker='o',
+            alpha=init_no3,
+            markersize=8
         )
+        axes[0].set_ylim(y_lim[0], y_lim[1])
+
+        init_no2 = float((df['chl1_init_no2'].iloc[j] + df['chl0_init_no2'].iloc[j]) / 
+                        np.max(df['chl1_init_no2'] + df['chl0_init_no2'])) * 0.9 + 0.1
+        axes[1].plot(
+            time[i], y,
+            color=colors[i],
+            marker='o',
+            alpha=init_no2,
+            markersize=8
+        )
+        axes[1].set_ylim(y_lim[0], y_lim[1])
+axes[1].set_xlabel('Time (days)')
+
+sm1 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.min(df['chl1_init_no3'] + df['chl0_init_no3'])/2, vmax=np.max(df['chl1_init_no3'] + df['chl0_init_no3'])/2))
+sm1.set_array([])
+fig.colorbar(sm1, ax=axes[0], label='A(0) (mM)')
+sm2 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.min(df['chl1_init_no2'] + df['chl0_init_no2'])/2, vmax=np.max(df['chl1_init_no2'] + df['chl0_init_no2'])/2))
+sm2.set_array([])
+fig.colorbar(sm2, ax=axes[1], label='I(0) (mM)')
+fig.suptitle(r'$log(\frac{A^-_{cons}}{I^-_{cons}})/log(\frac{A^+_{cons}}{I^+_{cons}})$', fontsize = 15)
+
+plt.show()
