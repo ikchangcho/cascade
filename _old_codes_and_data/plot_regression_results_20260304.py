@@ -174,7 +174,7 @@ ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
 dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_data_for_phase_diagram.csv') for id in ids]
 
-y_label = 'frac_log_chl0_chl1'
+y_label = 'frac_chl0_chl1'
 colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
 y_lim = (-5, 6)
 
@@ -210,6 +210,6 @@ fig.colorbar(sm1, ax=axes[0], label='A(0) (mM)')
 sm2 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.min(df['chl1_init_no2'] + df['chl0_init_no2'])/2, vmax=np.max(df['chl1_init_no2'] + df['chl0_init_no2'])/2))
 sm2.set_array([])
 fig.colorbar(sm2, ax=axes[1], label='I(0) (mM)')
-fig.suptitle(r'$log(\frac{A^-_{cons}}{I^-_{cons}})/log(\frac{A^+_{cons}}{I^+_{cons}})$', fontsize = 15)
+fig.suptitle(r'$\frac{A^-_{cons}-I^-_{cons}}{A^+_{cons}-I^+_{cons}}$', fontsize = 15)
 
 plt.show()
