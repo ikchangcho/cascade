@@ -760,6 +760,7 @@ if __name__ == "__main__":
         df_for_phase_diagram['chl1_init_no3'] = chl1_init_no3
         df_for_phase_diagram['chl1_init_no2'] = chl1_init_no2
         df_for_phase_diagram['chl1_no3_cons_25hrs'] = chl1_cons_interp_df['no3_cons_25hrs']
+        df_for_phase_diagram['chl1_no3_cons_25hrs'][df_for_phase_diagram['chl1_init_no3'] < 0.1] = np.nan
         df_for_phase_diagram['chl1_no2_cons_25hrs'] = chl1_cons_interp_df['no2_cons_25hrs']
         df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
         df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
@@ -790,6 +791,7 @@ if __name__ == "__main__":
         df_for_phase_diagram['frac_log_chl0_chl1'] = frac_log_chl0_chl1
 
         df_for_phase_diagram.to_csv(f'fitting_results/{id}_data_for_phase_diagram.csv')
+        print(f'Saved fitting_results/{id}_data_for_phase_diagram.csv')
 
 
         

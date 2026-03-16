@@ -174,35 +174,38 @@ ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
 dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_data_for_phase_diagram.csv') for id in ids]
 
-x_label = 'chl1_no3_cons_25hrs'
-y_label = 'chl1_no2_cons_25hrs'
+chl = 'chl1'
+x_label = f'{chl}_no3_cons_25hrs'
+y_label = f'{chl}_no2_cons_25hrs'
 colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
+no3_range = (-10, 10)
+no2_range = (-10, 10)
 
 fig, axes = plt.subplots(2, 1, figsize=(5, 10))
-for i, df in enumerate(dfs_to_plot[:]):
-    mask = (df['chl1_init_no3'] > 1.0) & (df['chl1_init_no3'] < 1.5)
-    x_values = df[x_label][mask]
-    y_values = df[y_label][mask]
-    for j, (x, y) in enumerate(zip(x_values, y_values)):
-        init_no3 = float((df['chl1_init_no3'].iloc[j] + df['chl0_init_no3'].iloc[j]) / 
-                        np.max(df['chl1_init_no3'] + df['chl0_init_no3'])) * 0.9 + 0.1
-        axes[0].plot(
-            x, y,
-            color=colors[i],
-            marker='o',
-            alpha=init_no3,
-            markersize=8
-        )
+for i in [0, 1, 2, 3, 4, 5]:
+    df = dfs_to_plot[i]
+    mask = (df[f'{chl}_init_no3'] > no3_range[0]) & (df[f'{chl}_init_no3'] < no3_range[1]) & (df[f'{chl}_init_no2'] > no2_range[0]) & (df[f'{chl}_init_no2'] < no2_range[1])
+    for j, bool in enumerate(mask):
+        if bool:
+            init_no3 = float(df[f'{chl}_init_no3'].iloc[j] / np.max(df[f'{chl}_init_no3'])) * 0.9 + 0.1
+            axes[0].plot(
+                df[x_label].iloc[j],
+                df[y_label].iloc[j],
+                color=colors[i],
+                marker='o',
+                alpha=init_no3,
+                markersize=8
+            )
 
-        init_no2 = float((df['chl1_init_no2'].iloc[j] + df['chl0_init_no2'].iloc[j]) / 
-                        np.max(df['chl1_init_no2'] + df['chl0_init_no2'])) * 0.9 + 0.1
-        axes[1].plot(
-            x, y,
-            color=colors[i],
-            marker='o',
-            alpha=init_no2,
-            markersize=8
-        )
+            init_no2 = float(df[f'{chl}_init_no2'].iloc[j] / np.max(df[f'{chl}_init_no2'])) * 0.9 + 0.1
+            axes[1].plot(
+                df[x_label].iloc[j],
+                df[y_label].iloc[j],
+                color=colors[i],
+                marker='o',
+                alpha=init_no2,
+                markersize=8
+            )
 
 sm1 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.min(df['chl1_init_no3'] + df['chl0_init_no3'])/2, vmax=np.max(df['chl1_init_no3'] + df['chl0_init_no3'])/2))
 sm1.set_array([])
@@ -218,6 +221,6 @@ handles = [plt.Line2D([0], [0], color='red', marker='o', label=f'batch 1'),
             plt.Line2D([0], [0], color='purple', marker='o', label=f'batch 5'),
             plt.Line2D([0], [0], color='black', marker='o', label=f'batch 6')]
 fig.legend(handles=handles)
-fig.suptitle(f'{y_label} vs {x_label}')
+fig.suptitle(f'{y_label} vs {x_label}\n{no3_range[0]} < A(0) < {no3_range[1]}, {no2_range[0]} < I(0) < {no2_range[1]}')
 
 plt.show()
