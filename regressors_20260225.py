@@ -760,35 +760,25 @@ if __name__ == "__main__":
         df_for_phase_diagram['chl1_init_no3'] = chl1_init_no3
         df_for_phase_diagram['chl1_init_no2'] = chl1_init_no2
         df_for_phase_diagram['chl1_no3_cons_25hrs'] = chl1_cons_interp_df['no3_cons_25hrs']
-        df_for_phase_diagram['chl1_no3_cons_25hrs'][df_for_phase_diagram['chl1_init_no3'] < 0.1] = np.nan
         df_for_phase_diagram['chl1_no2_cons_25hrs'] = chl1_cons_interp_df['no2_cons_25hrs']
         df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
         df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
         df_for_phase_diagram['chl0_no3_cons_10hrs'] = chl0_cons_interp_df['no3_cons_10hrs']
         df_for_phase_diagram['chl0_no2_cons_10hrs'] = chl0_cons_interp_df['no2_cons_10hrs']
         
-        chl1_no3_minus_no2 = chl1_cons_interp_df['no3_cons_25hrs'] - chl1_cons_interp_df['no2_cons_25hrs']
-        chl1_no3_minus_no2[df_for_phase_diagram['chl1_init_no3'] < 0.01] = np.nan
-        df_for_phase_diagram['chl1_no3_minus_no2'] = chl1_no3_minus_no2
+        no3_thrs = 0.31
+        no2_thrs = 0.1
+        df_for_phase_diagram.loc[df_for_phase_diagram['chl1_init_no3'] < no3_thrs, 'chl1_no3_cons_25hrs'] = np.nan
+        df_for_phase_diagram.loc[(df_for_phase_diagram['chl1_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl1_init_no2'] < no2_thrs), 'chl1_no2_cons_25hrs'] = np.nan
+        df_for_phase_diagram.loc[df_for_phase_diagram['chl0_init_no3'] < no3_thrs, 'chl0_no3_cons_10hrs'] = np.nan
+        df_for_phase_diagram.loc[(df_for_phase_diagram['chl0_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl0_init_no2'] < no2_thrs), 'chl0_no2_cons_10hrs'] = np.nan
 
-        chl0_no3_minus_no2 = chl0_cons_interp_df['no3_cons_10hrs'] - chl0_cons_interp_df['no2_cons_10hrs']
-        chl0_mask = df_for_phase_diagram['chl0_init_no3'] < 0.01
-        chl0_no3_minus_no2[chl0_mask] = np.nan
-        df_for_phase_diagram['chl0_no3_minus_no2'] = chl0_no3_minus_no2
-
-        frac_chl0_chl1 = chl0_no3_minus_no2 / chl1_no3_minus_no2
-        df_for_phase_diagram['frac_chl0_chl1'] = frac_chl0_chl1
-
-        chl1_log_no3_no2 = np.log(chl1_cons_interp_df['no3_cons_25hrs'] / chl1_cons_interp_df['no2_cons_25hrs'])
-        chl1_log_no3_no2[df_for_phase_diagram['chl1_init_no3'] < 0.01] = np.nan
-        df_for_phase_diagram['chl1_log_no3_no2'] = chl1_log_no3_no2
-
-        chl0_log_no3_no2 = np.log(chl0_cons_interp_df['no3_cons_10hrs'] / chl0_cons_interp_df['no2_cons_10hrs'])
-        chl0_log_no3_no2[df_for_phase_diagram['chl0_init_no3'] < 0.01] = np.nan
-        df_for_phase_diagram['chl0_log_no3_no2'] = chl0_log_no3_no2
-
-        frac_log_chl0_chl1 = chl0_log_no3_no2 / chl1_log_no3_no2
-        df_for_phase_diagram['frac_log_chl0_chl1'] = frac_log_chl0_chl1
+        df_for_phase_diagram['chl1_no3_minus_no2'] = df_for_phase_diagram['chl1_no3_cons_25hrs'] - df_for_phase_diagram['chl1_no2_cons_25hrs']
+        df_for_phase_diagram['chl0_no3_minus_no2'] = df_for_phase_diagram['chl0_no3_cons_10hrs'] - df_for_phase_diagram['chl0_no2_cons_10hrs']
+        df_for_phase_diagram['frac_chl0_chl1'] = df_for_phase_diagram['chl0_no3_minus_no2'] / df_for_phase_diagram['chl1_no3_minus_no2']
+        df_for_phase_diagram['chl1_log_no3_no2'] = np.log(df_for_phase_diagram['chl1_no3_cons_25hrs'] / df_for_phase_diagram['chl1_no2_cons_25hrs'])
+        df_for_phase_diagram['chl0_log_no3_no2'] = np.log(df_for_phase_diagram['chl0_no3_cons_10hrs'] / df_for_phase_diagram['chl0_no2_cons_10hrs'])
+        df_for_phase_diagram['frac_log_chl0_chl1'] = df_for_phase_diagram['chl0_log_no3_no2'] / df_for_phase_diagram['chl1_log_no3_no2']
 
         df_for_phase_diagram.to_csv(f'fitting_results/{id}_data_for_phase_diagram.csv')
         print(f'Saved fitting_results/{id}_data_for_phase_diagram.csv')
