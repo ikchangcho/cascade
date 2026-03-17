@@ -173,54 +173,106 @@ water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16, 4.74])
 ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
 dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_data_for_phase_diagram.csv') for id in ids]
+colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
 
 chl = 'chl1'
-x_label = f'{chl}_no3_cons_25hrs'
-y_label = f'{chl}_no2_cons_25hrs'
-colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
-no3_range = (-10, 10)
-no2_range = (-10, 10)
+labels = [('chl1_no3_minus_no2', 'chl0_no3_minus_no2'), 
+          ('chl1_no3_minus_no2', 'frac_chl0_chl1'),
+          ('chl1_no3_cons_25hrs', 'chl1_no2_cons_25hrs'),
+          ('chl0_no3_cons_10hrs', 'chl0_no2_cons_10hrs')]
+no3_range = (0.0, 1.0)
+no2_range = (0.0, 2.6)
+no3_min, no3_max, no2_min, no2_max = [], [], [], []
 
-fig, axes = plt.subplots(2, 1, figsize=(5, 10))
-for i in [0, 1, 2, 3, 4, 5]:
-    df = dfs_to_plot[i]
-    mask = (df[f'{chl}_init_no3'] > no3_range[0]) & (df[f'{chl}_init_no3'] < no3_range[1]) & (df[f'{chl}_init_no2'] > no2_range[0]) & (df[f'{chl}_init_no2'] < no2_range[1])
-    for j, bool in enumerate(mask):
-        if bool:
-            init_no3 = float(df[f'{chl}_init_no3'].iloc[j] / np.max(df[f'{chl}_init_no3'])) * 0.9 + 0.1
-            axes[0].plot(
-                df[x_label].iloc[j],
-                df[y_label].iloc[j],
-                color=colors[i],
-                marker='o',
-                alpha=init_no3,
-                markersize=8
-            )
+for x_label, y_label in labels:
+    title = f'{y_label} vs {x_label}\nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}'      
+    filename = f'4.2.{y_label}_vs_{x_label}_low_no3'
+    fig, axes = plt.subplots(2, 1, figsize=(5, 10))
+    for i in [0, 1, 2, 3, 4, 5]:
+        df = dfs_to_plot[i]
+        x_values = df[x_label]
+        y_values = df[y_label]
+        mask = (df[f'{chl}_init_no3'] > no3_range[0]) & (df[f'{chl}_init_no3'] < no3_range[1]) & (df[f'{chl}_init_no2'] > no2_range[0]) & (df[f'{chl}_init_no2'] < no2_range[1])
+        no3_min.append(df.loc[mask, f'{chl}_init_no3'].min())
+        no3_max.append(df.loc[mask, f'{chl}_init_no3'].max())
+        no2_min.append(df.loc[mask, f'{chl}_init_no2'].min())
+        no2_max.append(df.loc[mask, f'{chl}_init_no2'].max())
+        for j, bool in enumerate(mask):
+            if bool:
+                init_no3 = float(df[f'{chl}_init_no3'].iloc[j] / no3_max[-1]) * 0.9 + 0.1
+                axes[0].plot(
+                    x_values[j],
+                    y_values[j],
+                    color=colors[i],
+                    marker='o',
+                    alpha=init_no3,
+                    markersize=8
+                )
+                if y_label == 'frac_chl0_chl1':
+                    axes[0].axhline(y=0, color='black', linestyle='--', linewidth=1)
+                    axes[0].set_ylim(-4, 6)
 
-            init_no2 = float(df[f'{chl}_init_no2'].iloc[j] / np.max(df[f'{chl}_init_no2'])) * 0.9 + 0.1
-            axes[1].plot(
-                df[x_label].iloc[j],
-                df[y_label].iloc[j],
-                color=colors[i],
-                marker='o',
-                alpha=init_no2,
-                markersize=8
-            )
+                init_no2 = float(df[f'{chl}_init_no2'].iloc[j] / no2_max[-1]) * 0.9 + 0.1
+                axes[1].plot(
+                    x_values[j],
+                    y_values[j],
+                    color=colors[i],
+                    marker='o',
+                    alpha=init_no2,
+                    markersize=8
+                )
+                if y_label == 'frac_chl0_chl1':
+                    axes[1].axhline(y=0, color='black', linestyle='--', linewidth=1)
+                    axes[1].set_ylim(-4, 6)
 
-sm1 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.min(df['chl1_init_no3'] + df['chl0_init_no3'])/2, vmax=np.max(df['chl1_init_no3'] + df['chl0_init_no3'])/2))
-sm1.set_array([])
-fig.colorbar(sm1, ax=axes[0], label='A(0) (mM)')
-sm2 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.min(df['chl1_init_no2'] + df['chl0_init_no2'])/2, vmax=np.max(df['chl1_init_no2'] + df['chl0_init_no2'])/2))
-sm2.set_array([])
-fig.colorbar(sm2, ax=axes[1], label='I(0) (mM)')
+    sm1 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.nanmin(no3_min), vmax=np.nanmax(no3_max)))
+    sm1.set_array([])
+    fig.colorbar(sm1, ax=axes[0], label='A(0) (mM)')
+    sm2 = plt.cm.ScalarMappable(cmap='binary', norm=plt.Normalize(vmin=np.nanmin(no2_min), vmax=np.nanmax(no2_max)))
+    sm2.set_array([])
+    fig.colorbar(sm2, ax=axes[1], label='I(0) (mM)')
 
-handles = [plt.Line2D([0], [0], color='red', marker='o', label=f'batch 1'),
-            plt.Line2D([0], [0], color='darkorange', marker='o', label=f'batch 2'),
-            plt.Line2D([0], [0], color='green', marker='o', label=f'batch 3'),
-            plt.Line2D([0], [0], color='blue', marker='o', label=f'batch 4'),
-            plt.Line2D([0], [0], color='purple', marker='o', label=f'batch 5'),
-            plt.Line2D([0], [0], color='black', marker='o', label=f'batch 6')]
-fig.legend(handles=handles)
-fig.suptitle(f'{y_label} vs {x_label}\n{no3_range[0]} < A(0) < {no3_range[1]}, {no2_range[0]} < I(0) < {no2_range[1]}')
+    handles = [plt.Line2D([0], [0], color='red', marker='o', label=f'batch 1'),
+                plt.Line2D([0], [0], color='darkorange', marker='o', label=f'batch 2'),
+                plt.Line2D([0], [0], color='green', marker='o', label=f'batch 3'),
+                plt.Line2D([0], [0], color='blue', marker='o', label=f'batch 4'),
+                plt.Line2D([0], [0], color='purple', marker='o', label=f'batch 5'),
+                plt.Line2D([0], [0], color='black', marker='o', label=f'batch 6')]
+    fig.legend(handles=handles, loc='lower right')
+    fig.suptitle(title, fontsize=12, fontweight='bold')
+    plt.savefig(f'plots/{filename}.png', dpi=300, bbox_inches='tight')
+    print(f'Saved plots/{filename}.png')
+    plt.show()
 
-plt.show()
+
+
+# # plot fractions vs time
+# for i in [0, 1, 2, 3, 4, 5]:
+#     df = dfs_to_plot[i]
+#     mask = (df[f'{chl}_init_no3'] > no3_range[0]) & (df[f'{chl}_init_no3'] < no3_range[1]) & (df[f'{chl}_init_no2'] > no2_range[0]) & (df[f'{chl}_init_no2'] < no2_range[1])
+#     for j, bool in enumerate(mask):
+#         if bool:
+#             plt.plot(
+#                 time[i],
+#                 df['frac_chl0_chl1'].iloc[j],
+#                 color=colors[i],
+#                 marker='o',
+#                 alpha=0.5,
+#                 markersize=8
+#             )
+
+# handles = [plt.Line2D([0], [0], color='red', marker='o', label=f'batch 1'),
+#             plt.Line2D([0], [0], color='darkorange', marker='o', label=f'batch 2'),
+#             plt.Line2D([0], [0], color='green', marker='o', label=f'batch 3'),
+#             plt.Line2D([0], [0], color='blue', marker='o', label=f'batch 4'),
+#             plt.Line2D([0], [0], color='purple', marker='o', label=f'batch 5'),
+#             plt.Line2D([0], [0], color='black', marker='o', label=f'batch 6')]
+# plt.legend(handles=handles)
+# plt.title(r'$\frac{A^-_{cons} - I^-_{cons}}{A^+_{cons} - I^+_{cons}}$', fontsize=20, fontweight='bold')
+# plt.xlabel('Time (hours)')
+# plt.ylim(-4, 6)
+# plt.axhline(y=0, color='black', linestyle='--', linewidth=1)
+# filename = '4.2.frac_chl0_chl1'
+# plt.savefig(f'plots/{filename}.png', dpi=300, bbox_inches='tight')
+# print(f'Saved plots/{filename}.png')
+# # plt.show()
