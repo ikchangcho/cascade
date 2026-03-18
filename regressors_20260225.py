@@ -741,7 +741,7 @@ if __name__ == "__main__":
         )
         chl1_cons_interp_df = chl1_cons_interp_df.reset_index(drop=True)
         
-        chl0_time_points = [5, 10, 15]
+        chl0_time_points = [5, 10, 20]
         chl0_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
             row_labels=row_labels_chl0,
             time_points_no3=chl0_time_points,
@@ -765,6 +765,7 @@ if __name__ == "__main__":
         df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
         df_for_phase_diagram['chl0_no3_cons_10hrs'] = chl0_cons_interp_df['no3_cons_10hrs']
         df_for_phase_diagram['chl0_no2_cons_10hrs'] = chl0_cons_interp_df['no2_cons_10hrs']
+        df_for_phase_diagram['chl0_no2_cons_20hrs'] = chl0_cons_interp_df['no2_cons_20hrs']
         
         no3_thrs = 0.31
         no2_thrs = 0.1

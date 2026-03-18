@@ -184,7 +184,7 @@ no3_range = (0.0, 3.2)
 no2_range = (0.0, 2.6)
 no3_min, no3_max, no2_min, no2_max = [], [], [], []
 
-for x_label, y_label in labels:
+for x_label, y_label in [('chl0_no3_cons_10hrs', 'chl0_no2_cons_20hrs')]:
     title = f'{y_label} vs {x_label}\nBatch 6'       # \nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
     filename = f'4.2.batch6.{y_label}_vs_{x_label}'
     fig, axes = plt.subplots(2, 1, figsize=(5, 10))
