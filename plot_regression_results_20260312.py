@@ -180,15 +180,15 @@ labels = [('chl1_no3_minus_no2', 'chl0_no3_minus_no2'),
           ('chl1_no3_minus_no2', 'frac_chl0_chl1'),
           ('chl1_no3_cons_25hrs', 'chl1_no2_cons_25hrs'),
           ('chl0_no3_cons_10hrs', 'chl0_no2_cons_10hrs')]
-no3_range = (0.0, 1.0)
+no3_range = (0.0, 3.2)
 no2_range = (0.0, 2.6)
 no3_min, no3_max, no2_min, no2_max = [], [], [], []
 
 for x_label, y_label in labels:
-    title = f'{y_label} vs {x_label}\nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}'      
-    filename = f'4.2.{y_label}_vs_{x_label}_low_no3'
+    title = f'{y_label} vs {x_label}\nBatch 6'       # \nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
+    filename = f'4.2.batch6.{y_label}_vs_{x_label}'
     fig, axes = plt.subplots(2, 1, figsize=(5, 10))
-    for i in [0, 1, 2, 3, 4, 5]:
+    for i in [5]:
         df = dfs_to_plot[i]
         x_values = df[x_label]
         y_values = df[y_label]
@@ -208,6 +208,9 @@ for x_label, y_label in labels:
                     alpha=init_no3,
                     markersize=8
                 )
+                if y_label == 'chl0_no3_minus_no2':
+                    axes[0].axhline(y=0, color='black', linestyle='--', linewidth=1)
+                    # axes[0].axvline(x=0, color='black', linestyle='--', linewidth=1)
                 if y_label == 'frac_chl0_chl1':
                     axes[0].axhline(y=0, color='black', linestyle='--', linewidth=1)
                     axes[0].set_ylim(-4, 6)
@@ -221,6 +224,8 @@ for x_label, y_label in labels:
                     alpha=init_no2,
                     markersize=8
                 )
+                if y_label == 'chl0_no3_minus_no2':
+                    axes[1].axhline(y=0, color='black', linestyle='--', linewidth=1)
                 if y_label == 'frac_chl0_chl1':
                     axes[1].axhline(y=0, color='black', linestyle='--', linewidth=1)
                     axes[1].set_ylim(-4, 6)
