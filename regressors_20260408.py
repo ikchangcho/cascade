@@ -492,7 +492,7 @@ class LinearRegressor:
                 print(f"Linear regression results saved to {self.results_dir}/{output_fn}.csv")
             calculate_mean_and_var(f'{self.results_dir}/{output_fn}')
 
-        return self.regression_results
+        return regression_results_df
 
     
     def plot_selected_rows(
@@ -522,7 +522,7 @@ class LinearRegressor:
         marker_styles = ['o', 's', '^']
         for i, row in enumerate(row_labels):
             marker = marker_styles[i % num_rpl]
-            ax = axes[i // num_rpl]
+            ax = axes[i // num_rpl + 1]
             ax.set_ylim(y_min, y_max)
             ax.scatter(time, self.no2_df.loc[row], color='r', marker=marker)
             ax.scatter(time, self.no3_df.loc[row], color='b', marker=marker)
@@ -803,16 +803,13 @@ if __name__ == "__main__":
             time_threshold = 35
         time_interval = (40, 80)
         regressor = LinearRegressor(id, time_threshold, time_interval)
-        chl1_regression_results = regressor.fit_for_selected_rows(
+        chl1_linear_regression_df = regressor.fit_for_selected_rows(
             f'{id}_chl1_linear_regression_results', 
             row_labels_chl1)
         regressor.plot_selected_rows(
-            title = f'{id} Linear Regression',
-            row_labels = row_labels_chl1,
-            output_fn=f'{id}.chl1_linear_regression'
-        )
-
-
+            f'{id} CHL-', 
+            row_labels_chl1, 
+            output_fn=f'{id}_chl1_linear_regression')
 
         # # Create dateframe for phase diagram
         # no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
@@ -823,15 +820,15 @@ if __name__ == "__main__":
         # chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
 
         # df_for_phase_diagram = pd.DataFrame()
-        # df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
-        # df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
-        # df_for_phase_diagram['chl0_no3_half_rate'] = chl0_half_rate_df['no3_half_rate'].values
-        # df_for_phase_diagram['chl0_no2_half_rate'] = chl0_half_rate_df['no2_half_rate'].values
+        # df_for_phase_diagram['chl1_init_no3'] = chl1_init_no3
+        # df_for_phase_diagram['chl1_init_no2'] = chl1_init_no2
+        # df_for_phase_diagram['chl1_no3_rate_early'] = chl1_linear_regression_df['no3_rate_early'].values
+        # df_for_phase_diagram['chl1_no2_rate_early'] = chl1_linear_regression_df['no2_rate_early'].values
 
         # no3_thrs = 0.31
         # no2_thrs = 0.1
-        # df_for_phase_diagram.loc[df_for_phase_diagram['chl0_init_no3'] < no3_thrs, 'chl0_no3_half_rate'] = np.nan
-        # df_for_phase_diagram.loc[(df_for_phase_diagram['chl0_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl0_init_no2'] < no2_thrs), 'chl0_no2_half_rate'] = np.nan
+        # df_for_phase_diagram.loc[df_for_phase_diagram['chl1_init_no3'] < no3_thrs, 'chl1_no3_rate_early'] = np.nan
+        # df_for_phase_diagram.loc[(df_for_phase_diagram['chl1_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl1_init_no2'] < no2_thrs), 'chl1_no2_rate_early'] = np.nan
         
-        # df_for_phase_diagram.to_csv(f'fitting_results/{id}_half_rate_for_phase_diagram.csv')
-        # print(f'Saved fitting_results/{id}_half_rate_for_phase_diagram.csv')
+        # df_for_phase_diagram.to_csv(f'fitting_results/{id}.chl1_early_rate_for_phase_diagram.csv')
+        # print(f'Saved fitting_results/{id}.chl1_early_rate_for_phase_diagram.csv')

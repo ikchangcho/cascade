@@ -173,15 +173,15 @@ water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16, 4.74])
 ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
 # Phase diagram
-dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_half_rate_for_phase_diagram.csv') for id in ids]
+dfs_to_plot = [pd.read_csv(f'fitting_results/{id}.chl1_early_rate_for_phase_diagram.csv') for id in ids]
 colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
 
-chl = 'chl0'
+chl = 'chl1'
 no3_range = (0.0, 3.2)
 no2_range = (0.0, 2.6)
 no3_min, no3_max, no2_min, no2_max = [], [], [], []
 
-for x_label, y_label in [('chl0_no3_half_rate', 'chl0_no2_half_rate')]:
+for x_label, y_label in [('chl1_no3_rate_early', 'chl1_no2_rate_early')]:
     title = f'{y_label} vs {x_label}'       # \nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
     filename = f'4.2.{y_label}_vs_{x_label}'
     fig, axes = plt.subplots(2, 1, figsize=(5, 10))
