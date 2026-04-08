@@ -498,8 +498,8 @@ class LinearRegressor:
     def plot_selected_rows(
             self,
             title: str,
-            output_fn: str,
-            row_labels: List[str] = None,
+            row_labels: List[str],
+            output_fn: str = '',
             show_plot: bool = False
     ):
         if row_labels is None:
@@ -546,8 +546,9 @@ class LinearRegressor:
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
         fig.legend(handles=handles, loc='upper right', fontsize=15)
         fig.suptitle(suptitle, fontsize=20, fontweight='bold')
-        plt.savefig(f'{self.plots_dir}/{output_fn}.png', dpi=300, bbox_inches='tight')
-        print(f'Saved {self.plots_dir}/{output_fn}.png')
+        if output_fn != '':
+            plt.savefig(f'{self.plots_dir}/{output_fn}.png', dpi=300, bbox_inches='tight')
+            print(f'Saved {self.plots_dir}/{output_fn}.png')
         if show_plot:
             plt.show()
         plt.close()
@@ -797,27 +798,40 @@ if __name__ == "__main__":
     row_labels_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12', 'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12', 'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
     for id in ids[:]:
-        interpolator = Interpolator(id)
+        time_threshold = 20
+        if id == '4.2.batch5':
+            time_threshold = 35
+        time_interval = (40, 80)
+        regressor = LinearRegressor(id, time_threshold, time_interval)
+        chl1_regression_results = regressor.fit_for_selected_rows(
+            f'{id}_chl1_linear_regression_results', 
+            row_labels_chl1)
+        regressor.plot_selected_rows(
+            title = f'{id} Linear Regression',
+            row_labels = row_labels_chl1,
+            output_fn=f'{id}.chl1_linear_regression'
+        )
 
-        chl0_half_rate_df = interpolator.half_rate_for_selected_rows(row_labels=row_labels_chl0)
+
+
+        # # Create dateframe for phase diagram
+        # no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
+        # chl1_init_no3 = no3_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
+        # chl0_init_no3 = no3_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
+        # no2_conc_df = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0)
+        # chl1_init_no2 = no2_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
+        # chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
+
+        # df_for_phase_diagram = pd.DataFrame()
+        # df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
+        # df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
+        # df_for_phase_diagram['chl0_no3_half_rate'] = chl0_half_rate_df['no3_half_rate'].values
+        # df_for_phase_diagram['chl0_no2_half_rate'] = chl0_half_rate_df['no2_half_rate'].values
+
+        # no3_thrs = 0.31
+        # no2_thrs = 0.1
+        # df_for_phase_diagram.loc[df_for_phase_diagram['chl0_init_no3'] < no3_thrs, 'chl0_no3_half_rate'] = np.nan
+        # df_for_phase_diagram.loc[(df_for_phase_diagram['chl0_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl0_init_no2'] < no2_thrs), 'chl0_no2_half_rate'] = np.nan
         
-        no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
-        chl1_init_no3 = no3_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
-        chl0_init_no3 = no3_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
-        no2_conc_df = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0)
-        chl1_init_no2 = no2_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
-        chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
-
-        df_for_phase_diagram = pd.DataFrame()
-        df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
-        df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
-        df_for_phase_diagram['chl0_no3_half_rate'] = chl0_half_rate_df['no3_half_rate'].values
-        df_for_phase_diagram['chl0_no2_half_rate'] = chl0_half_rate_df['no2_half_rate'].values
-
-        no3_thrs = 0.31
-        no2_thrs = 0.1
-        df_for_phase_diagram.loc[df_for_phase_diagram['chl0_init_no3'] < no3_thrs, 'chl0_no3_half_rate'] = np.nan
-        df_for_phase_diagram.loc[(df_for_phase_diagram['chl0_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl0_init_no2'] < no2_thrs), 'chl0_no2_half_rate'] = np.nan
-        
-        df_for_phase_diagram.to_csv(f'fitting_results/{id}_half_rate_for_phase_diagram.csv')
-        print(f'Saved fitting_results/{id}_half_rate_for_phase_diagram.csv')
+        # df_for_phase_diagram.to_csv(f'fitting_results/{id}_half_rate_for_phase_diagram.csv')
+        # print(f'Saved fitting_results/{id}_half_rate_for_phase_diagram.csv')
