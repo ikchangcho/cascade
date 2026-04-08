@@ -42,6 +42,8 @@ class Interpolator:
         self.meta_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, -meta_col_num:]
         self.no3_df = pd.read_csv(f'{self.input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
         self.no2_df = pd.read_csv(f'{self.input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.no3_conc_df = pd.read_csv(f'{self.input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
+        self.no2_conc_df = pd.read_csv(f'{self.input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
         
         if not os.path.exists(self.results_dir):
             raise ValueError(f"Output directory {self.results_dir} does not exist.")
@@ -127,7 +129,6 @@ class Interpolator:
         no2_half = np.max(no2) * half - epsilon
         no3_half = np.max(no3) * half - epsilon
         
-
         smallest_index_no2_above_half = np.where(no2 > no2_half)[0][0]
         smallest_index_no3_above_half = np.where(no3 > no3_half)[0][0]
         
@@ -182,6 +183,70 @@ class Interpolator:
             print(f"Saved {self.results_dir}/{output_fn}.csv")
         
         return half_life_df
+    
+    def half_rate_for_row(
+            self,
+            row_label: str,
+            half: float = 0.5,
+            epsilon: float = 0.01,
+            show_plot: bool = False,
+            output_fn: str = ''
+    ):
+        time = self.time
+        no2 = self.no2_df.loc[row_label].values.astype(float)
+        no2_conc = self.no2_conc_df.loc[row_label].values.astype(float)
+        no3 = self.no3_df.loc[row_label].values.astype(float)
+        no3_conc = self.no3_conc_df.loc[row_label].values.astype(float)
+
+        no3_half = no3_conc[0] * half - epsilon
+        no2_half = (no2_conc[0] + no3_conc[0]) * half - epsilon
+
+        if np.sum(no2 > no2_half) == 0:
+            RuntimeError(f"Warning: NO2 consumption for row {row_label} never goes above half level. Cannot calculate half-life and half-rate for NO2.")
+        smallest_index_no2_above_half = np.where(no2 > no2_half)[0][0]
+        if np.sum(no3 > no3_half) == 0:
+            RuntimeError(f"Warning: NO3 consumption for row {row_label} never goes above half level. Cannot calculate half-life and half-rate for NO3.")
+        smallest_index_no3_above_half = np.where(no3 > no3_half)[0][0]
+
+        if smallest_index_no2_above_half == 0:
+            no2_half_life = None
+            no2_half_rate = None
+        else:
+            no2_half_life = np.interp(no2_half, [no2[smallest_index_no2_above_half - 1], no2[smallest_index_no2_above_half]], [time[smallest_index_no2_above_half - 1], time[smallest_index_no2_above_half]])
+            if no2_half_life < 0:
+                print(f"Warning: Calculated NO2 half-life for row {row_label} is negative.")
+            no2_half_rate = no2_half / no2_half_life
+        if smallest_index_no3_above_half == 0:
+            no3_half_life = None
+            no3_half_rate = None
+        else:
+            no3_half_life = np.interp(no3_half, [no3[smallest_index_no3_above_half - 1], no3[smallest_index_no3_above_half]], [time[smallest_index_no3_above_half - 1], time[smallest_index_no3_above_half]])
+            if no3_half_life < 0:
+                print(f"Warning: Calculated NO3 half-life for row {row_label} is negative.")
+            no3_half_rate = no3_half / no3_half_life
+        
+        return no3_half_rate, no2_half_rate
+    
+    def half_rate_for_selected_rows(
+            self,
+            row_labels: List[str],
+            half: float = 0.5,
+            output_fn: Optional[str] = None
+    ):
+        half_rate_data = []
+        for row_label in row_labels:
+            no3_half_rate, no2_half_rate = self.half_rate_for_row(row_label, half)
+            half_rate_data.append({'row_label': row_label, 'no3_half_rate': no3_half_rate, 'no2_half_rate': no2_half_rate})
+        half_rate_df = pd.DataFrame(half_rate_data).set_index('row_label')
+        half_rate_df = half_rate_df.join(self.meta_df.loc[half_rate_df.index])
+
+        if output_fn is not None:
+            half_rate_df.to_csv(f'{self.results_dir}/{output_fn}.csv')
+            print(f"Saved {self.results_dir}/{output_fn}.csv")
+        
+        return half_rate_df
+            
+            
     
     def auc_for_row(
             self,
@@ -733,22 +798,9 @@ if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
     for id in ids[:]:
         interpolator = Interpolator(id)
-        chl1_time_points = [15, 25, 40, 60]
-        chl1_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
-            row_labels=row_labels_chl1,
-            time_points_no3=chl1_time_points,
-            time_points_no2=chl1_time_points
-        )
-        chl1_cons_interp_df = chl1_cons_interp_df.reset_index(drop=True)
-        
-        chl0_time_points = [5, 10, 20]
-        chl0_cons_interp_df = interpolator.values_at_time_points_for_selected_rows(
-            row_labels=row_labels_chl0,
-            time_points_no3=chl0_time_points,
-            time_points_no2=chl0_time_points
-        )
-        chl0_cons_interp_df = chl0_cons_interp_df.reset_index(drop=True)
 
+        chl0_half_rate_df = interpolator.half_rate_for_selected_rows(row_labels=row_labels_chl0)
+        
         no3_conc_df = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
         chl1_init_no3 = no3_conc_df.loc[row_labels_chl1, '0.0'].values.astype(float)
         chl0_init_no3 = no3_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
@@ -757,52 +809,15 @@ if __name__ == "__main__":
         chl0_init_no2 = no2_conc_df.loc[row_labels_chl0, '0.0'].values.astype(float)
 
         df_for_phase_diagram = pd.DataFrame()
-        df_for_phase_diagram['chl1_init_no3'] = chl1_init_no3
-        df_for_phase_diagram['chl1_init_no2'] = chl1_init_no2
-        df_for_phase_diagram['chl1_no3_cons_25hrs'] = chl1_cons_interp_df['no3_cons_25hrs']
-        df_for_phase_diagram['chl1_no2_cons_25hrs'] = chl1_cons_interp_df['no2_cons_25hrs']
         df_for_phase_diagram['chl0_init_no3'] = chl0_init_no3
         df_for_phase_diagram['chl0_init_no2'] = chl0_init_no2
-        df_for_phase_diagram['chl0_no3_cons_10hrs'] = chl0_cons_interp_df['no3_cons_10hrs']
-        df_for_phase_diagram['chl0_no2_cons_10hrs'] = chl0_cons_interp_df['no2_cons_10hrs']
-        df_for_phase_diagram['chl0_no2_cons_20hrs'] = chl0_cons_interp_df['no2_cons_20hrs']
-        
+        df_for_phase_diagram['chl0_no3_half_rate'] = chl0_half_rate_df['no3_half_rate'].values
+        df_for_phase_diagram['chl0_no2_half_rate'] = chl0_half_rate_df['no2_half_rate'].values
+
         no3_thrs = 0.31
         no2_thrs = 0.1
-        df_for_phase_diagram.loc[df_for_phase_diagram['chl1_init_no3'] < no3_thrs, 'chl1_no3_cons_25hrs'] = np.nan
-        df_for_phase_diagram.loc[(df_for_phase_diagram['chl1_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl1_init_no2'] < no2_thrs), 'chl1_no2_cons_25hrs'] = np.nan
-        df_for_phase_diagram.loc[df_for_phase_diagram['chl0_init_no3'] < no3_thrs, 'chl0_no3_cons_10hrs'] = np.nan
-        df_for_phase_diagram.loc[(df_for_phase_diagram['chl0_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl0_init_no2'] < no2_thrs), 'chl0_no2_cons_10hrs'] = np.nan
-
-        df_for_phase_diagram['chl1_no3_minus_no2'] = df_for_phase_diagram['chl1_no3_cons_25hrs'] - df_for_phase_diagram['chl1_no2_cons_25hrs']
-        df_for_phase_diagram['chl0_no3_minus_no2'] = df_for_phase_diagram['chl0_no3_cons_10hrs'] - df_for_phase_diagram['chl0_no2_cons_10hrs']
-        df_for_phase_diagram['frac_chl0_chl1'] = df_for_phase_diagram['chl0_no3_minus_no2'] / df_for_phase_diagram['chl1_no3_minus_no2']
-        df_for_phase_diagram['chl1_log_no3_no2'] = np.log(df_for_phase_diagram['chl1_no3_cons_25hrs'] / df_for_phase_diagram['chl1_no2_cons_25hrs'])
-        df_for_phase_diagram['chl0_log_no3_no2'] = np.log(df_for_phase_diagram['chl0_no3_cons_10hrs'] / df_for_phase_diagram['chl0_no2_cons_10hrs'])
-        df_for_phase_diagram['frac_log_chl0_chl1'] = df_for_phase_diagram['chl0_log_no3_no2'] / df_for_phase_diagram['chl1_log_no3_no2']
-
-        df_for_phase_diagram.to_csv(f'fitting_results/{id}_data_for_phase_diagram.csv')
-        print(f'Saved fitting_results/{id}_data_for_phase_diagram.csv')
-
-
+        df_for_phase_diagram.loc[df_for_phase_diagram['chl0_init_no3'] < no3_thrs, 'chl0_no3_half_rate'] = np.nan
+        df_for_phase_diagram.loc[(df_for_phase_diagram['chl0_init_no3'] < no3_thrs) & (df_for_phase_diagram['chl0_init_no2'] < no2_thrs), 'chl0_no2_half_rate'] = np.nan
         
-
-        
-
-        
-
-
-
-        # time_threshold = 20
-        # if id == '4.2.batch5':
-        #     time_threshold = 40
-        # time_interval = (40, 80)
-        # regressor = LinearRegressor(id, time_threshold, time_interval)
-        # # result = regressor.fit_for_row('E04', [0, 1, 2, 3], show_plot=True)
-        # regressor.fit_for_selected_rows(output_fn=f'{id}.chl1_linear_regression_results', row_labels=row_labels_chl1)
-        # regressor.plot_selected_rows(
-        #     title=f'{id} Concentration CHL+',
-        #     output_fn=f'{id}.chl1_linear_regression',
-        #     row_labels=row_labels_chl1,
-        #     show_plot=False
-        # )
+        df_for_phase_diagram.to_csv(f'fitting_results/{id}_half_rate_for_phase_diagram.csv')
+        print(f'Saved fitting_results/{id}_half_rate_for_phase_diagram.csv')

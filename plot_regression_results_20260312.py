@@ -172,23 +172,20 @@ time = np.array(time)
 water_contents = np.array([98.9, 62.5, 34.4, 7.10, 5.16, 4.74])
 ids = [f'4.2.batch{i}' for i in range(1, 7)]
 
-dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_data_for_phase_diagram.csv') for id in ids]
+# Phase diagram
+dfs_to_plot = [pd.read_csv(f'fitting_results/{id}_half_rate_for_phase_diagram.csv') for id in ids]
 colors = ['red', 'darkorange', 'green', 'blue', 'purple', 'black']
 
-chl = 'chl1'
-labels = [('chl1_no3_minus_no2', 'chl0_no3_minus_no2'), 
-          ('chl1_no3_minus_no2', 'frac_chl0_chl1'),
-          ('chl1_no3_cons_25hrs', 'chl1_no2_cons_25hrs'),
-          ('chl0_no3_cons_10hrs', 'chl0_no2_cons_10hrs')]
+chl = 'chl0'
 no3_range = (0.0, 3.2)
 no2_range = (0.0, 2.6)
 no3_min, no3_max, no2_min, no2_max = [], [], [], []
 
-for x_label, y_label in [('chl0_no3_cons_10hrs', 'chl0_no2_cons_20hrs')]:
-    title = f'{y_label} vs {x_label}\nBatch 6'       # \nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
-    filename = f'4.2.batch6.{y_label}_vs_{x_label}'
+for x_label, y_label in [('chl0_no3_half_rate', 'chl0_no2_half_rate')]:
+    title = f'{y_label} vs {x_label}'       # \nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
+    filename = f'4.2.{y_label}_vs_{x_label}'
     fig, axes = plt.subplots(2, 1, figsize=(5, 10))
-    for i in [5]:
+    for i in [0, 1, 2, 3, 4, 5]:
         df = dfs_to_plot[i]
         x_values = df[x_label]
         y_values = df[y_label]
