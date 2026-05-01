@@ -9,7 +9,8 @@ import copy
 class ODEfitter:
     def __init__(
             self,
-            id: str, 
+            ids,
+            wells,
             model: Callable,
             no3_index: int,
             no2_index: int,
@@ -18,21 +19,30 @@ class ODEfitter:
             plot_dir: str = 'plots',
             meta_col_num: int = 4,
     ):
+        def load_csv(ids, wells):
+            data_dict = {}
+            for id in ids:
+                data_dict[id] = {}
+                no3_conc_df = pd.read_csv(f'{input_dir}/{id}_no3_conc.csv', index_col=0)
+                no2_conc_df = pd.read_csv(f'{input_dir}/{id}_no2_conc.csv', index_col=0)
+                no3_cons_df = pd.read_csv(f'{input_dir}/{id}_no3_cons.csv', index_col=0)
+                no2_cons_df = pd.read_csv(f'{input_dir}/{id}_no2_cons.csv', index_col=0)
+                for well in wells:
+                    well_data_df = pd.concat([no3_conc_df.loc[[well]], no2_conc_df.loc[[well]], no3_cons_df[[well]], no2_cons_df[[well]]], axis=0)
+                    well_data_df.index = ['no3_conc', 'no2_conc', 'no3_cons', 'no2_cons']
+                    data_dict[id][well] = well_data_df
+
+        self.data_dict = load_csv(ids, wells)
         self.model = model
         self.no3_index = no3_index
         self.no2_index = no2_index
         self.input_dir = input_dir
         self.result_dir = result_dir
         self.plot_dir = plot_dir
-        self.meta_df = pd.read_csv(f'{input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, -meta_col_num:]
-        self.no2_conc_df = pd.read_csv(f'{input_dir}/{id}_no2_conc.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.no3_conc_df = pd.read_csv(f'{input_dir}/{id}_no3_conc.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.no2_cons_df = pd.read_csv(f'{input_dir}/{id}_no2_cons.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.no3_cons_df = pd.read_csv(f'{input_dir}/{id}_no3_cons.csv', index_col=0).iloc[:, :-meta_col_num]
-        self.row_labels = self.no2_conc_df.index.tolist()
-        self.time = self.no2_conc_df.columns.values.astype(float)
-        self.no2_init_df = self.no2_conc_df.iloc[:, 0]
-        self.no3_init_df = self.no3_conc_df.iloc[:, 0]
+        # self.row_labels = self.no2_conc_df.index.tolist()
+        # self.time = self.no2_conc_df.columns.values.astype(float)
+        # self.no2_init_df = self.no2_conc_df.iloc[:, 0]
+        # self.no3_init_df = self.no3_conc_df.iloc[:, 0]
         
 
     def _solve_ode(
@@ -176,7 +186,7 @@ class ODEfitter:
         return params_df
 
 
-def model1(t, y, params):
+def model1(t, y, params):       # no3_index = 1, no2_index = 2
     X, A, I, C = y
     gamma = params['gamma'].value
     r_A = params['r_A'].value
@@ -196,7 +206,7 @@ def model1(t, y, params):
     
     return [dXdt,dAdt,dIdt,dCdt]
 
-def model2(t, y, params):
+def model2(t, y, params):       # no3_index = 2, no2_index = 3
     X_A, X_I, A, I, C = y
     gamma_A = params['gamma_A'].value
     gamma_I = params['gamma_I'].value
@@ -218,7 +228,7 @@ def model2(t, y, params):
 
     return [dX_Adt, dX_Idt, dAdt, dIdt, dCdt]
 
-def model3(t, y, params):
+def model3(t, y, params):       # no3_index = 2, no2_index = 3
     X_A, X_I, A, I = y
     gamma_A = params['gamma_A'].value
     gamma_I = params['gamma_I'].value
