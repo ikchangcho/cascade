@@ -47,26 +47,32 @@ class ODEfitter:
 
     def _solve_ode(
             self,
+            id,
+            well,
             params,
             init_cond
     ):
-        t_span = (self.time[0], self.time[-1])
+        time = self.data_dict[id][well].columns.values.astype(float)
+        t_span = (time[0], time[-1])
         sol = solve_ivp(self.model, t_span, init_cond, 
                         t_eval=self.time, args=(params,), 
                         method='BDF', rtol=1e-6)        # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
 
-        if len(sol.t) != len(self.time):
-            print(f"    Expected {len(self.time)} time points, but got {len(sol.t)}. Solver message: {sol.message}")
+        if len(sol.t) != len(time):
+            print(f"    Expected {len(time)} time points, but got {len(sol.t)}. Solver message: {sol.message}")
         
         return sol.t, sol.y.T
 
     def _solve_ode_for_plot(
             self,
+            id,
+            well,
             params,
             init_cond
     ):
-        t_span = (self.time[0], self.time[-1])
-        t_eval = np.linspace(self.time[0], self.time[-1], 100)
+        time = self.data_dict[id][well].columns.values.astype(float)
+        t_span = (time[0], time[-1])
+        t_eval = np.linspace(time[0], time[-1], 100)
         sol = solve_ivp(self.model, t_span, init_cond, 
                         t_eval=t_eval, args=(params,), 
                         method='BDF', rtol=1e-3)        # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
@@ -75,15 +81,17 @@ class ODEfitter:
     
     def _residual(
             self,
-            row_label,
+            id,
+            well,
             params,
             init_cond,
     ):
-        no2_conc = self.no2_conc_df.loc[row_label].values
-        no3_conc = self.no3_conc_df.loc[row_label].values
-        sol_time, sol = self._solve_ode(params, init_cond)
-        if len(sol_time) < len(self.time):
-            padding = sol[-1, :].reshape(1, -1).repeat(len(self.time) - len(sol_time), axis=0)
+        time = self.data_dict[id][well].columns.values.astype(float)
+        no2_conc = self.data_dict[id][well].loc['no2_conc'].values
+        no3_conc = self.data_dict[id][well].loc['no3_conc'].values
+        sol_time, sol = self._solve_ode(id, well, params, init_cond)
+        if len(sol_time) < len(time):
+            padding = sol[-1, :].reshape(1, -1).repeat(len(time) - len(sol_time), axis=0)
             sol = np.vstack([sol, padding])
             print(f"    Warning: ODE solver returned fewer time points than expected. Appending last solution value to match the length of time points.")
         
@@ -94,7 +102,8 @@ class ODEfitter:
     
     def fit_for_selected_rows(
             self,
-            row_labels: List[str],
+            ids,
+            wells: List[str],
             params: Parameters,
             skip_fine_tuning: bool = False,
             result_fn: str = '',
@@ -110,7 +119,7 @@ class ODEfitter:
                 print(f"Residuals function called {_residuals.call_count} times")
 
             residuals = []
-            for row_label in row_labels:
+            for row_label in wells:
                 if self.model == model1:
                     init_cond = np.array([1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
                 if self.model == model2:
@@ -140,20 +149,20 @@ class ODEfitter:
                 if trial.chisqr < best_result.chisqr:
                     best_result = trial
                 num_iterations += 1
-        print(f"Fitting result for {row_labels}:")
+        print(f"Fitting result for {wells}:")
         print(best_result.params.pretty_print())
         
-        params_df = pd.DataFrame({name: [param.value] for name, param in best_result.params.items()}, index=[', '.join(row_labels)])
+        params_df = pd.DataFrame({name: [param.value] for name, param in best_result.params.items()}, index=[', '.join(wells)])
         if result_fn != '':
             params_df.to_csv(f'{self.result_dir}/{id}{result_fn}.csv')
             print(f'Saved {self.result_dir}/{id}{result_fn}.csv')
 
         if plot_fn != '' or show_plot:
-            num_row = int(np.ceil(len(row_labels) / num_col / num_rpl))
+            num_row = int(np.ceil(len(wells) / num_col / num_rpl))
             fig, axes = plt.subplots(num_row, num_col, squeeze=False)
             axes = axes.flatten()
 
-            for i, row_label in enumerate(row_labels):
+            for i, row_label in enumerate(wells):
                 ax = axes[i // num_rpl]
                 time = self.time
                 no2_cons = self.no2_cons_df.loc[row_label].values
@@ -175,7 +184,7 @@ class ODEfitter:
             handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
             fig.legend(handles=handles, loc='upper right')
-            fig.suptitle(f'Model Fit for {row_labels}')
+            fig.suptitle(f'Model Fit for {wells}')
             fig.tight_layout()
             if plot_fn != '':
                 plt.savefig(f'{self.plot_dir}/{id}{plot_fn}.png', dpi=300)
