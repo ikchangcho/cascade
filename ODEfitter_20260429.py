@@ -28,9 +28,10 @@ class ODEfitter:
                 no3_cons_df = pd.read_csv(f'{input_dir}/{id}_no3_cons.csv', index_col=0)
                 no2_cons_df = pd.read_csv(f'{input_dir}/{id}_no2_cons.csv', index_col=0)
                 for well in wells:
-                    well_data_df = pd.concat([no3_conc_df.loc[[well]], no2_conc_df.loc[[well]], no3_cons_df[[well]], no2_cons_df[[well]]], axis=0)
+                    well_data_df = pd.concat([no3_conc_df.loc[[well]].iloc[:,:-meta_col_num], no2_conc_df.loc[[well]].iloc[:,:-meta_col_num], no3_cons_df.loc[[well]].iloc[:,:-meta_col_num], no2_cons_df.loc[[well]].iloc[:,:-meta_col_num]], axis=0)
                     well_data_df.index = ['no3_conc', 'no2_conc', 'no3_cons', 'no2_cons']
                     data_dict[id][well] = well_data_df
+            return data_dict
 
         self.data_dict = load_csv(ids, wells)       # data_dict structure: {id: {well: DataFrame of time points data}}
         self.model = model
@@ -55,7 +56,7 @@ class ODEfitter:
         time = self.data_dict[id][well].columns.values.astype(float)
         t_span = (time[0], time[-1])
         sol = solve_ivp(self.model, t_span, init_cond, 
-                        t_eval=self.time, args=(params,), 
+                        t_eval=time, args=(params,), 
                         method='BDF', rtol=1e-6)        # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
 
         if len(sol.t) != len(time):
@@ -110,8 +111,8 @@ class ODEfitter:
             plot_cons: bool = True,
             plot_fn: str = '',
             show_plot: bool = False,
-            num_rpl: int = 1,
-            num_col: int = 3
+            num_rpl: int = 3,
+            num_col: int = 6
     ):
         def _residuals(params):
             max_eval = 1000
@@ -162,7 +163,7 @@ class ODEfitter:
             print(f'Saved {self.result_dir}/{id}{result_fn}.csv')
 
         if plot_fn != '' or show_plot:
-            num_row = int(np.ceil(len(wells) / num_col / num_rpl))
+            num_row = int(np.ceil(len(ids) * len(wells) / num_col / num_rpl))
             fig, axes = plt.subplots(num_row, num_col, squeeze=False)
             axes = axes.flatten()
 
@@ -200,16 +201,16 @@ class ODEfitter:
                     else:
                         ax.plot(t, y[:, self.no3_index], color='blue')
                         ax.plot(t, y[:, self.no2_index], color='red')
-                handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
-                        plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
-                fig.legend(handles=handles, loc='upper right')
-                fig.suptitle(f'Model Fit for {wells}')
-                fig.tight_layout()
-                if plot_fn != '':
-                    plt.savefig(f'{self.plot_dir}/{plot_fn}.png', dpi=300)
-                    print(f'Saved {self.plot_dir}/{plot_fn}.png')
-                if show_plot:
-                    plt.show()
+            handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
+                    plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
+            fig.legend(handles=handles, loc='upper right')
+            fig.suptitle(f'Model Fit for {ids} {wells}')
+            fig.tight_layout()
+            if plot_fn != '':
+                plt.savefig(f'{self.plot_dir}/{plot_fn}.png', dpi=300)
+                print(f'Saved {self.plot_dir}/{plot_fn}.png')
+            if show_plot:
+                plt.show()
 
         return params_df
 
@@ -280,23 +281,19 @@ if __name__ == "__main__":
     wells = ['H01', 'H02', 'H03']
     fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
     
-    params_chl1 = Parameters()
+    params = Parameters()
     # params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
-    params_chl1.add('gamma_A', value=0.0, min=0.0, max=1.0, vary=False)
-    params_chl1.add('gamma_I', value=0.0, min=0.0, max=1.0, vary=False)
-    params_chl1.add('r_A', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
-    params_chl1.add('r_I', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
-    params_chl1.add('r_C', value=1e-2, min=0.0, max=0.05, vary=False)
-    params_chl1.add('K_A', value=1e-2, min=1e-3, max=1.0, vary=False)
-    params_chl1.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
-    params_chl1.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
+    params.add('gamma_A', value=0.0, min=0.0, max=1.0, vary=False)
+    params.add('gamma_I', value=0.0, min=0.0, max=1.0, vary=False)
+    params.add('r_A', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
+    params.add('r_I', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
+    params.add('r_C', value=1e-2, min=0.0, max=0.05, vary=False)
+    params.add('K_A', value=1e-2, min=1e-3, max=1.0, vary=False)
+    params.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
+    params.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
 
-    row_labels = ['A04', 'A05', 'A06', 'B04', 'B05', 'B06', 'C04', 'C05', 'C06', 'D04', 'D05', 'D06']
-    print(f'Fitting for {id} {row_labels}:')
-    params_chl1_df = fitter.fit_for_selected_rows(
-        row_labels, 
-        params_chl1,
+    fitter.fit_for_selected_rows(ids, wells, params,
         skip_fine_tuning=True,
-        result_fn='.chl1_model3_four_cond',
-        plot_fn='.chl1_model3_four_cond',
+        result_fn='',
+        plot_fn='',
         show_plot=True)
