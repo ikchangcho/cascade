@@ -291,14 +291,14 @@ if __name__ == "__main__":
     params.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
     params.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
 
-    fitter.fit_for_selected_rows(ids, wells, params)
+    fitter.fit_for_selected_rows(ids, wells, params, plot_fn='model2_global_brute_fit', show_plot=False)
 
     params.add('gamma_A', value=params['gamma_A'].value, min=params['gamma_A'].value-0.01, max=params['gamma_A'].value+0.01, brute_step=0.01)
     params.add('gamma_I', value=params['gamma_I'].value, min=params['gamma_I'].value-0.01, max=params['gamma_I'].value+0.01, brute_step=0.01)
     params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, brute_step=0.01)
     params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, brute_step=0.01)
     params.add('r_C', value=params['r_C'].value, min=0.01, max=0.05, vary=False)
-    fitter.fit_for_selected_rows(ids, wells, params, skip_fine_tuning=False)
+    fitter.fit_for_selected_rows(ids, wells, params, skip_fine_tuning=False, plot_fn='model2_global_fine_tuning', show_plot=True)
 
     for id in ids:
         for i in range(0, len(wells), 3):
@@ -308,7 +308,7 @@ if __name__ == "__main__":
             params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, vary=False)
             params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, vary=False)
             params.add('r_C', value=params['r_C'].value, min=0.01, max=0.05, brute_step=0.01)
-            fitter.fit_for_selected_rows([id], wells, params, skip_fine_tuning=False)
+            fitter.fit_for_selected_rows([id], wells, params, skip_fine_tuning=False, plot_fn=f'{id}_r_C_fitting', show_plot=True)
 
 
 
