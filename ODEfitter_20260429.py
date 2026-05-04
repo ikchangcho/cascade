@@ -106,11 +106,11 @@ class ODEfitter:
             ids,
             wells: List[str],
             params: Parameters,
-            skip_fine_tuning: bool = False,
+            skip_fine_tuning: bool = True,
             result_fn: str = '',
-            plot_cons: bool = True,
             plot_fn: str = '',
-            show_plot: bool = False,
+            plot_cons: bool = True,
+            show_plot: bool = True,
             num_rpl: int = 3,
             num_col: int = 6
     ):
@@ -164,7 +164,7 @@ class ODEfitter:
 
         if plot_fn != '' or show_plot:
             num_row = int(np.ceil(len(ids) * len(wells) / num_col / num_rpl))
-            fig, axes = plt.subplots(num_row, num_col, squeeze=False)
+            fig, axes = plt.subplots(num_row, num_col, squeeze=False, figsize=(5*num_col, 3*num_row))
             axes = axes.flatten()
 
             for id in ids:
@@ -177,13 +177,13 @@ class ODEfitter:
                     if plot_cons:
                         no3_cons = self.data_dict[id][well].loc['no3_cons'].values
                         no2_cons = self.data_dict[id][well].loc['no2_cons'].values
-                        ax.scatter(time, no3_cons, color='blue')
-                        ax.scatter(time, no2_cons, color='red')
+                        ax.scatter(time, no3_cons, color='blue', s=20)
+                        ax.scatter(time, no2_cons, color='red', s=10)
                     else:
                         no3_conc = self.data_dict[id][well].loc['no3_conc'].values
                         no2_conc = self.data_dict[id][well].loc['no2_conc'].values
-                        ax.scatter(time, no3_conc, color='blue')
-                        ax.scatter(time, no2_conc, color='red')
+                        ax.scatter(time, no3_conc, color='blue', s=20)
+                        ax.scatter(time, no2_conc, color='red', s=10)
                         
                     if self.model == model1:
                         init_cond = np.array([1.0, init_no3, init_no2, 1.0])
@@ -282,18 +282,36 @@ if __name__ == "__main__":
     fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
     
     params = Parameters()
-    # params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
-    params.add('gamma_A', value=0.0, min=0.0, max=1.0, vary=False)
-    params.add('gamma_I', value=0.0, min=0.0, max=1.0, vary=False)
-    params.add('r_A', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
-    params.add('r_I', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
-    params.add('r_C', value=1e-2, min=0.0, max=0.05, vary=False)
+    params.add('gamma_A', value=0.02, min=0.02, max=0.08, brute_step=0.02)
+    params.add('gamma_I', value=0.02, min=0.02, max=0.08, brute_step=0.02)
+    params.add('r_A', value=0.02, min=0.02, max=0.08, brute_step=0.02)
+    params.add('r_I', value=0.02, min=0.02, max=0.08, brute_step=0.02)
+    params.add('r_C', value=0.01, min=0.01, max=0.05, brute_step=0.02)
     params.add('K_A', value=1e-2, min=1e-3, max=1.0, vary=False)
     params.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
     params.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
 
-    fitter.fit_for_selected_rows(ids, wells, params,
-        skip_fine_tuning=True,
-        result_fn='',
-        plot_fn='',
-        show_plot=True)
+    fitter.fit_for_selected_rows(ids, wells, params)
+
+    params.add('gamma_A', value=params['gamma_A'].value, min=params['gamma_A'].value-0.01, max=params['gamma_A'].value+0.01, brute_step=0.01)
+    params.add('gamma_I', value=params['gamma_I'].value, min=params['gamma_I'].value-0.01, max=params['gamma_I'].value+0.01, brute_step=0.01)
+    params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, brute_step=0.01)
+    params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, brute_step=0.01)
+    params.add('r_C', value=params['r_C'].value, min=0.01, max=0.05, vary=False)
+    fitter.fit_for_selected_rows(ids, wells, params, skip_fine_tuning=False)
+
+    for id in ids:
+        for i in range(0, len(wells), 3):
+            wells = wells[i:i+3]
+            params.add('gamma_A', value=params['gamma_A'].value, min=params['gamma_A'].value-0.01, max=params['gamma_A'].value+0.01, vary=False)
+            params.add('gamma_I', value=params['gamma_I'].value, min=params['gamma_I'].value-0.01, max=params['gamma_I'].value+0.01, vary=False)
+            params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, vary=False)
+            params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, vary=False)
+            params.add('r_C', value=params['r_C'].value, min=0.01, max=0.05, brute_step=0.01)
+            fitter.fit_for_selected_rows([id], wells, params, skip_fine_tuning=False)
+
+
+
+    
+
+
