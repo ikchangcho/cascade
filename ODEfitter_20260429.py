@@ -32,7 +32,7 @@ class ODEfitter:
                     well_data_df.index = ['no3_conc', 'no2_conc', 'no3_cons', 'no2_cons']
                     data_dict[id][well] = well_data_df
 
-        self.data_dict = load_csv(ids, wells)
+        self.data_dict = load_csv(ids, wells)       # data_dict structure: {id: {well: DataFrame of time points data}}
         self.model = model
         self.no3_index = no3_index
         self.no2_index = no2_index
@@ -107,6 +107,7 @@ class ODEfitter:
             params: Parameters,
             skip_fine_tuning: bool = False,
             result_fn: str = '',
+            plot_cons: bool = True,
             plot_fn: str = '',
             show_plot: bool = False,
             num_rpl: int = 1,
@@ -119,16 +120,19 @@ class ODEfitter:
                 print(f"Residuals function called {_residuals.call_count} times")
 
             residuals = []
-            for row_label in wells:
-                if self.model == model1:
-                    init_cond = np.array([1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
-                if self.model == model2:
-                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
-                if self.model == model3:
-                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label]])
-                residual_no2, residual_no3 = self._residual(row_label, params, init_cond)
-                residuals.extend(residual_no2)
-                residuals.extend(residual_no3)
+            for id in ids:
+                for well in wells:
+                    init_no3 = self.data_dict[id][well].iloc[0, 0]
+                    init_no2 = self.data_dict[id][well].iloc[1, 0]
+                    if self.model == model1:
+                        init_cond = np.array([1.0, init_no3, init_no2, 1.0])
+                    if self.model == model2:
+                        init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
+                    if self.model == model3:
+                        init_cond = np.array([1.0, 1.0, init_no3, init_no2])
+                    residual_no2, residual_no3 = self._residual(id, well, params, init_cond)
+                    residuals.extend(residual_no2)
+                    residuals.extend(residual_no3)
             return np.array(residuals)
         
         optimizer = Minimizer(_residuals, params)
@@ -149,7 +153,7 @@ class ODEfitter:
                 if trial.chisqr < best_result.chisqr:
                     best_result = trial
                 num_iterations += 1
-        print(f"Fitting result for {wells}:")
+        print(f"Fitting result for {ids} {wells}:")
         print(best_result.params.pretty_print())
         
         params_df = pd.DataFrame({name: [param.value] for name, param in best_result.params.items()}, index=[', '.join(wells)])
@@ -162,35 +166,50 @@ class ODEfitter:
             fig, axes = plt.subplots(num_row, num_col, squeeze=False)
             axes = axes.flatten()
 
-            for i, row_label in enumerate(wells):
-                ax = axes[i // num_rpl]
-                time = self.time
-                no2_cons = self.no2_cons_df.loc[row_label].values
-                no3_cons = self.no3_cons_df.loc[row_label].values
-                ax.scatter(time, no2_cons, color='red')
-                ax.scatter(time, no3_cons, color='blue')
-                
-                if self.model == model1:
-                    init_cond = np.array([1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
-                if self.model == model2:
-                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label], 1.0])
-                if self.model == model3:
-                    init_cond = np.array([1.0, 1.0, self.no3_init_df.loc[row_label], self.no2_init_df.loc[row_label]])
-                t, y = self._solve_ode_for_plot(best_result.params, init_cond)
-                no3_cons_fit = y[0, self.no3_index] - y[:, self.no3_index]
-                no2_cons_fit = y[0, self.no2_index] - y[:, self.no2_index] + no3_cons_fit
-                ax.plot(t, no3_cons_fit, color='blue')
-                ax.plot(t, no2_cons_fit, color='red')
-            handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
-                    plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
-            fig.legend(handles=handles, loc='upper right')
-            fig.suptitle(f'Model Fit for {wells}')
-            fig.tight_layout()
-            if plot_fn != '':
-                plt.savefig(f'{self.plot_dir}/{id}{plot_fn}.png', dpi=300)
-                print(f'Saved {self.plot_dir}/{id}{plot_fn}.png')
-            if show_plot:
-                plt.show()
+            for id in ids:
+                for well in wells:
+                    init_no3 = self.data_dict[id][well].iloc[0, 0]
+                    init_no2 = self.data_dict[id][well].iloc[1, 0]
+                    i = ids.index(id) * len(wells) + wells.index(well)
+                    ax = axes[i // num_rpl]
+                    time = self.data_dict[id][well].columns.values.astype(float)
+                    if plot_cons:
+                        no3_cons = self.data_dict[id][well].loc['no3_cons'].values
+                        no2_cons = self.data_dict[id][well].loc['no2_cons'].values
+                        ax.scatter(time, no3_cons, color='blue')
+                        ax.scatter(time, no2_cons, color='red')
+                    else:
+                        no3_conc = self.data_dict[id][well].loc['no3_conc'].values
+                        no2_conc = self.data_dict[id][well].loc['no2_conc'].values
+                        ax.scatter(time, no3_conc, color='blue')
+                        ax.scatter(time, no2_conc, color='red')
+                        
+                    if self.model == model1:
+                        init_cond = np.array([1.0, init_no3, init_no2, 1.0])
+                    if self.model == model2:
+                        init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
+                    if self.model == model3:
+                        init_cond = np.array([1.0, 1.0, init_no3, init_no2])
+                    
+                    t, y = self._solve_ode_for_plot(id, well, best_result.params, init_cond)
+                    if plot_cons:
+                        no3_cons_fit = y[0, self.no3_index] - y[:, self.no3_index]
+                        no2_cons_fit = y[0, self.no2_index] - y[:, self.no2_index] + no3_cons_fit
+                        ax.plot(t, no3_cons_fit, color='blue')
+                        ax.plot(t, no2_cons_fit, color='red')
+                    else:
+                        ax.plot(t, y[:, self.no3_index], color='blue')
+                        ax.plot(t, y[:, self.no2_index], color='red')
+                handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
+                        plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
+                fig.legend(handles=handles, loc='upper right')
+                fig.suptitle(f'Model Fit for {wells}')
+                fig.tight_layout()
+                if plot_fn != '':
+                    plt.savefig(f'{self.plot_dir}/{plot_fn}.png', dpi=300)
+                    print(f'Saved {self.plot_dir}/{plot_fn}.png')
+                if show_plot:
+                    plt.show()
 
         return params_df
 

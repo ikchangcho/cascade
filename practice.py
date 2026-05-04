@@ -25,5 +25,4 @@ wells = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', '
 data_dict = load_csv(ids, wells)
 example = data_dict['4.2.batch1']['A01']
 print(example)
-print(example.index)
-print(example.columns)
+print(data_dict['4.2.batch1']['A01'].iloc[0, 0])
