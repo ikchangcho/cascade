@@ -277,26 +277,26 @@ def model3(t, y, params):       # no3_index = 2, no2_index = 3
 
 if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
-    for id in ids[:]:
-        fitter = ODEfitter(id, model2, no3_index=2, no2_index=3)
-        
-        params_chl1 = Parameters()
-        # params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
-        params_chl1.add('gamma_A', value=0.0, min=0.0, max=1.0, vary=False)
-        params_chl1.add('gamma_I', value=0.0, min=0.0, max=1.0, vary=False)
-        params_chl1.add('r_A', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
-        params_chl1.add('r_I', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
-        params_chl1.add('r_C', value=1e-2, min=0.0, max=0.05, vary=False)
-        params_chl1.add('K_A', value=1e-2, min=1e-3, max=1.0, vary=False)
-        params_chl1.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
-        params_chl1.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
+    wells = ['H01', 'H02', 'H03']
+    fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
+    
+    params_chl1 = Parameters()
+    # params_chl1.add('gamma', value=0, min=0.0, max=1.0, vary=False)
+    params_chl1.add('gamma_A', value=0.0, min=0.0, max=1.0, vary=False)
+    params_chl1.add('gamma_I', value=0.0, min=0.0, max=1.0, vary=False)
+    params_chl1.add('r_A', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
+    params_chl1.add('r_I', value=1e-2, min=0.0, max=0.10, brute_step=0.03)
+    params_chl1.add('r_C', value=1e-2, min=0.0, max=0.05, vary=False)
+    params_chl1.add('K_A', value=1e-2, min=1e-3, max=1.0, vary=False)
+    params_chl1.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
+    params_chl1.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
 
-        row_labels = ['A04', 'A05', 'A06', 'B04', 'B05', 'B06', 'C04', 'C05', 'C06', 'D04', 'D05', 'D06']
-        print(f'Fitting for {id} {row_labels}:')
-        params_chl1_df = fitter.fit_for_selected_rows(
-            row_labels, 
-            params_chl1,
-            skip_fine_tuning=True,
-            result_fn='.chl1_model3_four_cond',
-            plot_fn='.chl1_model3_four_cond',
-            show_plot=True)
+    row_labels = ['A04', 'A05', 'A06', 'B04', 'B05', 'B06', 'C04', 'C05', 'C06', 'D04', 'D05', 'D06']
+    print(f'Fitting for {id} {row_labels}:')
+    params_chl1_df = fitter.fit_for_selected_rows(
+        row_labels, 
+        params_chl1,
+        skip_fine_tuning=True,
+        result_fn='.chl1_model3_four_cond',
+        plot_fn='.chl1_model3_four_cond',
+        show_plot=True)
