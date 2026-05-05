@@ -308,7 +308,7 @@ if __name__ == "__main__":
             params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, vary=False)
             params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, vary=False)
             params.add('r_C', value=params['r_C'].value, min=0.00, max=0.05, brute_step=0.01)
-            fitter.fit_for_selected_rows([id], wells, params, skip_fine_tuning=False, plot_fn=f'{id}_r_C_fitting', show_plot=False)
+            fitter.fit_for_selected_rows([id], wells, params, skip_fine_tuning=False, plot_fn=f'{id}_r_C_fitting', show_plot=False, num_rpl=3, num_col=1)
 
 
 
