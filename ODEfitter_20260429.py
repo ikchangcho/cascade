@@ -147,7 +147,7 @@ class ODEfitter:
             for candidate in results_brute.candidates:
                 print(f'=====Searching candidates {num_iterations}=====')
                 _residuals.call_count = 0
-                trial = optimizer.minimize(method='leastsq', params=candidate.params)
+                trial = optimizer.minimize(method='leastsq', params=candidate.params)  
                 if _residuals.call_count > 1000:
                     print(f"    Iteration limit reached ({_residuals.call_count} calls), skipping to next candidate")
                     continue
@@ -204,15 +204,16 @@ class ODEfitter:
             handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
             fig.legend(handles=handles, loc='upper right')
-            fig.suptitle(f'Model Fit for {ids} {wells}')
-            fig.tight_layout()
+            fig.suptitle(f'Model Fit for {ids} {wells}\n' + 
+                         ', '.join([f'{name}={param.value:.4f}' for name, param in best_result.params.items()]))
+            # fig.tight_layout()
             if plot_fn != '':
                 plt.savefig(f'{self.plot_dir}/{plot_fn}.png', dpi=300)
                 print(f'Saved {self.plot_dir}/{plot_fn}.png')
             if show_plot:
                 plt.show()
 
-        return params_df
+        return best_result.params
 
 
 def model1(t, y, params):       # no3_index = 1, no2_index = 2
@@ -281,34 +282,35 @@ if __name__ == "__main__":
     wells = ['H01', 'H02', 'H03']
     fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
     
-    params = Parameters()
-    params.add('gamma_A', value=0.02, min=0.02, max=0.08, brute_step=0.02)
-    params.add('gamma_I', value=0.02, min=0.02, max=0.08, brute_step=0.02)
-    params.add('r_A', value=0.02, min=0.02, max=0.08, brute_step=0.02)
-    params.add('r_I', value=0.02, min=0.02, max=0.08, brute_step=0.02)
-    params.add('r_C', value=0.01, min=0.01, max=0.05, brute_step=0.02)
-    params.add('K_A', value=1e-2, min=1e-3, max=1.0, vary=False)
-    params.add('K_I', value=1e-2, min=1e-3, max=1.0, vary=False)
-    params.add('K_C', value=1e-2, min=1e-3, max=1.0, vary=False)
+    initial_guess = Parameters()
+    initial_guess.add('gamma_A', value=0.01, min=0.01, max=0.05, brute_step=0.02)
+    initial_guess.add('gamma_I', value=0.01, min=0.01, max=0.05, brute_step=0.02)
+    initial_guess.add('r_A', value=0.02, min=0.02, max=0.06, brute_step=0.02)
+    initial_guess.add('r_I', value=0.02, min=0.02, max=0.06, brute_step=0.02)
+    initial_guess.add('r_C', value=1e-3, min=1e-3, max=0.01, brute_step=5e-3)
+    initial_guess.add('K_A', value=1e-3, vary=False)
+    initial_guess.add('K_I', value=1e-3, vary=False)
+    initial_guess.add('K_C', value=1e-3, vary=False)
 
-    fitter.fit_for_selected_rows(ids, wells, params, plot_fn='model2_global_brute_fit', show_plot=False)
-
-    params.add('gamma_A', value=params['gamma_A'].value, min=params['gamma_A'].value-0.01, max=params['gamma_A'].value+0.01, brute_step=0.01)
-    params.add('gamma_I', value=params['gamma_I'].value, min=params['gamma_I'].value-0.01, max=params['gamma_I'].value+0.01, brute_step=0.01)
-    params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, brute_step=0.01)
-    params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, brute_step=0.01)
-    params.add('r_C', value=params['r_C'].value, min=0.01, max=0.05, vary=False)
-    fitter.fit_for_selected_rows(ids, wells, params, skip_fine_tuning=False, plot_fn='model2_global_fine_tuning', show_plot=False)
+    global_params = fitter.fit_for_selected_rows(ids, wells, initial_guess, 
+        skip_fine_tuning=False, 
+        plot_fn='model2_global_fit', 
+        show_plot=False, 
+        num_rpl=3, num_col=3)
 
     for id in ids:
         for i in range(0, len(wells), 3):
             wells = wells[i:i+3]
-            params.add('gamma_A', value=params['gamma_A'].value, min=params['gamma_A'].value-0.01, max=params['gamma_A'].value+0.01, vary=False)
-            params.add('gamma_I', value=params['gamma_I'].value, min=params['gamma_I'].value-0.01, max=params['gamma_I'].value+0.01, vary=False)
-            params.add('r_A', value=params['r_A'].value, min=params['r_A'].value-0.01, max=params['r_A'].value+0.01, vary=False)
-            params.add('r_I', value=params['r_I'].value, min=params['r_I'].value-0.01, max=params['r_I'].value+0.01, vary=False)
-            params.add('r_C', value=params['r_C'].value, min=0.00, max=0.05, brute_step=0.01)
-            fitter.fit_for_selected_rows([id], wells, params, skip_fine_tuning=False, plot_fn=f'{id}_r_C_fitting', show_plot=False, num_rpl=3, num_col=1)
+            global_params.add('gamma_A', value=global_params['gamma_A'].value, vary=False)
+            global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
+            global_params.add('r_A', global_params['r_A'].value, vary=False)
+            global_params.add('r_I', global_params['r_I'].value, vary=False)
+            global_params.add('r_C', global_params['r_C'].value, min=1e-3, max=0.01, brute_step=1e-3)
+            fitter.fit_for_selected_rows([id], wells, initial_guess, 
+                skip_fine_tuning=False, 
+                plot_fn=f'{id}_model2_r_C_individual_fit', 
+                show_plot=False, 
+                num_rpl=3, num_col=2)
 
 
 
