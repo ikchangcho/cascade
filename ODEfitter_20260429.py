@@ -287,7 +287,7 @@ if __name__ == "__main__":
     global_params.add('gamma_I', value=0.03, min=0.01, max=0.07, brute_step=0.02)
     global_params.add('r_A', value=0.03, min=0.02, max=0.06, brute_step=0.02)
     global_params.add('r_I', value=0.03, min=0.02, max=0.06, brute_step=0.02)
-    global_params.add('r_C', value=5e-3, min=1e-3, max=0.01)
+    global_params.add('r_C', value=0.01, min=0.01, max=0.1, brute_step=0.03)
     global_params.add('K_A', value=1e-3, vary=False)
     global_params.add('K_I', value=1e-3, vary=False)
     global_params.add('K_C', value=1e-3, vary=False)
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
             global_params.add('r_A', value=global_params['r_A'].value, vary=False)
             global_params.add('r_I', value=global_params['r_I'].value, vary=False)
-            global_params.add('r_C', value=global_params['r_C'].value, min=1e-3, max=0.01, brute_step=1e-3)
+            global_params.add('r_C', value=global_params['r_C'].value, min=0.01, max=0.1, brute_step=0.01)
             fitter.fit_for_selected_rows([id], wells, global_params, 
                 skip_fine_tuning=False, 
                 plot_fn=f'{id}_model2_r_C_individual_fit', 
