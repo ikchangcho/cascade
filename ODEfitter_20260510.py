@@ -58,7 +58,7 @@ class ODEfitter:
         sol = solve_ivp(self.model, t_span, init_cond, 
                         t_eval=time, args=(params,), 
                         method='BDF', rtol=1e-6)        # methods: 'RK45', 'RK23', 'Radau', 'BDF', 'LSODA', 'DOP853'
-
+        
         if len(sol.t) != len(time):
             print(f"    Expected {len(time)} time points, but got {len(sol.t)}. Solver message: {sol.message}")
         
@@ -96,17 +96,16 @@ class ODEfitter:
             sol = np.vstack([sol, padding])
             print(f"    Warning: ODE solver returned fewer time points than expected. Appending last solution value to match the length of time points.")
         
-        residual_no2 = sol[:, self.no2_index] - no2_conc
-        residual_no3 = sol[:, self.no3_index] - no3_conc
+        _residual_no2 = sol[:, self.no2_index] - no2_conc
+        _residual_no3 = sol[:, self.no3_index] - no3_conc
         
-        return residual_no2, residual_no3
+        return _residual_no2, _residual_no3
     
     def fit_for_selected_rows(
             self,
             ids,
             wells: List[str],
             params: Parameters,
-            skip_fine_tuning: bool = True,
             result_fn: str = '',
             plot_fn: str = '',
             plot_cons: bool = True,
@@ -115,11 +114,6 @@ class ODEfitter:
             num_col: int = 6
     ):
         def _residuals(params):
-            max_eval = 1000
-            _residuals.call_count += 1
-            if _residuals.call_count % 100 == 0:
-                print(f"Residuals function called {_residuals.call_count} times")
-
             residuals = []
             for id in ids:
                 for well in wells:
@@ -131,34 +125,18 @@ class ODEfitter:
                         init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
                     if self.model == model3:
                         init_cond = np.array([1.0, 1.0, init_no3, init_no2])
-                    residual_no2, residual_no3 = self._residual(id, well, params, init_cond)
-                    residuals.extend(residual_no2)
-                    residuals.extend(residual_no3)
+                    _residual_no2, _residual_no3 = self._residual(id, well, params, init_cond)
+                    residuals.extend(_residual_no2)
+                    residuals.extend(_residual_no3)
             return np.array(residuals)
         
         optimizer = Minimizer(_residuals, params)
-        print(f'=====Brute fitting started=====')
-        _residuals.call_count = 0
-        results_brute = optimizer.minimize(method='brute')
-        best_result = copy.deepcopy(results_brute)
-
-        if not skip_fine_tuning:
-            num_iterations = 1
-            for candidate in results_brute.candidates:
-                print(f'=====Searching candidates {num_iterations}=====')
-                _residuals.call_count = 0
-                trial = optimizer.minimize(method='leastsq', params=candidate.params)  
-                if _residuals.call_count > 1000:
-                    print(f"    Iteration limit reached ({_residuals.call_count} calls), skipping to next candidate")
-                    continue
-                if trial.chisqr < best_result.chisqr:
-                    best_result = trial
-                num_iterations += 1
-        print(f"Fitting result for {ids} {wells}:")
-        print(best_result.params.pretty_print())
+        results = optimizer.minimize(method='leastsq')
+        print(f"Residual: {results.chisqr}")
+        print(results.params.pretty_print())
         
-        params_df = pd.DataFrame({name: [param.value] for name, param in best_result.params.items()}, index=[', '.join(wells)])
         if result_fn != '':
+            params_df = pd.DataFrame({name: [param.value] for name, param in results.params.items()}, index=[', '.join(wells)])
             params_df.to_csv(f'{self.result_dir}/{id}{result_fn}.csv')
             print(f'Saved {self.result_dir}/{id}{result_fn}.csv')
 
@@ -192,7 +170,7 @@ class ODEfitter:
                     if self.model == model3:
                         init_cond = np.array([1.0, 1.0, init_no3, init_no2])
                     
-                    t, y = self._solve_ode_for_plot(id, well, best_result.params, init_cond)
+                    t, y = self._solve_ode_for_plot(id, well, results.params, init_cond)
                     if plot_cons:
                         no3_cons_fit = y[0, self.no3_index] - y[:, self.no3_index]
                         no2_cons_fit = y[0, self.no2_index] - y[:, self.no2_index] + no3_cons_fit
@@ -205,7 +183,7 @@ class ODEfitter:
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
             fig.legend(handles=handles, loc='upper right')
             fig.suptitle(f'Model Fit for {ids} {wells}\n' + 
-                         ', '.join([f'{name}={param.value:.4f}' for name, param in best_result.params.items()]))
+                         ', '.join([f'{name}={param.value:.4f}' for name, param in results.params.items()]))
             # fig.tight_layout()
             if plot_fn != '':
                 plt.savefig(f'{self.plot_dir}/{plot_fn}.png', dpi=300)
@@ -213,7 +191,7 @@ class ODEfitter:
             if show_plot:
                 plt.show()
 
-        return best_result.params
+        return results
 
 
 def model1(t, y, params):       # no3_index = 1, no2_index = 2
@@ -239,6 +217,11 @@ def model1(t, y, params):       # no3_index = 1, no2_index = 2
 
 def model2(t, y, params):       # no3_index = 2, no2_index = 3
     X_A, X_I, A, I, C = y
+
+    A = max(A, 0)
+    I = max(I, 0)
+    C = max(C, 0)
+
     gamma_A = params['gamma_A'].value
     gamma_I = params['gamma_I'].value
     r_A = params['r_A'].value
@@ -280,31 +263,46 @@ def model3(t, y, params):       # no3_index = 2, no2_index = 3
     return [dX_Adt, dX_Idt, dAdt, dIdt]
 
 if __name__ == "__main__":
-    ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
+    ids = ['4.2.batch1', '4.2.batch4']
     wells = ['H01', 'H02', 'H03']
     fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
     
-    global_params = Parameters()
-    global_params.add('gamma_A', value=0.01, vary=False)
-    global_params.add('gamma_I', value=0.05, vary=False)
-    global_params.add('r_A', value=0.0453, vary=False)
-    global_params.add('r_I', value=0.0269, vary=False)
-    global_params.add('r_C', value=0.005, vary=False)
-    global_params.add('K_A', value=1e-3, vary=False)
-    global_params.add('K_I', value=1e-3, vary=False)
-    global_params.add('K_C', value=1e-3, vary=False)
+    initial_guess = Parameters()
+    initial_guess.add('gamma_A', value=0.05, min=1e-3, max=1.0)
+    initial_guess.add('gamma_I', value=0.05, min=1e-3, max=1.0)
+    initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
+    initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
+    initial_guess.add('r_C', value=0.05, min=1e-3, max=1.0)
+    initial_guess.add('K_A', value=1e-3, vary=False)
+    initial_guess.add('K_I', value=1e-3, vary=False)
+    initial_guess.add('K_C', value=1e-3, vary=False)
+
+    global_results = fitter.fit_for_selected_rows(ids, wells, initial_guess,
+            result_fn=f'',
+            plot_fn=f'',
+            plot_cons=False,
+            show_plot=False,
+            num_rpl=1, num_col=3)
+
+    global_params = global_results.params
+    global_params.add('gamma_A', value=global_params['gamma_A'].value, vary=False)
+    global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
+    global_params.add('r_A', value=global_params['r_A'].value, vary=False)
+    global_params.add('r_I', value=global_params['r_I'].value, vary=False)
+    global_params.add('r_C', value=global_params['r_C'].value, min=1e-4, max=0.1)
 
     for id in ids:
         for i in range(0, len(wells), 3):
-            wells = wells[i:i+3]
-            global_params.add('r_C', value=global_params['r_C'].value, min=0.01, max=0.1, brute_step=0.01)
-            fitter.fit_for_selected_rows([id], wells, global_params, 
-                skip_fine_tuning=False, 
-                plot_fn=f'{id}_model2_r_C_individual_fit', 
-                show_plot=False, 
-                num_rpl=3, num_col=2)
-
-
+            selected_wells = wells[i:i+3]
+            individual_results = fitter.fit_for_selected_rows([id], selected_wells, global_params,
+                result_fn=f'',
+                plot_fn=f'20260511_{id}_H01-H03_model2_conc',
+                plot_cons=False, 
+                show_plot=True, 
+                num_rpl=1, num_col=3)
+            
+                                                              
+                                                                
 
     
 
