@@ -263,7 +263,7 @@ def model3(t, y, params):       # no3_index = 2, no2_index = 3
     return [dX_Adt, dX_Idt, dAdt, dIdt]
 
 if __name__ == "__main__":
-    ids = ['4.2.batch1', '4.2.batch4']
+    ids = ['4.2.batch4']
     wells = ['H01', 'H02', 'H03']
     fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
     
@@ -279,27 +279,27 @@ if __name__ == "__main__":
 
     global_results = fitter.fit_for_selected_rows(ids, wells, initial_guess,
             result_fn=f'',
-            plot_fn=f'',
+            plot_fn=f'20260511_batch4_H01-H03_model2_conc',
             plot_cons=False,
-            show_plot=False,
+            show_plot=True,
             num_rpl=1, num_col=3)
 
-    global_params = global_results.params
-    global_params.add('gamma_A', value=global_params['gamma_A'].value, vary=False)
-    global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
-    global_params.add('r_A', value=global_params['r_A'].value, vary=False)
-    global_params.add('r_I', value=global_params['r_I'].value, vary=False)
-    global_params.add('r_C', value=global_params['r_C'].value, min=1e-4, max=0.1)
+    # global_params = global_results.params
+    # global_params.add('gamma_A', value=global_params['gamma_A'].value, vary=False)
+    # global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
+    # global_params.add('r_A', value=global_params['r_A'].value, vary=False)
+    # global_params.add('r_I', value=global_params['r_I'].value, vary=False)
+    # global_params.add('r_C', value=global_params['r_C'].value, min=1e-4, max=0.1)
 
-    for id in ids:
-        for i in range(0, len(wells), 3):
-            selected_wells = wells[i:i+3]
-            individual_results = fitter.fit_for_selected_rows([id], selected_wells, global_params,
-                result_fn=f'',
-                plot_fn=f'20260511_{id}_H01-H03_model2_conc',
-                plot_cons=False, 
-                show_plot=True, 
-                num_rpl=1, num_col=3)
+    # for id in ids:
+    #     for i in range(0, len(wells), 3):
+    #         selected_wells = wells[i:i+3]
+    #         individual_results = fitter.fit_for_selected_rows([id], selected_wells, global_params,
+    #             result_fn=f'',
+    #             plot_fn=f'20260511_{id}_H01-H03_model2_conc',
+    #             plot_cons=False, 
+    #             show_plot=True, 
+    #             num_rpl=1, num_col=3)
             
                                                               
                                                                 
