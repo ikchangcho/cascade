@@ -120,11 +120,13 @@ class ODEfitter:
                     init_no3 = self.data_dict[id][well].iloc[0, 0]
                     init_no2 = self.data_dict[id][well].iloc[1, 0]
                     if self.model == model1:
-                        init_cond = np.array([1.0, init_no3, init_no2, 1.0])
+                        init_cond = np.array([1.0, init_no3, init_no2])
                     if self.model == model2:
-                        init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
+                        init_cond = np.array([1.0, init_no3, init_no2, 1.0])
                     if self.model == model3:
                         init_cond = np.array([1.0, 1.0, init_no3, init_no2])
+                    if self.model == model4:
+                        init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
                     _residual_no2, _residual_no3 = self._residual(id, well, params, init_cond)
                     residuals.extend(_residual_no2)
                     residuals.extend(_residual_no3)
@@ -164,11 +166,13 @@ class ODEfitter:
                         ax.scatter(time, no2_conc, color='red', s=10)
                         
                     if self.model == model1:
-                        init_cond = np.array([1.0, init_no3, init_no2, 1.0])
+                        init_cond = np.array([1.0, init_no3, init_no2])
                     if self.model == model2:
-                        init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
+                        init_cond = np.array([1.0, init_no3, init_no2, 1.0])
                     if self.model == model3:
                         init_cond = np.array([1.0, 1.0, init_no3, init_no2])
+                    if self.model == model4:
+                        init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
                     
                     t, y = self._solve_ode_for_plot(id, well, results.params, init_cond)
                     if plot_cons:
@@ -184,7 +188,8 @@ class ODEfitter:
             fig.legend(handles=handles, loc='upper right')
             fig.suptitle(f'Model Fit for {ids} {wells}\n' + 
                          ', '.join([f'{name}={param.value:.4f}' for name, param in results.params.items()]))
-            # fig.tight_layout()
+            plt.tight_layout()
+            
             if plot_fn != '':
                 plt.savefig(f'{self.plot_dir}/{plot_fn}.png', dpi=300)
                 print(f'Saved {self.plot_dir}/{plot_fn}.png')
@@ -193,8 +198,28 @@ class ODEfitter:
 
         return results
 
-
+# When you modify the model, make sure to update the initial conditions in fit_for_selected_rows accordingly in line 122 and 168.
 def model1(t, y, params):       # no3_index = 1, no2_index = 2
+    X, A, I = y
+    gamma = params['gamma'].value
+    r_A = params['r_A'].value
+    r_I = params['r_I'].value
+    K_A = params['K_A'].value
+    K_I = params['K_I'].value
+
+    A = max(A, 0)
+    I = max(I, 0)
+
+    monod_A = A / (K_A + A)
+    monod_I = I / (K_I + I)
+
+    dXdt = 0.5 * (monod_A + monod_I) * gamma * X
+    dAdt = -monod_A * r_A * X
+    dIdt = -monod_I * r_I * X - dAdt
+
+    return [dXdt, dAdt, dIdt]
+
+def model2(t, y, params):       # no3_index = 1, no2_index = 2
     X, A, I, C = y
     gamma = params['gamma'].value
     r_A = params['r_A'].value
@@ -204,18 +229,44 @@ def model1(t, y, params):       # no3_index = 1, no2_index = 2
     K_I = params['K_I'].value
     K_C = params['K_C'].value
 
+    A = max(A, 0)
+    I = max(I, 0)
+    C = max(C, 0)
+
     monod_A = A / (K_A + A)
     monod_I = I / (K_I + I)
     monod_C = C / (K_C + C)
 
-    dXdt = (monod_A * monod_C + monod_I * monod_C) * gamma * X
+    dXdt = 0.5 * (monod_A + monod_I) * gamma * X
     dAdt = -monod_A * r_A * X
     dIdt = -monod_I * r_I * X - dAdt
     dCdt = -monod_C * r_C * X
     
     return [dXdt,dAdt,dIdt,dCdt]
 
-def model2(t, y, params):       # no3_index = 2, no2_index = 3
+def model3(t, y, params):       # no3_index = 2, no2_index = 3
+    X_A, X_I, A, I = y
+    gamma_A = params['gamma_A'].value
+    gamma_I = params['gamma_I'].value
+    r_A = params['r_A'].value
+    r_I = params['r_I'].value
+    K_A = params['K_A'].value
+    K_I = params['K_I'].value
+
+    A = max(A, 0)
+    I = max(I, 0)
+
+    monod_A = A / (K_A + A)
+    monod_I = I / (K_I + I)
+
+    dX_Adt = monod_A * gamma_A * X_A
+    dX_Idt = monod_I * gamma_I * X_I
+    dAdt = -monod_A * r_A * X_A
+    dIdt = -monod_I * r_I * X_I -dAdt
+
+    return [dX_Adt, dX_Idt, dAdt, dIdt]
+
+def model4(t, y, params):       # no3_index = 2, no2_index = 3
     X_A, X_I, A, I, C = y
 
     A = max(A, 0)
@@ -243,47 +294,48 @@ def model2(t, y, params):       # no3_index = 2, no2_index = 3
 
     return [dX_Adt, dX_Idt, dAdt, dIdt, dCdt]
 
-def model3(t, y, params):       # no3_index = 2, no2_index = 3
-    X_A, X_I, A, I = y
-    gamma_A = params['gamma_A'].value
-    gamma_I = params['gamma_I'].value
-    r_A = params['r_A'].value
-    r_I = params['r_I'].value
-    K_A = params['K_A'].value
-    K_I = params['K_I'].value
 
-    monod_A = A / (K_A + A)
-    monod_I = I / (K_I + I)
-
-    dX_Adt = monod_A * gamma_A * X_A
-    dX_Idt = monod_I * gamma_I * X_I
-    dAdt = -monod_A * r_A * X_A
-    dIdt = -monod_I * r_I * X_I + monod_A * r_A * X_A
-
-    return [dX_Adt, dX_Idt, dAdt, dIdt]
 
 if __name__ == "__main__":
-    ids = ['4.2.batch4']
-    wells = ['H01', 'H02', 'H03']
-    fitter = ODEfitter(ids, wells, model2, no3_index=2, no2_index=3)
+    fitter = ODEfitter(ids=['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6'],
+             wells=['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
+                    'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
+                    'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12',
+                    'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12',
+                    'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12',
+                    'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12',
+                    'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12',
+                    'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12'], 
+             model=model1, no3_index=1, no2_index=2)
     
-    initial_guess = Parameters()
-    initial_guess.add('gamma_A', value=0.05, min=1e-3, max=1.0)
-    initial_guess.add('gamma_I', value=0.05, min=1e-3, max=1.0)
-    initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
-    initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
-    initial_guess.add('r_C', value=0.05, min=1e-3, max=1.0)
-    initial_guess.add('K_A', value=1e-3, vary=False)
-    initial_guess.add('K_I', value=1e-3, vary=False)
-    initial_guess.add('K_C', value=1e-3, vary=False)
+    ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
+    wells_chl1 = ['A04']
+    wells_chl0 = ['E04']
 
-    global_results = fitter.fit_for_selected_rows(ids, wells, initial_guess,
-            result_fn=f'',
-            plot_fn=f'20260511_batch4_H01-H03_model2_conc',
-            plot_cons=False,
-            show_plot=True,
-            num_rpl=1, num_col=3)
+    for id in ids:
+        for (well_chl1, well_chl0) in zip(wells_chl1, wells_chl0):    
+            # CHL+ fitting
+            initial_guess = Parameters()
+            initial_guess.add('gamma', value=0, vary=False)
+            initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
+            initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
+            initial_guess.add('K_A', value=1e-3, vary=False)
+            initial_guess.add('K_I', value=1e-3, vary=False)
+            initial_guess.add('K_C', value=1e-3, vary=False)
 
+            chl1_result = fitter.fit_for_selected_rows([id], [well_chl1], initial_guess,
+                show_plot=True, num_rpl=1, num_col=1)
+
+            params = chl1_result.params
+            params.add('gamma', value=0.05, min=1e-3, max=1.0)
+            params.add('r_A', value=params['r_A'].value, vary=False)
+            params.add('r_I', value=params['r_I'].value, vary=False)
+
+            chl0_result = fitter.fit_for_selected_rows([id], [well_chl0], params,
+                show_plot=True, num_rpl=1, num_col=1)
+
+
+    
     # global_params = global_results.params
     # global_params.add('gamma_A', value=global_params['gamma_A'].value, vary=False)
     # global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
