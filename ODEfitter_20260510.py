@@ -201,7 +201,7 @@ class ODEfitter:
 # When you modify the model, make sure to update the initial conditions in fit_for_selected_rows accordingly in line 122 and 168.
 def model1(t, y, params):       # no3_index = 1, no2_index = 2
     X, A, I = y
-    gamma = params['gamma'].value
+    Gamma = params['Gamma'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
     K_A = params['K_A'].value
@@ -213,7 +213,7 @@ def model1(t, y, params):       # no3_index = 1, no2_index = 2
     monod_A = A / (K_A + A)
     monod_I = I / (K_I + I)
 
-    dXdt = 0.5 * (monod_A + monod_I) * gamma * X
+    dXdt = 0.5 * (monod_A + monod_I) * Gamma * X
     dAdt = -monod_A * r_A * X
     dIdt = -monod_I * r_I * X - dAdt
 
@@ -221,7 +221,7 @@ def model1(t, y, params):       # no3_index = 1, no2_index = 2
 
 def model2(t, y, params):       # no3_index = 1, no2_index = 2
     X, A, I, C = y
-    gamma = params['gamma'].value
+    Gamma = params['Gamma'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
     r_C = params['r_C'].value
@@ -237,7 +237,7 @@ def model2(t, y, params):       # no3_index = 1, no2_index = 2
     monod_I = I / (K_I + I)
     monod_C = C / (K_C + C)
 
-    dXdt = 0.5 * (monod_A + monod_I) * gamma * X
+    dXdt = 0.5 * (monod_A + monod_I) * Gamma * X
     dAdt = -monod_A * r_A * X
     dIdt = -monod_I * r_I * X - dAdt
     dCdt = -monod_C * r_C * X
@@ -246,8 +246,8 @@ def model2(t, y, params):       # no3_index = 1, no2_index = 2
 
 def model3(t, y, params):       # no3_index = 2, no2_index = 3
     X_A, X_I, A, I = y
-    gamma_A = params['gamma_A'].value
-    gamma_I = params['gamma_I'].value
+    Gamma_A = params['Gamma_A'].value
+    Gamma_I = params['Gamma_I'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
     K_A = params['K_A'].value
@@ -259,8 +259,8 @@ def model3(t, y, params):       # no3_index = 2, no2_index = 3
     monod_A = A / (K_A + A)
     monod_I = I / (K_I + I)
 
-    dX_Adt = monod_A * gamma_A * X_A
-    dX_Idt = monod_I * gamma_I * X_I
+    dX_Adt = monod_A * Gamma_A * X_A
+    dX_Idt = monod_I * Gamma_I * X_I
     dAdt = -monod_A * r_A * X_A
     dIdt = -monod_I * r_I * X_I -dAdt
 
@@ -273,8 +273,8 @@ def model4(t, y, params):       # no3_index = 2, no2_index = 3
     I = max(I, 0)
     C = max(C, 0)
 
-    gamma_A = params['gamma_A'].value
-    gamma_I = params['gamma_I'].value
+    Gamma_A = params['Gamma_A'].value
+    Gamma_I = params['Gamma_I'].value
     r_A = params['r_A'].value
     r_I = params['r_I'].value
     r_C = params['r_C'].value
@@ -286,8 +286,8 @@ def model4(t, y, params):       # no3_index = 2, no2_index = 3
     monod_I = I / (K_I + I)
     monod_C = C / (K_C + C)
 
-    dX_Adt = monod_A * monod_C * gamma_A * X_A
-    dX_Idt = monod_I * monod_C * gamma_I * X_I
+    dX_Adt = monod_A * monod_C * Gamma_A * X_A
+    dX_Idt = monod_I * monod_C * Gamma_I * X_I
     dAdt = -monod_A * r_A * X_A
     dIdt = -monod_I * r_I * X_I - dAdt 
     dCdt = -monod_C * r_C * (X_A + X_I)
@@ -311,12 +311,13 @@ if __name__ == "__main__":
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
     wells_chl1 = ['A04']
     wells_chl0 = ['E04']
+    results_df = pd.DataFrame(columns=['id', 'well_chl1', 'red_chi2_chl1', 'well_chl0', 'red_chi2_chl0', 'gamma', 'r_A', 'r_I', 'K_A', 'K_I'])
 
     for id in ids:
         for (well_chl1, well_chl0) in zip(wells_chl1, wells_chl0):    
             # CHL+ fitting
             initial_guess = Parameters()
-            initial_guess.add('gamma', value=0, vary=False)
+            initial_guess.add('Gamma', value=0, vary=False)
             initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
             initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
             initial_guess.add('K_A', value=1e-3, vary=False)
@@ -324,21 +325,27 @@ if __name__ == "__main__":
             initial_guess.add('K_C', value=1e-3, vary=False)
 
             chl1_result = fitter.fit_for_selected_rows([id], [well_chl1], initial_guess,
-                show_plot=True, num_rpl=1, num_col=1)
+                show_plot=False, num_rpl=1, num_col=1)
 
             params = chl1_result.params
-            params.add('gamma', value=0.05, min=1e-3, max=1.0)
+            params.add('Gamma', value=0.05, min=1e-3, max=1.0)
             params.add('r_A', value=params['r_A'].value, vary=False)
             params.add('r_I', value=params['r_I'].value, vary=False)
 
             chl0_result = fitter.fit_for_selected_rows([id], [well_chl0], params,
-                show_plot=True, num_rpl=1, num_col=1)
+                show_plot=False, num_rpl=1, num_col=1)
+            
+            results_df.loc[len(results_df)] = [id, well_chl1, chl1_result.redchi, well_chl0, chl0_result.redchi, chl0_result.params['Gamma'].value, chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value]
+
+    # save useful results as dataframe
+
+    # save entire results object
 
 
     
     # global_params = global_results.params
-    # global_params.add('gamma_A', value=global_params['gamma_A'].value, vary=False)
-    # global_params.add('gamma_I', value=global_params['gamma_I'].value, vary=False)
+    # global_params.add('Gamma_A', value=global_params['Gamma_A'].value, vary=False)
+    # global_params.add('Gamma_I', value=global_params['Gamma_I'].value, vary=False)
     # global_params.add('r_A', value=global_params['r_A'].value, vary=False)
     # global_params.add('r_I', value=global_params['r_I'].value, vary=False)
     # global_params.add('r_C', value=global_params['r_C'].value, min=1e-4, max=0.1)
