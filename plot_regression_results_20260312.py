@@ -182,7 +182,7 @@ no2_range = (0.0, 2.6)
 no3_min, no3_max, no2_min, no2_max = [], [], [], []
 
 for x_label, y_label in [('chl1_no3_rate_early', 'chl1_no2_rate_early')]:
-    title = f'{y_label} vs {x_label}'       # \nConditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
+    title = f'{y_label} vs {x_label}'       # \n Conditions of {no3_range[0]} < A(0) < {no3_range[1]} & {no2_range[0]} < I(0) < {no2_range[1]}     
     filename = f'4.2.{y_label}_vs_{x_label}'
     fig, axes = plt.subplots(2, 1, figsize=(5, 10))
     for i in [0, 1, 2, 3, 4, 5]:
