@@ -107,6 +107,7 @@ class ODEfitter:
             wells: List[str],
             params: Parameters,
             plot_fn: str = '',
+            plot_title: str = '',
             show_plot: bool = True,
             num_rpl: int = 3,
             num_col: int = 6
@@ -169,7 +170,8 @@ class ODEfitter:
             handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
             fig.legend(handles=handles, loc='upper right')
-            fig.suptitle(', '.join([f'{name}={param.value:.4f}' for name, param in results.params.items()]))
+            fig.suptitle(f'{plot_title} \n' + 
+                ', '.join([f'{name}={param.value:.4f}' for name, param in results.params.items()]))
             plt.tight_layout()
             
             if plot_fn != '':
@@ -323,6 +325,7 @@ if __name__ == "__main__":
         print(f"Fitting {id} CHL+ wells...")
         chl1_result = fitter.fit_for_selected_rows([id], wells_chl1, initial_guess,
             plot_fn = f'{id}.chl1_model3_fit_20260520',
+            plot_title = f'{id} CHL+ model3 fit',
             show_plot=False, num_rpl=3, num_col=4)
 
         params = chl1_result.params
@@ -335,4 +338,5 @@ if __name__ == "__main__":
         print(f"Fitting {id} CHL- wells...")
         chl0_result = fitter.fit_for_selected_rows([id], wells_chl0, params,
             plot_fn = f'{id}.chl0_model3_fit_20260520',
+            plot_title = f'{id} CHL- model3 fit',
             show_plot=False, num_rpl=3, num_col=4)
