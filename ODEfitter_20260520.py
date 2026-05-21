@@ -136,8 +136,8 @@ class ODEfitter:
         print(results.params.pretty_print())
 
         if plot_fn != '' or show_plot:
-            num_row = int(np.ceil(len(ids) * len(wells) / num_rpl / num_col / 2))
-            fig, axes = plt.subplots(num_row, num_col * 2, squeeze=False, figsize=(4*num_col*2, 3*num_row))
+            num_row = int(np.ceil(len(ids) * len(wells) / num_rpl / num_col))
+            fig, axes = plt.subplots(num_row, num_col, squeeze=False, figsize=(4*num_col, 3*num_row))
             axes = axes.flatten()
 
             for id in ids:
@@ -147,20 +147,13 @@ class ODEfitter:
                     init_no2 = self.data_dict[id][well].iloc[1, 0]
                     i = ids.index(id) * len(wells) + wells.index(well)
                     
-                    ax1 = axes[i // num_rpl]
+                    ax1 = axes[i // num_rpl + 1]
                     no3_conc = self.data_dict[id][well].loc['no3_conc'].values
                     no2_conc = self.data_dict[id][well].loc['no2_conc'].values
                     ax1.scatter(time, no3_conc, color='blue', s=20)
                     ax1.scatter(time, no2_conc, color='red', s=10)
                     ax1.set_title(f'Concentration vs Time')
 
-                    ax2 = axes[(i // num_rpl) + 1]
-                    no3_cons = self.data_dict[id][well].loc['no3_cons'].values
-                    no2_cons = self.data_dict[id][well].loc['no2_cons'].values
-                    ax2.scatter(time, no3_cons, color='blue', s=20)
-                    ax2.scatter(time, no2_cons, color='red', s=10)
-                    ax2.set_title(f'Consumption vs Time')
-                        
                     if self.model == model1:
                         init_cond = np.array([1.0, init_no3, init_no2])
                     if self.model == model2:
@@ -171,17 +164,12 @@ class ODEfitter:
                         init_cond = np.array([1.0, 1.0, init_no3, init_no2, 1.0])
                     
                     t, y = self._solve_ode_for_plot(id, well, results.params, init_cond)
-                    no3_cons_fit = y[0, self.no3_index] - y[:, self.no3_index]
-                    no2_cons_fit = y[0, self.no2_index] - y[:, self.no2_index] + no3_cons_fit
-                    ax2.plot(t, no3_cons_fit, color='blue')
-                    ax2.plot(t, no2_cons_fit, color='red')
                     ax1.plot(t, y[:, self.no3_index], color='blue')
                     ax1.plot(t, y[:, self.no2_index], color='red')
             handles = [plt.Line2D([0], [0], color='b', marker='.', linestyle='-', label=f'$NO_3$ (A)'),
                     plt.Line2D([0], [0], color='r', marker='.', linestyle='-', label=f'$NO_2$ (I)')]
             fig.legend(handles=handles, loc='upper right')
-            fig.suptitle(f'Model Fit for {ids} {wells}: ' + r'$\chi^2_{red}$=' + f'{results.redchi:.4f} \n' + 
-                         ', '.join([f'{name}={param.value:.4f}' for name, param in results.params.items()]))
+            fig.suptitle(', '.join([f'{name}={param.value:.4f}' for name, param in results.params.items()]))
             plt.tight_layout()
             
             if plot_fn != '':
@@ -321,61 +309,30 @@ if __name__ == "__main__":
 
     for id in ids:
         results_dict[id] = {}
-        for (well_chl1, well_chl0) in zip(wells_chl1, wells_chl0):    
-            # CHL+ fitting
-            initial_guess = Parameters()
-            # initial_guess.add('Gamma', value=0, vary=False)
-            initial_guess.add('Gamma_A', value=0, vary=False)
-            initial_guess.add('Gamma_I', value=0, vary=False)
-            initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
-            initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
-            initial_guess.add('K_A', value=1e-3, vary=False)
-            initial_guess.add('K_I', value=1e-3, vary=False)
 
-            print(f"Fitting {id} {well_chl1}...")
-            chl1_result = fitter.fit_for_selected_rows([id], [well_chl1], initial_guess,
-                plot_fn = f'',
-                show_plot=True, num_rpl=3, num_col=4)
-            results_dict[id][well_chl1] = chl1_result
+        # CHL+ fitting
+        initial_guess = Parameters()
+        # initial_guess.add('Gamma', value=0, vary=False)
+        initial_guess.add('Gamma_A', value=0, vary=False)
+        initial_guess.add('Gamma_I', value=0, vary=False)
+        initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
+        initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
+        initial_guess.add('K_A', value=1e-3, vary=False)
+        initial_guess.add('K_I', value=1e-3, vary=False)
 
-            params = chl1_result.params
-            # params.add('Gamma', value=0.5, min=1e-3, max=1.0)
-            params.add('Gamma_A', value=0.05, min=1e-3, max=1.0)
-            params.add('Gamma_I', value=0.05, min=1e-3, max=1.0)
-            params.add('r_A', value=params['r_A'].value, vary=False)
-            params.add('r_I', value=params['r_I'].value, vary=False)
+        print(f"Fitting {id} CHL+ wells...")
+        chl1_result = fitter.fit_for_selected_rows([id], wells_chl1, initial_guess,
+            plot_fn = f'{id}.chl1_model3_fit_20260520',
+            show_plot=False, num_rpl=3, num_col=4)
 
-            print(f"Fitting {id} {well_chl0}...")
-            chl0_result = fitter.fit_for_selected_rows([id], [well_chl0], params,
-                plot_fn = f'',
-                show_plot=True, num_rpl=1, num_col=1)
-            results_dict[id][well_chl0] = chl0_result
-            
-            # results_df.loc[len(results_df)] = [id, well_chl1, chl1_result.redchi, well_chl0, chl0_result.redchi, 
-            #                                    chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['Gamma'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value,
-            #                                    fitter.data_dict[id][well_chl1].loc['no3_conc'].iloc[0], fitter.data_dict[id][well_chl1].loc['no2_conc'].iloc[0]]
-            results_df.loc[len(results_df)] = [id, well_chl1, chl1_result.redchi, well_chl0, chl0_result.redchi, 
-                                               chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['Gamma_A'].value, chl0_result.params['Gamma_I'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value,
-                                               fitter.data_dict[id][well_chl1].loc['no3_conc'].iloc[0], fitter.data_dict[id][well_chl1].loc['no2_conc'].iloc[0]]
-    
-    # mean_redchi_chl1 = results_df['red_chi2_chl1'].mean()
-    # std_redchi_chl1 = results_df['red_chi2_chl1'].std()
-    # mean_redchi_chl0 = results_df['red_chi2_chl0'].mean()
-    # std_redchi_chl0 = results_df['red_chi2_chl0'].std()
-    # print(f"Mean red_chi2_chl1: {mean_redchi_chl1:.4f} ± {std_redchi_chl1:.4f}")
-    # print(f"Mean red_chi2_chl0: {mean_redchi_chl0:.4f} ± {std_redchi_chl0:.4f}")
+        params = chl1_result.params
+        # params.add('Gamma', value=0.5, min=1e-3, max=1.0)
+        params.add('Gamma_A', value=0.05, min=1e-3, max=1.0)
+        params.add('Gamma_I', value=0.05, min=1e-3, max=1.0)
+        params.add('r_A', value=params['r_A'].value, vary=False)
+        params.add('r_I', value=params['r_I'].value, vary=False)
 
-    # filename = f'model3_fitting_results_20260517'
-    # results_df.to_csv(f'{fitter.result_dir}/{filename}.csv', index=False)
-    # print(f'Saved {fitter.result_dir}/{filename}.csv')
-    # with open(f'{fitter.result_dir}/{filename}.pkl', 'wb') as f:
-    #     pickle.dump(results_dict, f)
-    # print(f'Saved {fitter.result_dir}/{filename}.pkl')
-
-
-                                                              
-                                                                
-
-    
-
-
+        print(f"Fitting {id} CHL- wells...")
+        chl0_result = fitter.fit_for_selected_rows([id], wells_chl0, params,
+            plot_fn = f'{id}.chl0_model3_fit_20260520',
+            show_plot=False, num_rpl=3, num_col=4)
