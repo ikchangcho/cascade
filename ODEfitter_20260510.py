@@ -300,21 +300,17 @@ if __name__ == "__main__":
                     'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12',
                     'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12',
                     'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12'], 
-             model=model3, no3_index=2, no2_index=3)
+             model=model1, no3_index=1, no2_index=2)
     
     ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
-    wells_chl1 = ['A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12',
-                    'B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11', 'B12',
-                    'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12',
-                    'D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12']
-    wells_chl0 = ['E04', 'E05', 'E06', 'E07', 'E08', 'E09', 'E10', 'E11', 'E12',
-                    'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09', 'F10', 'F11', 'F12',
-                    'G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09', 'G10', 'G11', 'G12',
-                    'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12']
-    # results_df = pd.DataFrame(columns=['id', 'well_chl1', 'red_chi2_chl1', 'well_chl0', 'red_chi2_chl0', 'r_A', 'r_I', 'Gamma', 'K_A', 'K_I'])
+    wells_chl1 = ['D04']
+    wells_chl0 = ['H04']
     results_df = pd.DataFrame(columns=['id', 'well_chl1', 'red_chi2_chl1', 'well_chl0', 'red_chi2_chl0', 
-                                       'r_A', 'r_I', 'Gamma_A', 'Gamma_I', 'K_A', 'K_I',
+                                       'r_A', 'r_I', 'Gamma', 'K_A', 'K_I',
                                        'init_no3', 'init_no2'])
+    # results_df = pd.DataFrame(columns=['id', 'well_chl1', 'red_chi2_chl1', 'well_chl0', 'red_chi2_chl0', 
+                                    #    'r_A', 'r_I', 'Gamma_A', 'Gamma_I', 'K_A', 'K_I',
+                                    #    'init_no3', 'init_no2'])
     results_dict = {}
 
     for id in ids:
@@ -322,9 +318,9 @@ if __name__ == "__main__":
         for (well_chl1, well_chl0) in zip(wells_chl1, wells_chl0):    
             # CHL+ fitting
             initial_guess = Parameters()
-            # initial_guess.add('Gamma', value=0, vary=False)
-            initial_guess.add('Gamma_A', value=0, vary=False)
-            initial_guess.add('Gamma_I', value=0, vary=False)
+            initial_guess.add('Gamma', value=0, vary=False)
+            # initial_guess.add('Gamma_A', value=0, vary=False)
+            # initial_guess.add('Gamma_I', value=0, vary=False)
             initial_guess.add('r_A', value=0.05, min=1e-3, max=1.0)
             initial_guess.add('r_I', value=0.05, min=1e-3, max=1.0)
             initial_guess.add('K_A', value=1e-3, vary=False)
@@ -333,40 +329,42 @@ if __name__ == "__main__":
             print(f"Fitting {id} {well_chl1}...")
             chl1_result = fitter.fit_for_selected_rows([id], [well_chl1], initial_guess,
                 plot_fn = f'',
-                show_plot=False, num_rpl=1, num_col=1)
+                show_plot=True, num_rpl=1, num_col=1)
             results_dict[id][well_chl1] = chl1_result
 
             params = chl1_result.params
-            # params.add('Gamma', value=0.05, min=1e-3, max=1.0)
-            params.add('Gamma_A', value=0.05, min=1e-3, max=1.0)
-            params.add('Gamma_I', value=0.05, min=1e-3, max=1.0)
+            params.add('Gamma', value=0.5, min=1e-3, max=1.0)
+            # params.add('Gamma_A', value=0.05, min=1e-3, max=1.0)
+            # params.add('Gamma_I', value=0.05, min=1e-3, max=1.0)
             params.add('r_A', value=params['r_A'].value, vary=False)
             params.add('r_I', value=params['r_I'].value, vary=False)
 
             print(f"Fitting {id} {well_chl0}...")
             chl0_result = fitter.fit_for_selected_rows([id], [well_chl0], params,
                 plot_fn = f'',
-                show_plot=False, num_rpl=1, num_col=1)
+                show_plot=True, num_rpl=1, num_col=1)
             results_dict[id][well_chl0] = chl0_result
             
-            # results_df.loc[len(results_df)] = [id, well_chl1, chl1_result.redchi, well_chl0, chl0_result.redchi, chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['Gamma'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value]
             results_df.loc[len(results_df)] = [id, well_chl1, chl1_result.redchi, well_chl0, chl0_result.redchi, 
-                                               chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['Gamma_A'].value, chl0_result.params['Gamma_I'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value,
+                                               chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['Gamma'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value,
                                                fitter.data_dict[id][well_chl1].loc['no3_conc'].iloc[0], fitter.data_dict[id][well_chl1].loc['no2_conc'].iloc[0]]
+            # results_df.loc[len(results_df)] = [id, well_chl1, chl1_result.redchi, well_chl0, chl0_result.redchi, 
+            #                                    chl0_result.params['r_A'].value, chl0_result.params['r_I'].value, chl0_result.params['Gamma_A'].value, chl0_result.params['Gamma_I'].value, chl0_result.params['K_A'].value, chl0_result.params['K_I'].value,
+            #                                    fitter.data_dict[id][well_chl1].loc['no3_conc'].iloc[0], fitter.data_dict[id][well_chl1].loc['no2_conc'].iloc[0]]
     
-    mean_redchi_chl1 = results_df['red_chi2_chl1'].mean()
-    std_redchi_chl1 = results_df['red_chi2_chl1'].std()
-    mean_redchi_chl0 = results_df['red_chi2_chl0'].mean()
-    std_redchi_chl0 = results_df['red_chi2_chl0'].std()
-    print(f"Mean red_chi2_chl1: {mean_redchi_chl1:.4f} ± {std_redchi_chl1:.4f}")
-    print(f"Mean red_chi2_chl0: {mean_redchi_chl0:.4f} ± {std_redchi_chl0:.4f}")
+    # mean_redchi_chl1 = results_df['red_chi2_chl1'].mean()
+    # std_redchi_chl1 = results_df['red_chi2_chl1'].std()
+    # mean_redchi_chl0 = results_df['red_chi2_chl0'].mean()
+    # std_redchi_chl0 = results_df['red_chi2_chl0'].std()
+    # print(f"Mean red_chi2_chl1: {mean_redchi_chl1:.4f} ± {std_redchi_chl1:.4f}")
+    # print(f"Mean red_chi2_chl0: {mean_redchi_chl0:.4f} ± {std_redchi_chl0:.4f}")
 
-    filename = f'model3_fitting_results_20260517'
-    results_df.to_csv(f'{fitter.result_dir}/{filename}.csv', index=False)
-    print(f'Saved {fitter.result_dir}/{filename}.csv')
-    with open(f'{fitter.result_dir}/{filename}.pkl', 'wb') as f:
-        pickle.dump(results_dict, f)
-    print(f'Saved {fitter.result_dir}/{filename}.pkl')
+    # filename = f'model3_fitting_results_20260517'
+    # results_df.to_csv(f'{fitter.result_dir}/{filename}.csv', index=False)
+    # print(f'Saved {fitter.result_dir}/{filename}.csv')
+    # with open(f'{fitter.result_dir}/{filename}.pkl', 'wb') as f:
+    #     pickle.dump(results_dict, f)
+    # print(f'Saved {fitter.result_dir}/{filename}.pkl')
 
 
                                                               
