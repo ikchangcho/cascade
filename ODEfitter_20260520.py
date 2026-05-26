@@ -323,20 +323,20 @@ if __name__ == "__main__":
         initial_guess.add('K_I', value=1e-3, vary=False)
 
         print(f"Fitting {id} CHL+ wells...")
-        chl1_result = fitter.fit_for_selected_rows([id], wells_chl1, initial_guess,
-            plot_fn = f'{id}.chl1_model3_fit_20260520',
-            plot_title = f'{id} CHL+ model3 fit',
+        chl1_result = fitter.fit_for_selected_rows([id], wells_chl0, initial_guess,
+            plot_fn = f'{id}.chl0_linear_fit_20260525',
+            plot_title = f'{id} CHL- linear fit',
             show_plot=False, num_rpl=3, num_col=4)
 
-        params = chl1_result.params
-        # params.add('Gamma', value=0.5, min=1e-3, max=1.0)
-        params.add('Gamma_A', value=0.05, min=1e-3, max=1.0)
-        params.add('Gamma_I', value=0.05, min=1e-3, max=1.0)
-        params.add('r_A', value=params['r_A'].value, vary=False)
-        params.add('r_I', value=params['r_I'].value, vary=False)
+        # params = chl1_result.params
+        # # params.add('Gamma', value=0.5, min=1e-3, max=1.0)
+        # params.add('Gamma_A', value=0.05, min=1e-3, max=1.0)
+        # params.add('Gamma_I', value=0.05, min=1e-3, max=1.0)
+        # params.add('r_A', value=params['r_A'].value, vary=False)
+        # params.add('r_I', value=params['r_I'].value, vary=False)
 
-        print(f"Fitting {id} CHL- wells...")
-        chl0_result = fitter.fit_for_selected_rows([id], wells_chl0, params,
-            plot_fn = f'{id}.chl0_model3_fit_20260520',
-            plot_title = f'{id} CHL- model3 fit',
-            show_plot=False, num_rpl=3, num_col=4)
+        # print(f"Fitting {id} CHL- wells...")
+        # chl0_result = fitter.fit_for_selected_rows([id], wells_chl0, params,
+        #     plot_fn = f'{id}.chl0_model3_fit_20260520',
+        #     plot_title = f'{id} CHL- model3 fit',
+        #     show_plot=False, num_rpl=3, num_col=4)
