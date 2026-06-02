@@ -9,6 +9,14 @@ for id in ids:
     data[id]['no3'] = pd.read_csv(f'concentrations/{id}_no3_conc.csv', index_col=0)
     data[id]['no2'] = pd.read_csv(f'concentrations/{id}_no2_conc.csv', index_col=0)
 
+def load_data_to_plot(ids, data, no3_or_no2, chl):
+    data_to_plot = {}
+    for id in ids:
+        df = data[id][no3_or_no2]
+        df = df[(df['Chloramphenicol'] == chl) & (df['Sample_type'] != 'Blank')]
+        data_to_plot[id] = df.iloc[:, :-4]
+    return data_to_plot
+
 # # Figure 1
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
 # fig.suptitle(r'Raw $NO_3^-$ concentration $A(t)$ - drug condition' + '\n' + r'one curve per replicate | colour = batch')
@@ -129,8 +137,16 @@ plt.show()
 
 
 # Figure 4
+data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+fig.suptitle(r'$I_0$ independance: all $I_0$ pairs, all relicate combinations - one panel per batch' 
+                 + '\n' + r'colour = nominal $A_{add}$ | diagonal = perfect agreement | all 3 x3 replicate pairs per ($A_{add}, I_{add}$ pair, batch)')
+colors = ['grey', 'orange', 'blue', 'pink']
+for i in range(6):
+    ax = axes[i // 3, i % 3]
+    df = data_to_plot[ids[i]]
 
-            
+
 
     
 
