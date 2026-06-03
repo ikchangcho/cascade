@@ -179,32 +179,60 @@ def load_data_to_plot(ids, data, no3_or_no2, chl):
 # plt.show()
 
 
-# Figure 5
+# # Figure 5
+# data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
+# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+# fig.suptitle(r'Mean $NO_3^-$ curves averaged over replicates and $I_0$ - per batch'
+#                     + '\n' + r'colour = nominal $A_{add}$ | band = $\pm$ SEM | faint = indicidual curves')    
+# colors = ['gray', 'blue', 'orange', 'red']
+
+# for i in range(6):
+#     ax = axes[i // 3, i % 3]
+#     df = data_to_plot[ids[i]]
+#     for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
+#         df_A = df[df['Nitrate_input'] == A_add]
+#         x = df_A.columns[:-4].astype(float)
+#         y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
+#         y_sem = df_A.iloc[:, :-4].sem(axis=0).values.astype(float)
+#         ax.plot(x, y_mean, color=color, linestyle='-', linewidth=2, label=f'$A_{{add}}$={A_add}')
+#         ax.fill_between(x, y_mean - y_sem, y_mean + y_sem, color=color, alpha=0.2)
+#         for idx in df_A.index:
+#             y = df_A.loc[idx].iloc[:-4].values.astype(float)
+#             ax.plot(x, y, color=color, linestyle='-', alpha=0.1)
+#     ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
+#     ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
+#     ax.set_title(f'Batch {i+1}', fontsize=10)
+#     if i == 0:
+#         ax.legend(loc='upper right', fontsize=8)
+# fig.savefig(f'plots/figure5_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# Figure 6
 data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
-fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-fig.suptitle(r'Mean $NO_3^-$ curves averaged over replicates and $I_0$ - per batch'
-                    + '\n' + r'colour = nominal $A_{add}$ | band = $\pm$ SEM | faint = indicidual curves')    
+fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+fig.suptitle(r'Excess nitrate $A(0) - A_{add}$ by batch'
+                + '\n' + r'colour/martker = nominal $A_{add}$ | diamond - batch median')
+ax.set_xticks(range(6))
+ax.set_xticklabels([f'Batch {j+1}' for j in range(6)])
+ax.set_ylabel(r'$A(0) - A_{add}$ (mM)')
 colors = ['gray', 'blue', 'orange', 'red']
-
+markers = ['o', 's', '^', 'D']
 for i in range(6):
-    ax = axes[i // 3, i % 3]
     df = data_to_plot[ids[i]]
-    for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
+    median_val = np.median(df.iloc[:, :-4].iloc[:, 0].values.astype(float) - df['Nitrate_input'].values.astype(float))
+    ax.scatter([i], [median_val], color='white', marker='D', s=100, edgecolors='black', linewidths=1.5, zorder=5)
+    for A_add, color, marker in zip([0.0, 0.7, 1.4, 2.0], colors, markers):
         df_A = df[df['Nitrate_input'] == A_add]
-        x = df_A.columns[:-4].astype(float)
-        y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
-        y_sem = df_A.iloc[:, :-4].sem(axis=0).values.astype(float)
-        ax.plot(x, y_mean, color=color, linestyle='-', linewidth=2, label=f'$A_{{add}}$={A_add}')
-        ax.fill_between(x, y_mean - y_sem, y_mean + y_sem, color=color, alpha=0.2)
-        for idx in df_A.index:
-            y = df_A.loc[idx].iloc[:-4].values.astype(float)
-            ax.plot(x, y, color=color, linestyle='-', alpha=0.1)
-    ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
-    ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
-    ax.set_title(f'Batch {i+1}', fontsize=10)
-    if i == 0:
-        ax.legend(loc='upper right', fontsize=8)
-fig.savefig(f'plots/figure5_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+        x_positions = [i] * len(df_A)
+        y_values = (df_A.iloc[:, :-4].iloc[:, 0].values.astype(float) - A_add)
+        ax.scatter(x_positions, y_values, color=color, marker=marker, alpha=0.3, s=50)
+handles = [
+    plt.Line2D([0], [0], marker=markers[0], color=colors[0], label='$A_{add}$=0.0 mM', linestyle='None'),
+    plt.Line2D([0], [0], marker=markers[1], color=colors[1], label='$A_{add}$=0.7 mM', linestyle='None'),
+    plt.Line2D([0], [0], marker=markers[2], color=colors[2], label='$A_{add}$=1.4 mM', linestyle='None'),
+    plt.Line2D([0], [0], marker=markers[3], color=colors[3], label='$A_{add}$=2.0 mM', linestyle='None'),
+]
+ax.legend(handles=handles, loc='upper left')
+plt.savefig(f'plots/figure6_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 plt.show()
-
-
