@@ -238,38 +238,73 @@ def load_data_to_plot(ids, data, no3_or_no2, chl):
 # plt.show()
 
 
-# Figure 7
-data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
-fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-fig.suptitle(r'Mean $NO_3^-$ curves with fitted linear slop $A(0) - st$'
-                    + '\n' + r'batch 5 uses 8 time points | others use 6 | dotted = window boundary')
-colors = ['gray', 'blue', 'orange', 'red']
-batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+# # Figure 7
+# data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
+# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+# fig.suptitle(r'Mean $NO_3^-$ curves with fitted linear slop $A(0) - st$'
+#                     + '\n' + r'batch 5 uses 8 time points | others use 6 | dotted = window boundary')
+# colors = ['gray', 'blue', 'orange', 'red']
+# batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
 
-for i in range(6):
-    ax = axes[i // 3, i % 3]
-    ax.set_title(batch_labels[i] + ' ( 6 pts)', fontsize=10)
-    if ids[i] == '4.2.batch5':
-        ax.set_title(batch_labels[i] + ' ( 8 pts)', fontsize=10)
-    ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
-    ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
+# for i in range(6):
+#     ax = axes[i // 3, i % 3]
+#     ax.set_title(batch_labels[i] + ' ( 6 pts)', fontsize=10)
+#     if ids[i] == '4.2.batch5':
+#         ax.set_title(batch_labels[i] + ' ( 8 pts)', fontsize=10)
+#     ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
+#     ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
 
-    for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
-        df = data_to_plot[ids[i]]
-        df_A = df[df['Nitrate_input'] == A_add]
-        x = df_A.columns[:-4].astype(float)
-        y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
-        if ids[i] == '4.2.batch5':
-            fit_indices = range(8)
-        else:
-            fit_indices = range(6)
-        x_fit = x[fit_indices]
-        y_fit = y_mean[fit_indices]
-        slope, intercept = np.polyfit(x_fit, y_fit, 1)
-        y_line = intercept + slope * x_fit
-        ax.scatter(x, y_mean, color=color, marker='o', alpha=0.5, s=3, label=f'$A_{{add}}$={A_add}' if i == 0 else None)
-        ax.plot(x_fit, y_line, color=color, linestyle='-', linewidth=1)
-        ax.axvline(x=x_fit[-1], color='black', linestyle=':', linewidth=1)
-    ax.legend(loc='upper right') if i == 0 else None
-plt.savefig(f'plots/figure7_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
-plt.show()
+#     for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
+#         df = data_to_plot[ids[i]]
+#         df_A = df[df['Nitrate_input'] == A_add]
+#         x = df_A.columns[:-4].astype(float)
+#         y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
+#         if ids[i] == '4.2.batch5':
+#             fit_indices = range(8)
+#         else:
+#             fit_indices = range(6)
+#         x_fit = x[fit_indices]
+#         y_fit = y_mean[fit_indices]
+#         slope, intercept = np.polyfit(x_fit, y_fit, 1)
+#         y_line = intercept + slope * x_fit
+#         ax.scatter(x, y_mean, color=color, marker='o', alpha=0.5, s=3, label=f'$A_{{add}}$={A_add}' if i == 0 else None)
+#         ax.plot(x_fit, y_line, color=color, linestyle='-', linewidth=1)
+#         ax.axvline(x=x_fit[-1], color='black', linestyle=':', linewidth=1)
+#     ax.legend(loc='upper right') if i == 0 else None
+# plt.savefig(f'plots/figure7_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# # Figure 8
+# data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
+# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+# fig.suptitle(r'Mean normalised cumulative consumption $\tilde{C}(t)$ per ($A_{add}$, batch)'
+#                     + '\n' + r'averaged over replicates and $I_0$ | colour = nominal $A_{add}$ | diagonal = linear')
+# colors = ['gray', 'blue', 'orange', 'red']
+# for i in range(6):
+#     ax = axes[i // 3, i % 3]
+#     df = data_to_plot[ids[i]]
+#     time = df.columns[:-4].astype(float)
+#     for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
+#         df_A = df[df['Nitrate_input'] == A_add]
+#         y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
+#         thrsh_end = 0.05
+#         zero_indices = np.where(y_mean < thrsh_end)[0]
+#         if len(zero_indices) > 0:
+#             last_index = zero_indices[0]
+#         else:
+#             last_index = len(y_mean) - 1
+#         y_mean = y_mean[:last_index + 1]
+#         x_norm = time[:last_index + 1] / time[last_index]
+#         y_norm = (y_mean[0] - y_mean) / (y_mean[0] - y_mean[-1])
+#         ax.plot(x_norm, y_norm, color=color, linestyle='-', linewidth=2, label=f'$A_{{add}}$={A_add}')
+#     ax.plot([0, 1], [0, 1], color='black', linestyle='--', alpha=1.0)
+#     ax.set_xlabel(r'$\frac{t}{t_{last}}$') if i // 3 == 1 else None
+#     ax.set_ylabel(r'$\tilde{C}(t)$') if i % 3 == 0 else None
+#     ax.set_title(f'Batch {i+1}', fontsize=10)
+#     ax.set_xlim(-0.05, 1.05)
+#     ax.set_ylim(-0.05, 1.05)
+# handles, labels = axes[0, 0].get_legend_handles_labels()
+# fig.legend(handles, labels, loc='lower center', ncol=6, fontsize=10)
+# plt.savefig(f'plots/figure8_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
