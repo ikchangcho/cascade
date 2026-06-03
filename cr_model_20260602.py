@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 
 ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
 data = {}
@@ -178,32 +179,32 @@ def load_data_to_plot(ids, data, no3_or_no2, chl):
 # plt.show()
 
 
-# # Figure 5
-# data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
-# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-# fig.suptitle(r'Mean $NO_3^-$ curves averaged over replicates and $I_0$ - per batch'
-#                     + '\n' + r'colour = nominal $A_{add}$ | band = $\pm$ SEM | faint = indicidual curves')    
-# colors = ['gray', 'blue', 'orange', 'red']
+# Figure 5
+data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+fig.suptitle(r'Mean $NO_3^-$ curves averaged over replicates and $I_0$ - per batch'
+                    + '\n' + r'colour = nominal $A_{add}$ | band = $\pm$ SEM | faint = indicidual curves')    
+colors = ['gray', 'blue', 'orange', 'red']
 
-# for i in range(6):
-#     ax = axes[i // 3, i % 3]
-#     df = data_to_plot[ids[i]]
-#     for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
-#         df_A = df[df['Nitrate_input'] == A_add]
-#         x = df_A.columns[:-4].astype(float)
-#         y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
-#         y_sem = df_A.iloc[:, :-4].sem(axis=0).values.astype(float)
-#         ax.plot(x, y_mean, color=color, linestyle='-', linewidth=2, label=f'$A_{{add}}$={A_add}')
-#         ax.fill_between(x, y_mean - y_sem, y_mean + y_sem, color=color, alpha=0.2)
-#         for idx in df_A.index:
-#             y = df_A.loc[idx].iloc[:-4].values.astype(float)
-#             ax.plot(x, y, color=color, linestyle='-', alpha=0.1)
-#     ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
-#     ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
-#     ax.set_title(f'Batch {i+1}', fontsize=10)
-#     if i == 0:
-#         ax.legend(loc='upper right', fontsize=8)
-# plt.show()
+for i in range(6):
+    ax = axes[i // 3, i % 3]
+    df = data_to_plot[ids[i]]
+    for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
+        df_A = df[df['Nitrate_input'] == A_add]
+        x = df_A.columns[:-4].astype(float)
+        y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
+        y_sem = df_A.iloc[:, :-4].sem(axis=0).values.astype(float)
+        ax.plot(x, y_mean, color=color, linestyle='-', linewidth=2, label=f'$A_{{add}}$={A_add}')
+        ax.fill_between(x, y_mean - y_sem, y_mean + y_sem, color=color, alpha=0.2)
+        for idx in df_A.index:
+            y = df_A.loc[idx].iloc[:-4].values.astype(float)
+            ax.plot(x, y, color=color, linestyle='-', alpha=0.1)
+    ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
+    ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
+    ax.set_title(f'Batch {i+1}', fontsize=10)
+    if i == 0:
+        ax.legend(loc='upper right', fontsize=8)
+fig.savefig(f'plots/figure5_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.show()
 
 
-# F
