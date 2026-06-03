@@ -208,31 +208,68 @@ def load_data_to_plot(ids, data, no3_or_no2, chl):
 # plt.show()
 
 
-# Figure 6
+# # Figure 6
+# data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# fig.suptitle(r'Excess nitrate $A(0) - A_{add}$ by batch'
+#                 + '\n' + r'colour/martker = nominal $A_{add}$ | diamond - batch median')
+# ax.set_xticks(range(6))
+# ax.set_xticklabels([f'Batch {j+1}' for j in range(6)])
+# ax.set_ylabel(r'$A(0) - A_{add}$ (mM)')
+# colors = ['gray', 'blue', 'orange', 'red']
+# markers = ['o', 's', '^', 'D']
+# for i in range(6):
+#     df = data_to_plot[ids[i]]
+#     median_val = np.median(df.iloc[:, :-4].iloc[:, 0].values.astype(float) - df['Nitrate_input'].values.astype(float))
+#     ax.scatter([i], [median_val], color='white', marker='D', s=100, edgecolors='black', linewidths=1.5, zorder=5)
+#     for A_add, color, marker in zip([0.0, 0.7, 1.4, 2.0], colors, markers):
+#         df_A = df[df['Nitrate_input'] == A_add]
+#         x_positions = [i] * len(df_A)
+#         y_values = (df_A.iloc[:, :-4].iloc[:, 0].values.astype(float) - A_add)
+#         ax.scatter(x_positions, y_values, color=color, marker=marker, alpha=0.3, s=50)
+# handles = [
+#     plt.Line2D([0], [0], marker=markers[0], color=colors[0], label='$A_{add}$=0.0 mM', linestyle='None'),
+#     plt.Line2D([0], [0], marker=markers[1], color=colors[1], label='$A_{add}$=0.7 mM', linestyle='None'),
+#     plt.Line2D([0], [0], marker=markers[2], color=colors[2], label='$A_{add}$=1.4 mM', linestyle='None'),
+#     plt.Line2D([0], [0], marker=markers[3], color=colors[3], label='$A_{add}$=2.0 mM', linestyle='None'),
+# ]
+# ax.legend(handles=handles, loc='upper left')
+# plt.savefig(f'plots/figure6_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# Figure 7
 data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-fig.suptitle(r'Excess nitrate $A(0) - A_{add}$ by batch'
-                + '\n' + r'colour/martker = nominal $A_{add}$ | diamond - batch median')
-ax.set_xticks(range(6))
-ax.set_xticklabels([f'Batch {j+1}' for j in range(6)])
-ax.set_ylabel(r'$A(0) - A_{add}$ (mM)')
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+fig.suptitle(r'Mean $NO_3^-$ curves with fitted linear slop $A(0) - st$'
+                    + '\n' + r'batch 5 uses 8 time points | others use 6 | dotted = window boundary')
 colors = ['gray', 'blue', 'orange', 'red']
-markers = ['o', 's', '^', 'D']
+batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+
 for i in range(6):
-    df = data_to_plot[ids[i]]
-    median_val = np.median(df.iloc[:, :-4].iloc[:, 0].values.astype(float) - df['Nitrate_input'].values.astype(float))
-    ax.scatter([i], [median_val], color='white', marker='D', s=100, edgecolors='black', linewidths=1.5, zorder=5)
-    for A_add, color, marker in zip([0.0, 0.7, 1.4, 2.0], colors, markers):
+    ax = axes[i // 3, i % 3]
+    ax.set_title(batch_labels[i] + ' ( 6 pts)', fontsize=10)
+    if ids[i] == '4.2.batch5':
+        ax.set_title(batch_labels[i] + ' ( 8 pts)', fontsize=10)
+    ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
+    ax.set_ylabel(r'$NO_3^-$ (mM)') if i % 3 == 0 else None
+
+    for A_add, color in zip([0.0, 0.7, 1.4, 2.0], colors):
+        df = data_to_plot[ids[i]]
         df_A = df[df['Nitrate_input'] == A_add]
-        x_positions = [i] * len(df_A)
-        y_values = (df_A.iloc[:, :-4].iloc[:, 0].values.astype(float) - A_add)
-        ax.scatter(x_positions, y_values, color=color, marker=marker, alpha=0.3, s=50)
-handles = [
-    plt.Line2D([0], [0], marker=markers[0], color=colors[0], label='$A_{add}$=0.0 mM', linestyle='None'),
-    plt.Line2D([0], [0], marker=markers[1], color=colors[1], label='$A_{add}$=0.7 mM', linestyle='None'),
-    plt.Line2D([0], [0], marker=markers[2], color=colors[2], label='$A_{add}$=1.4 mM', linestyle='None'),
-    plt.Line2D([0], [0], marker=markers[3], color=colors[3], label='$A_{add}$=2.0 mM', linestyle='None'),
-]
-ax.legend(handles=handles, loc='upper left')
-plt.savefig(f'plots/figure6_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+        x = df_A.columns[:-4].astype(float)
+        y_mean = df_A.iloc[:, :-4].mean(axis=0).values.astype(float)
+        if ids[i] == '4.2.batch5':
+            fit_indices = range(8)
+        else:
+            fit_indices = range(6)
+        x_fit = x[fit_indices]
+        y_fit = y_mean[fit_indices]
+        slope, intercept = np.polyfit(x_fit, y_fit, 1)
+        y_line = intercept + slope * x_fit
+        ax.scatter(x, y_mean, color=color, marker='o', alpha=0.5, s=3, label=f'$A_{{add}}$={A_add}' if i == 0 else None)
+        ax.plot(x_fit, y_line, color=color, linestyle='-', linewidth=1)
+        ax.axvline(x=x_fit[-1], color='black', linestyle=':', linewidth=1)
+    ax.legend(loc='upper right') if i == 0 else None
+plt.savefig(f'plots/figure7_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 plt.show()
