@@ -57,21 +57,24 @@ nccc_stat = {}
 for id in ids:
     df = data_to_plot[id]
     time = df.columns[:-4].astype(float)
-    nccc_stat[id] = pd.DataFrame(index=df.index, columns=['AUC_norm_cons', 't_last'])
+    nccc_stat[id] = pd.DataFrame(index=df.index, columns=['AUC_norm_cons', 't_last', 'death_rate', 'curve_hits_zero'])
     for well in df.index:
         y = df.loc[well].iloc[:-4].astype(float)
         thrsh_end = 0.05
         zero_indices = np.where(y < thrsh_end)[0]
         if len(zero_indices) > 0:
             last_index = zero_indices[0]
+            nccc_stat[id].loc[well, 'curve_hits_zero'] = True
         else:
             last_index = len(y) - 1
+            nccc_stat[id].loc[well, 'curve_hits_zero'] = False
         y = y.iloc[:last_index + 1]
         x_norm = time[:last_index + 1] / time[last_index]
         y_norm = (y.iloc[0] - y) / (y.iloc[0] - y.iloc[-1])
         auc = np.trapezoid(y_norm, x_norm)
         nccc_stat[id].loc[well, 'AUC_norm_cons'] = auc
         nccc_stat[id].loc[well, 't_last'] = time[last_index]
+        nccc_stat[id].loc[well, 'death_rate'] = auc / time[last_index] if time[last_index] > 0 else np.nan
 
 # # Figure 1
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
@@ -498,14 +501,102 @@ for id in ids:
 # plt.savefig(f'plots/figure11_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 # plt.show()
 
-# Figure 12
+# # Figure 12
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.set_title(r'$\delta$ from  $\Phi$ inversion - curves that never hit zero only'
+#                 + '\n' + r'bootstrap 68% CI | diamond = batch median')
+# ax.set_xlabel('Batch (drying time course)')
+# ax.set_xticks(range(6))
+# ax.set_xticklabels(batch_labels)
+# ax.set_ylabel(r'$\delta$ ($hr^{-1}$)')
+
+# for i in range(6):
+#     conc_df = data_to_plot[ids[i]]
+#     nccc_stat_df = nccc_stat[ids[i]]
+#     df = pd.concat([nccc_stat_df[['death_rate', 'curve_hits_zero']], conc_df[['Nitrate_input']]], axis=1)
+#     delta = df[df['curve_hits_zero'] == False]['death_rate'].astype(float).values
+#     delta = delta[~np.isnan(delta)]
+#     median_delta = np.median(delta)
+#     ax.scatter(i, median_delta, color='white', marker='D', s=100, edgecolors=batch_colors[i], linewidths=1.5, zorder=5, alpha=0.8)
+#     for A_add, marker in zip(A_add_list, A_add_markers):
+#         indices = df[(df['Nitrate_input'] == A_add) & (df['curve_hits_zero'] == False)].index
+#         delta_A = df.loc[indices, ['death_rate']].astype(float).values
+#         delta_A = delta_A[~np.isnan(delta_A)]
+#         if len(delta_A) == 0:
+#             continue
+#         delta_mean, delta_lb, delta_ub = mean_bootstrap_ci(delta_A, n_bootstrap=1000, ci=68)
+#         ax.errorbar(i, delta_mean, yerr=[[delta_mean - delta_lb], [delta_ub - delta_mean]],
+#                     fmt=marker, color=batch_colors[i], alpha=0.8, markersize=6)
+# handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+#             for m, a in zip(A_add_markers, A_add_list)]
+# ax.legend(handles=handles, loc='upper right', fontsize=9, title=r'Nominal $A_{add}$', ncols=2)
+# plt.savefig(f'plots/figure12_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# # Figure 12.1
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.set_title(r'$\delta$ from  $\Phi$ inversion'
+#                 + '\n' + r'bootstrap 68% CI | diamond = batch median')
+# ax.set_xlabel('Batch (drying time course)')
+# ax.set_xticks(range(6))
+# ax.set_xticklabels(batch_labels)
+# ax.set_ylabel(r'$\delta$ ($hr^{-1}$)')
+
+# for i in range(6):
+#     conc_df = data_to_plot[ids[i]]
+#     nccc_stat_df = nccc_stat[ids[i]]
+#     df = pd.concat([nccc_stat_df[['death_rate', 'curve_hits_zero']], conc_df[['Nitrate_input']]], axis=1)
+#     delta = df['death_rate'].astype(float).values
+#     delta = delta[~np.isnan(delta)]
+#     median_delta = np.median(delta)
+#     ax.scatter(i, median_delta, color='white', marker='D', s=100, edgecolors=batch_colors[i], linewidths=1.5, zorder=5, alpha=0.8)
+#     for A_add, marker in zip(A_add_list, A_add_markers):
+#         indices = df[(df['Nitrate_input'] == A_add)].index
+#         delta_A = df.loc[indices, ['death_rate']].astype(float).values
+#         delta_A = delta_A[~np.isnan(delta_A)]
+#         if len(delta_A) == 0:
+#             continue
+#         delta_mean, delta_lb, delta_ub = mean_bootstrap_ci(delta_A, n_bootstrap=1000, ci=68)
+#         ax.errorbar(i, delta_mean, yerr=[[delta_mean - delta_lb], [delta_ub - delta_mean]],
+#                     fmt=marker, color=batch_colors[i], alpha=0.8, markersize=6)
+# handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+#             for m, a in zip(A_add_markers, A_add_list)]
+# ax.legend(handles=handles, loc='upper right', fontsize=9, title=r'Nominal $A_{add}$', ncols=2)
+# plt.savefig(f'plots/figure12.1_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# Figure 13
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.set_title(r'$\delta$ from  $\Phi$ inversion - curves that nver hit zero only'
-                + '\n' + r'bootstrap 68% CI | diamond = batch median')
-ax.set_xlabel('Batch (drying time course)')
+ax.set_title(r'$\delta$ vs s -- curves that never hit zero only'
+                + '\n' + r'bootstrap 68% CI | colour = batch | marker = nominal $A_{add}$')
+ax.set_xlabel(r's (mM/hr)')
 ax.set_ylabel(r'$\delta$ ($hr^{-1}$)')
 
-delta = {}
 for i in range(6):
     conc_df = data_to_plot[ids[i]]
-    
+    linear_fit_df = linear_fit_results[ids[i]]
+    nccc_stat_df = nccc_stat[ids[i]]
+    df = pd.concat([linear_fit_df['Initial_slope'], nccc_stat_df[['death_rate', 'curve_hits_zero']], conc_df['Nitrate_input']], axis=1)
+    df = df[df['curve_hits_zero'] == False]
+    for A_add, markers in zip(A_add_list, A_add_markers):
+        df_A = df[df['Nitrate_input'] == A_add]
+        s = -df_A['Initial_slope'].astype(float).values
+        s = s[~np.isnan(s)]
+        delta = df_A['death_rate'].astype(float).values
+        delta = delta[~np.isnan(delta)]
+
+        if len(s) == 0 or len(delta) == 0:
+            continue
+        s_mean, s_lb, s_ub = mean_bootstrap_ci(s, n_bootstrap=1000, ci=68)
+        delta_mean, delta_lb, delta_ub = mean_bootstrap_ci(delta, n_bootstrap=1000, ci=68)
+        ax.errorbar(s_mean, delta_mean, xerr=[[s_mean - s_lb], [s_ub - s_mean]], yerr=[[delta_mean - delta_lb], [delta_ub - delta_mean]],
+                    fmt=markers, color=batch_colors[i], alpha=0.8, markersize=6, label=batch_labels[i] if A_add == 2.0 else None)
+first_legend = ax.legend(loc='upper left', title='Batch', ncols=2)
+ax.add_artist(first_legend)
+marker_handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+            for m, a in zip(A_add_markers, A_add_list)]
+ax.legend(handles=marker_handles, loc='lower right', title=r'Nominal $A_{add}$', ncols=2)
+plt.savefig(f'plots/figure13_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.show()

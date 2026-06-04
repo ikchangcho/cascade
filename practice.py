@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Sample data
-df = pd.DataFrame({'height': [150, 160, 170, 180, 190], 'weight': [50, 60, 70, 80, 90]})
-height = df['height'].astype(float).values
-print(type(height))
+fig, ax = plt.subplots()
+ax.plot([0, 1, 2], [0, 1, 4])
+ax.set_xticks([3, 1, 2])
+ax.set_xticklabels(['zero', 'one', 'two'])
+plt.show()
