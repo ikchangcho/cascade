@@ -1,9 +1,15 @@
+from scipy import stats
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 
 ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
+batch_colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
+batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+A_add_list = [0.0, 0.7, 1.4, 2.0]
+A_add_markers = ['o', 's', '^', 'D']
+
 data = {}
 for id in ids:
     data[id] = {}
@@ -20,6 +26,16 @@ def load_data_to_plot(ids, data, no3_or_no2, chl):
 
 data_to_plot = load_data_to_plot(ids, data, 'no3', chl=1)
 
+def mean_bootstrap_ci(data, n_bootstrap, ci):
+    # data has to be a 1D array
+    rng = np.random.default_rng()
+    bootstrap_means = [np.mean(rng.choice(data, size=len(data), replace=True)) for _ in range(n_bootstrap)]
+    mean = np.mean(bootstrap_means)
+    lower_bound = np.percentile(bootstrap_means, (100 - ci) / 2)
+    upper_bound = np.percentile(bootstrap_means, 100 - (100 - ci) / 2)
+
+    return mean, lower_bound, upper_bound
+
 # Initial slopes
 linear_fit_results = {}
 for id in ids:
@@ -32,7 +48,7 @@ for id in ids:
         fit_indices = range(6)
     for well in df.index:
         y = df.loc[well].iloc[:-4].astype(float)
-        slope, intercept = np.polyfit(time[fit_indices], y[fit_indices], 1)
+        slope, intercept = np.polyfit(time[fit_indices], y.iloc[fit_indices], 1)
         linear_fit_results[id].loc[well, 'Initial_slope'] = slope
         linear_fit_results[id].loc[well, 'Initial_intercept'] = intercept
 
@@ -50,10 +66,10 @@ for id in ids:
             last_index = zero_indices[0]
         else:
             last_index = len(y) - 1
-        y = y[:last_index + 1]
+        y = y.iloc[:last_index + 1]
         x_norm = time[:last_index + 1] / time[last_index]
-        y_norm = (y[0] - y) / (y[0] - y[-1])
-        auc = np.trapz(y_norm, x_norm)
+        y_norm = (y.iloc[0] - y) / (y.iloc[0] - y.iloc[-1])
+        auc = np.trapezoid(y_norm, x_norm)
         nccc_stat[id].loc[well, 'AUC_norm_cons'] = auc
         nccc_stat[id].loc[well, 't_last'] = time[last_index]
 
@@ -348,25 +364,148 @@ for id in ids:
 # plt.savefig(f'plots/figure8_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 # plt.show()
 
-# Figure 9
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.set_title(r's vs $\Phi$ - colour = batch | marker = nominal $A_{add}$ | dashed = linear reference ($\Phi$ = 0.5)')
-ax.set_xlabel(r's (mM/hr)')
-ax.set_ylabel(r'$\Phi$ = Area under $\tilde{C}$')
-colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
-batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
-markers = ['o', 's', '^', 'D']
-A_add_list = [0.0, 0.7, 1.4, 2.0]
 
-for id, color, label in zip(ids, colors, batch_labels):
-    conc_df = data_to_plot[id]
-    s_df = - linear_fit_results[id]['Initial_slope']
-    phi_df = nccc_stat[id]['AUC_norm_cons']
-    for A_add, marker in zip(A_add_list, markers):
-        indices = conc_df[conc_df['Nitrate_input'] == A_add].index
-        s = s_df.loc[indices].astype(float)
-        phi = phi_df.loc[indices].astype(float)
-        ax.scatter(s, phi, color=color, marker=marker, alpha=0.5, s=50, label=label if A_add == 0.0 else None)
-ax.legend(ncols=2)
-ax.set_ylim([-0.1, 0.9])
-plt.show()
+# Figure 9
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.set_title(r's vs $\Phi$ - colour = batch | marker = nominal $A_{add}$ '
+#                 + '\n' + r'bootstrap 68% CI | dashed = linear reference ($\Phi$ = 0.5)')
+# ax.set_xlabel(r's (mM/hr)')
+# ax.set_ylabel(r'$\Phi$ = Area under $\tilde{C}$')
+# ax.set_xlim([0.0, 0.05])
+# ax.set_ylim([0.4, 0.8])
+# ax.axhline(y=0.5, color='black', linestyle='--', alpha=0.7)
+# colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
+# batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+# markers = ['o', 's', '^', 'D']
+# A_add_list = [0.0, 0.7, 1.4, 2.0]
+
+# for id, color, batch_label in zip(ids, colors, batch_labels):
+#     conc_df = data_to_plot[id]
+#     s_df = - linear_fit_results[id]['Initial_slope']
+#     phi_df = nccc_stat[id]['AUC_norm_cons']
+#     for A_add, marker in zip(A_add_list, markers):
+#         indices = conc_df[conc_df['Nitrate_input'] == A_add].index
+#         s = s_df.loc[indices].astype(float).values
+#         phi = phi_df.loc[indices].astype(float).values
+#         s_mean, s_lb, s_ub = mean_bootstrap_ci(s, n_bootstrap=1000, ci=68)
+#         phi_mean, phi_lb, phi_ub = mean_bootstrap_ci(phi, n_bootstrap=1000, ci=68)
+#         ax.errorbar(s_mean, phi_mean, xerr=[[s_mean - s_lb], [s_ub - s_mean]], yerr=[[phi_mean - phi_lb], [phi_ub - phi_mean]],
+#                     fmt=marker, color=color, alpha=0.8, markersize=6, label=batch_label if A_add == 0.0 else None)
+
+# first_legend = ax.legend(loc='upper left', fontsize=9, title='Batch', ncols=2)
+# ax.add_artist(first_legend)
+
+# marker_handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+#             for m, a in zip(markers, A_add_list)]
+# ax.legend(handles=marker_handles, loc='lower right', fontsize=9, title=r'Nominal $A_{add}$', ncol=2)
+# plt.savefig(f'plots/figure9_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# # Figure 9.1
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.set_title(r's vs $\Phi$ - colour = batch | marker = nominal $A_{add}$ | dashed = linear reference ($\Phi$ = 0.5)')
+# ax.set_xlabel(r's (mM/hr)')
+# ax.set_ylabel(r'$\Phi$ = Area under $\tilde{C}$')
+# ax.set_ylim([0.2, 1.0])
+# ax.axhline(y=0.5, color='black', linestyle='--', alpha=0.7)
+# colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
+# batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+# markers = ['o', 's', '^', 'D']
+# A_add_list = [0.0, 0.7, 1.4, 2.0]
+
+# for id, color, batch_label in zip(ids, colors, batch_labels):
+#     conc_df = data_to_plot[id]
+#     s_df = - linear_fit_results[id]['Initial_slope']
+#     phi_df = nccc_stat[id]['AUC_norm_cons']
+#     for A_add, marker in zip(A_add_list, markers):
+#         indices = conc_df[conc_df['Nitrate_input'] == A_add].index
+#         s = s_df.loc[indices].astype(float)
+#         phi = phi_df.loc[indices].astype(float)
+#         ax.scatter(s, phi, color=color, marker=marker, alpha=0.5, s=50, label=batch_label if A_add == 0.0 else None)
+
+# first_legend = ax.legend(loc='upper left', fontsize=9, title='Batch', ncols=2)
+# ax.add_artist(first_legend)
+
+# marker_handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+#             for m, a in zip(markers, A_add_list)]
+# ax.legend(handles=marker_handles, loc='lower right', fontsize=9, title=r'Nominal $A_{add}$', ncol=2)
+# plt.savefig(f'plots/figure9.1_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# # Figure 10
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.set_title(r's vs excess nitrate - batch 1-2 faded'
+#                 + '\n' + r'bootstrap 68% CI on both axes')
+# ax.set_xlabel(r'Excess nitrate $A(0) - A_{add}$ (mM)')
+# ax.set_ylabel(r's (mM/hr)')
+
+# colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
+# batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+# markers = ['o', 's', '^', 'D']
+# A_add_list = [0.0, 0.7, 1.4, 2.0]
+
+# for id, color, batch_label in zip(ids, colors, batch_labels):
+#     conc_df = data_to_plot[id]
+#     s_df = - linear_fit_results[id]['Initial_slope']
+#     excess_nitrate_df = conc_df.iloc[:, :-4].iloc[:, 0].astype(float) - conc_df['Nitrate_input'].astype(float)
+#     for A_add, marker in zip(A_add_list, markers):
+#         indices = conc_df[conc_df['Nitrate_input'] == A_add].index
+#         s = s_df.loc[indices].astype(float).values
+#         excess_nitrate = excess_nitrate_df.loc[indices].values
+#         s_mean, s_lb, s_ub = mean_bootstrap_ci(s, n_bootstrap=1000, ci=68)
+#         excess_mean, excess_lb, excess_ub = mean_bootstrap_ci(excess_nitrate, n_bootstrap=1000, ci=68)
+#         alpha = 0.2 if batch_label in ['Batch 1', 'Batch 2'] else 0.8
+#         ax.errorbar(excess_mean, s_mean, xerr=[[excess_mean - excess_lb], [excess_ub - excess_mean]], yerr=[[s_mean - s_lb], [s_ub - s_mean]],
+#                     fmt=marker, color=color, alpha=alpha, markersize=6, label=batch_label if A_add == 0.0 else None)
+# first_legend = ax.legend(loc='upper left', fontsize=9, title='Batch', ncols=2)
+# ax.add_artist(first_legend)
+
+# marker_handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+#             for m, a in zip(markers, A_add_list)]
+# ax.legend(handles=marker_handles, loc='lower right', fontsize=9, title=r'Nominal $A_{add}$', ncol=2)
+# plt.savefig(f'plots/figure10_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+# # Figure 11
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# ax.set_title(r'$\Phi$ vs excess nitrate - batch 1-2 faded'
+#                 + '\n' + r'bootstrap 68% CI on both axes | dashed = linear reference ($\Phi$ = 0.5)')
+# ax.set_xlabel(r'Excess nitrate $A(0) - A_{add}$ (mM)')
+# ax.set_ylabel(r'$\Phi$ = Area under $\tilde{C}$')
+# ax.axhline(y=0.5, color='gray', linestyle='--', alpha=0.7)
+# ax.set_ylim([0.4, 1.0])
+
+# for id, color, batch_label in zip(ids, batch_colors, batch_labels):
+#     conc_df = data_to_plot[id]
+#     phi_df = nccc_stat[id]['AUC_norm_cons']
+#     excess_nitrate_df = conc_df.iloc[:, :-4].iloc[:, 0].astype(float) - conc_df['Nitrate_input'].astype(float)
+#     for A_add, marker in zip(A_add_list, A_add_markers):
+#         indices = conc_df[conc_df['Nitrate_input'] == A_add].index
+#         phi = phi_df.loc[indices].astype(float).values
+#         excess_nitrate = excess_nitrate_df.loc[indices].values
+#         phi_mean, phi_lb, phi_ub = mean_bootstrap_ci(phi, n_bootstrap=1000, ci=68)
+#         excess_mean, excess_lb, excess_ub = mean_bootstrap_ci(excess_nitrate, n_bootstrap=1000, ci=68)
+#         alpha = 0.2 if batch_label in ['Batch 1', 'Batch 2'] else 0.8
+#         ax.errorbar(excess_mean, phi_mean, xerr=[[excess_mean - excess_lb], [excess_ub - excess_mean]], yerr=[[phi_mean - phi_lb], [phi_ub - phi_mean]],
+#                     fmt=marker, color=color, alpha=alpha, markersize=6, label=batch_label if A_add == 0.0 else None)
+# first_legend = ax.legend(loc='upper left', fontsize=9, title='Batch', ncols=2)
+# ax.add_artist(first_legend)
+# marker_handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6) 
+#             for m, a in zip(A_add_markers, A_add_list)]
+# ax.legend(handles=marker_handles, loc='lower right', fontsize=9, title=r'Nominal $A_{add}$', ncol=2)
+# plt.savefig(f'plots/figure11_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+# Figure 12
+fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+ax.set_title(r'$\delta$ from  $\Phi$ inversion - curves that nver hit zero only'
+                + '\n' + r'bootstrap 68% CI | diamond = batch median')
+ax.set_xlabel('Batch (drying time course)')
+ax.set_ylabel(r'$\delta$ ($hr^{-1}$)')
+
+delta = {}
+for i in range(6):
+    conc_df = data_to_plot[ids[i]]
+    
