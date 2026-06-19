@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 ext_fig1_df = pd.read_csv('concentrations/lee_etal_ext_fig1.csv')
 ext_fig1_chl_df = ext_fig1_df[ext_fig1_df['Chloramphenicol'] == 'CHL']
 
-fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 ax.set_ylabel(r'$\tilde{C}(t) = \frac{A(0) - A(t)}{A(0) - A(t_{last})}$')
 ax.set_xlabel(r'$\frac{t}{t_{last}}$')
 ax.set_xlim(0, 1)
