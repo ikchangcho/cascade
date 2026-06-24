@@ -42,4 +42,8 @@ for i in range(6):
     
     times = no3_conc_norm_df.columns.values
     for index in no3_conc_norm_df.index:
-        
+        no3_conc = no3_conc_norm_df.loc[index].values
+        no3_add = meta_df.loc[index, 'Nitrate_input']
+        ax.plot(times, no3_conc, linestyle='-', color=colors[add_conc.index(no3_add)], alpha = 0.3)
+
+plt.show()
