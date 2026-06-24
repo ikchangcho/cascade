@@ -23,8 +23,8 @@ for i in range(len(df_to_plot)):
     if time == 0 and i > 0:
         if no3_conc[-1] < no3_conc[0]:
             count += 1
-            no3_conc = no3_conc[:-3]
-            times = times[:-3]          # Exclude the last three time points
+            no3_conc = no3_conc[:-1]
+            times = times[:-1]          # Exclude the last time point
 
             no3_norm_cons = [(no3_conc[0] - no3) / (no3_conc[0] - no3_conc[-1]) for no3 in no3_conc]
             norm_time = [t / times[-1] for t in times]
@@ -35,7 +35,7 @@ for i in range(len(df_to_plot)):
     no3_conc.append(no3)
 print(f'Number of curves plotted: {count} out of {len(df_to_plot) // 10}')
 ax.set_title(r'Normalized Cumulative Consumption $\tilde{C}$'
-              + '\n' + 'Data: Lee et al. Ext. Fig. 1 | Truncated at 40 ~ 50 hours'
+              + '\n' + 'Data: Lee et al. Ext. Fig. 1 | Truncated at 70 hours'
               + '\n' + f'drug conditions | phase 2 (-50 ~ +10) | {count} curves')
 plt.savefig(f'plots/lee_etal_ext_fig1_chl_norm_cons_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300)
 plt.show()
