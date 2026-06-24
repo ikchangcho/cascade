@@ -2,7 +2,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Sample data
-y = [1, 0.5, 0.1, 0.04, 0.0]
-zero_indices = np.where(np.array(y) < 0.05)
-print(zero_indices[0])
+# Plot 1 / (1 - np.exp(-x)) - (1 / x)
+x = np.linspace(-10, 10, 1000)  # Avoid x=0
+y = 1 / (1 - np.exp(-x)) - (1 / x)
+
+fig, ax = plt.subplots()
+ax.plot(x, y)
+ax.set_xlabel('x')
+ax.set_ylabel('f(x)')
+ax.set_title('1 / (1 - exp(-x)) - 1 / x')
+ax.grid(True)
+plt.show()
