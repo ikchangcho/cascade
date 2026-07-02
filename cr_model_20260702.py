@@ -166,51 +166,51 @@ for id in ids:
 # plt.show()
 
 
-# Figure 3
-no3_or_no2 = 'no2'
-chl = 1
-data_to_plot = {}
-for id in ids:
-    df = data[id][no3_or_no2]
-    df = df[(df['Chloramphenicol'] == chl) & (df['Sample_type'] != 'Blank')]
-    data_to_plot[id] = df.iloc[:, :-4]
+# # Figure 3
+# no3_or_no2 = 'no2'
+# chl = 1
+# data_to_plot = {}
+# for id in ids:
+#     df = data[id][no3_or_no2]
+#     df = df[(df['Chloramphenicol'] == chl) & (df['Sample_type'] != 'Blank')]
+#     data_to_plot[id] = df.iloc[:, :-4]
 
-fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-fig.suptitle(r'Normalized cumulative nitrite consumption $\tilde{C}(t)$ - individual replicates'
-                 + '\n' + r'$t_{last}$ = first zero time point (or last measured if never zero) | diagonal = linear model')
-batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
-colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
-for i in range(6):
-    ax = axes[i // 3, i % 3]
-    df = data_to_plot[ids[i]]
-    time = df.columns.astype(float)
-    count = 0
-    for well in df.index:
-        y = df.loc[well].values.astype(float)
-        thrsh_init = 0.1
-        if y[-1] < thrsh_init:
-            continue
+# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+# fig.suptitle(r'Normalized cumulative nitrite consumption $\tilde{C}(t)$ - individual replicates'
+#                  + '\n' + r'$t_{last}$ = first zero time point (or last measured if never zero) | diagonal = linear model')
+# batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
+# colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
+# for i in range(6):
+#     ax = axes[i // 3, i % 3]
+#     df = data_to_plot[ids[i]]
+#     time = df.columns.astype(float)
+#     count = 0
+#     for well in df.index:
+#         y = df.loc[well].values.astype(float)
+#         thrsh_init = 0.1
+#         if y[-1] < thrsh_init:
+#             continue
     
-        last_index = len(y) - 1
+#         last_index = len(y) - 1
 
-        y = y[:last_index + 1]
-        y = (y[0] - y) / (y[0] - y[-1]) 
-        x = time[:last_index + 1] / time[last_index]
+#         y = y[:last_index + 1]
+#         y = (y[0] - y) / (y[0] - y[-1]) 
+#         x = time[:last_index + 1] / time[last_index]
         
-        ax.plot(x, y, color=colors[i], linestyle='-', alpha=0.5)
-        count += 1
-    ax.plot([0, 1], [0, 1], color='black', linestyle='--', alpha=1.0, label='Linear')
-    ax.set_title(batch_labels[i] + f' (n={count})', color=colors[i])
-    if i == 0:
-        ax.legend(loc='upper left')
-    if i  % 3 == 0:
-        ax.set_ylabel(r'$\tilde{C}(t) = \frac{A(0) - A(t)}{A(0) - A(t_{last})}$')
-    if i // 3 == 1:
-        ax.set_xlabel(r'$\frac{t}{t_{last}}$')
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-plt.savefig(f'plots/figure3_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
-plt.show()
+#         ax.plot(x, y, color=colors[i], linestyle='-', alpha=0.5)
+#         count += 1
+#     ax.plot([0, 1], [0, 1], color='black', linestyle='--', alpha=1.0, label='Linear')
+#     ax.set_title(batch_labels[i] + f' (n={count})', color=colors[i])
+#     if i == 0:
+#         ax.legend(loc='upper left')
+#     if i  % 3 == 0:
+#         ax.set_ylabel(r'$\tilde{C}(t) = \frac{A(0) - A(t)}{A(0) - A(t_{last})}$')
+#     if i // 3 == 1:
+#         ax.set_xlabel(r'$\frac{t}{t_{last}}$')
+#     ax.set_xlim(0, 1)
+#     ax.set_ylim(0, 1)
+# plt.savefig(f'plots/figure3_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
 
 
 # # Figure 4
@@ -620,32 +620,32 @@ plt.show()
 # plt.show()
 
 
-# # Figure 14
-# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-# ax.set_title(r's for batches | bootstrap 68% CI | diamond = batch median')
-# ax.set_xlabel('Batch (drying time course)')
-# ax.set_xticks(range(6))
-# ax.set_xticklabels(batch_labels)
-# ax.set_ylabel(r's (mM/hr)')
+# Figure 14
+fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+ax.set_title(r's for batches | bootstrap 68% CI | diamond = batch median')
+ax.set_xlabel('Batch (drying time course)')
+ax.set_xticks(range(6))
+ax.set_xticklabels(batch_labels)
+ax.set_ylabel(r's (mM/hr)')
 
-# for i in range(6):
-#     conc_df = data_to_plot[ids[i]]
-#     linear_fit_df = linear_fit_results[ids[i]]
-#     df = pd.concat([linear_fit_df['Initial_slope'], conc_df['Nitrate_input']], axis=1)
-#     median = np.median(-df['Initial_slope'].astype(float).values)
-#     ax.scatter(i, median, color='white', marker='D', s=100, edgecolors=batch_colors[i], linewidths=1.5, zorder=5, alpha=0.8)
-#     for A_add, marker in zip(A_add_list, A_add_markers):
-#         df_A = df[df['Nitrate_input'] == A_add]
-#         s = -df_A['Initial_slope'].astype(float).values
-#         s = s[~np.isnan(s)]
-#         if len(s) == 0:
-#             continue
-#         s_mean, s_lb, s_ub = mean_bootstrap_ci(s, n_bootstrap=1000, ci=68)
-#         x = i + (A_add - 1.0) * 0.1
-#         ax.errorbar(x, s_mean, yerr=[[s_mean - s_lb], [s_ub - s_mean]],
-#                     fmt=marker, color=batch_colors[i], alpha=0.8, markersize=6)
-# handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6)
-#             for m, a in zip(A_add_markers, A_add_list)]
-# ax.legend(handles=handles, loc='upper right', fontsize=9, title=r'Nominal $A_{add}$', ncols=2)
-# plt.savefig(f'plots/figure14_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
-# plt.show()
+for i in range(6):
+    conc_df = data_to_plot[ids[i]]
+    linear_fit_df = linear_fit_results[ids[i]]
+    df = pd.concat([linear_fit_df['Initial_slope'], conc_df['Nitrate_input']], axis=1)
+    median = np.median(-df['Initial_slope'].astype(float).values)
+    ax.scatter(i, median, color='white', marker='D', s=100, edgecolors=batch_colors[i], linewidths=1.5, zorder=5, alpha=0.8)
+    for A_add, marker in zip(A_add_list, A_add_markers):
+        df_A = df[df['Nitrate_input'] == A_add]
+        s = df_A['Initial_slope'].astype(float).values
+        s = s[~np.isnan(s)]
+        if len(s) == 0:
+            continue
+        s_mean, s_lb, s_ub = mean_bootstrap_ci(s, n_bootstrap=1000, ci=68)
+        x = i + (A_add - 1.0) * 0.1
+        ax.errorbar(x, s_mean, yerr=[[s_mean - s_lb], [s_ub - s_mean]],
+                    fmt=marker, color=batch_colors[i], alpha=0.8, markersize=6)
+handles = [plt.Line2D([0], [0], marker=m, color='black', label=f'$A_{{add}}$={a}', linestyle='None', markersize=6)
+            for m, a in zip(A_add_markers, A_add_list)]
+ax.legend(handles=handles, loc='upper right', fontsize=9, title=r'Nominal $A_{add}$', ncols=2)
+plt.savefig(f'plots/figure14_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.show()
