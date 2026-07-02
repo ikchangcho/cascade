@@ -34,7 +34,6 @@ for i in range(6):
     ax.set_title(batch_labels[i])
     ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
     ax.set_ylabel(r'$A(t) - A(0)$ (mM)') if i % 3 == 0 else None
-
     if i == 0:
         custom_lines = [Line2D([0], [0], color=colors[0]),
                         Line2D([0], [0], color=colors[1]),
