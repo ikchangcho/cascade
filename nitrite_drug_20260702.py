@@ -28,60 +28,32 @@ for id in ids:
 
 # Normalized cumulative consumption
 fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-fig.suptitle(r'Normalized cumulative consumption of nitrite $\Delta B \equiv \Delta I + \Delta A$ - individual replicates'
-                 + '\n' + r'$t_{last}$ = last measured time | diagonal = linear model')
+fig.suptitle(r'Normalized cumulative consumption of nitrite $\Delta B \equiv \Delta I + \Delta A$'
+                 + '\n' + r'individual replicates | $t_{last}$ = last measured time | diagonal = linear model')
 
 for i in range(6):
-    ax = axes[i // 3, i % 3]
-    ax.set_title(batch_labels[i])
-    ax.set_xlabel(r'$\frac{t}{t_{last}}$') if i // 3 == 1 else None
-    ax.set_ylabel(r'$\tilde{C}(t) = \frac{B(0) - B(t)}{B(0) - B(t_{last})}$') if i % 3 == 0 else None
-    if i == 0:
-        custom_lines = [Line2D([0], [0], color='black', linestyle='--')]
-        ax.legend(custom_lines, ['Linear'])
-
-
+    ax = axes[i // 3, i % 3]    
     id = ids[i]
     df = data_dict[id]['no2_cons'].loc[mask_chl_blank_dict[id]]
     time = df.columns.values.astype(float)
     count = 0
     for well in df.index:
-        y = df.loc[well].values.astype(float)
-        
-
-
-
-    df = data_dict[id]['no2_cons'].loc[mask_chl_blank_dict]
-    time = df.columns.astype(float)
-    count = 0
-    for well in df.index:
-        y = df.loc[well].values.astype(float)
-        thrsh_init = 0.3
-        if y[0] < thrsh_init:
+        B = df.loc[well].values.astype(float)
+        if B[-1] < 0.1:         # exclude wells that consumed less than 0.3 mM
             continue
+        y = B / B[-1]
+        x = time / time[-1]
         
-        thrsh_end = 0.05
-        zero_indices = np.where(y < thrsh_end)[0]
-        if len(zero_indices) > 0:
-            last_index = zero_indices[0]
-        else:
-            last_index = len(y) - 1
-
-        y = y[:last_index + 1]
-        y = (y[0] - y) / (y[0] - y[-1]) 
-        x = time[:last_index + 1] / time[last_index]
-        
-        ax.plot(x, y, color=colors[i], linestyle='-', alpha=0.5)
+        ax.plot(x, y, color=batch_colors[i], linestyle='-', alpha=0.5)
         count += 1
-    ax.plot([0, 1], [0, 1], color='black', linestyle='--', alpha=1.0, label='Linear')
-    ax.set_title(batch_labels[i] + f' (n={count})', color=colors[i])
-    if i == 0:
-        ax.legend(loc='upper left')
-    if i  % 3 == 0:
-        ax.set_ylabel(r'$\tilde{C}(t) = \frac{A(0) - A(t)}{A(0) - A(t_{last})}$')
-    if i // 3 == 1:
-        ax.set_xlabel(r'$\frac{t}{t_{last}}$')
+        ax.set_title(batch_labels[i] + f'(n={count})')
+    ax.set_xlabel(r'$\frac{t}{t_{last}}$') if i // 3 == 1 else None
+    ax.set_ylabel(r'$\tilde{C}(t) = \frac{B(0) - B(t)}{B(0) - B(t_{last})}$') if i % 3 == 0 else None
     ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-plt.savefig(f'plots/figure3_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+    ax.set_ylim(-0.1, 1.1)
+    ax.plot([0, 1], [0, 1], color='black', linestyle='--', alpha=1.0, label='Linear')
+    if i == 0:
+        ax.legend()
+
+plt.savefig(f'plots/nitrite_norm_cum_cons_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 plt.show()
