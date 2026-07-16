@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 
-df = pd.read_csv('absorbances/20260711_Ik_OD600_96F_chl_no_lid_avg.csv', skiprows=7, usecols=[0, 2], names=['Well', 'OD600'], index_col=0)
+df = pd.read_csv('absorbances/20260716_Ik_OD600_96F_bacteroidota_123_no_lid.csv', skiprows=8, usecols=[0, 2], names=['Well', 'OD600'], index_col=0)
 chl_1 = np.array([1.843 * 323.13 / (2 ** i) for i in range(8)] + [0])
 chl_2 = np.array([1.843 * 323.13 / (2 ** i) for i in range(8)] + [0])
 chl_3 = np.array([1.786 * 323.13 / (2 ** i) for i in range(8)] + [0])
