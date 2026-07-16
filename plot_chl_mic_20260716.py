@@ -34,7 +34,7 @@ strain_61 = df2.loc['G'].values - blank_mean_2
 strain_62 = df2.loc['H'].values - blank_mean_2
 
 fig, axes = plt.subplots(3, 2, figsize=(8, 8))
-fig.suptitle('Chloramphenicol MICs for Bacteroidota Isolates', fontsize=16)
+fig.suptitle('MIC Curves for Bacteroidota Isolates', fontsize=16)
 
 ax1 = axes[0, 0]
 ax1.plot(chl_1, strain_11, 'o-', color='blue', alpha=0.7)
@@ -71,8 +71,9 @@ ax6.plot(chl_6, strain_61, 'o-', color='blue', alpha=0.7)
 ax6.plot(chl_6, strain_62, 'o-', color='orange', alpha=0.7)
 ax6.set_title('Strain 6: Dyadobacter')
 
-for ax in axes.flatten():
-    ax.set_xlim(0, 50)
-
 plt.tight_layout()
-plt.savefig(f'bacteroidota_mic_close_up_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+
+plt.savefig(f'plots/bacteroidota_mic_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# for ax in axes.flatten():
+#     ax.set_xlim(0, 50)
+# plt.savefig(f'plots/bacteroidota_mic_close_up_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
