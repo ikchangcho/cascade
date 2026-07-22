@@ -2,8 +2,8 @@ from Bio import SeqIO
 import pandas as pd
 
 # 1. Set the name of your GenBank file
-gbk_file = "GL78RF_46_HMWF001_1_reference.gbk"
-output_csv = "Complete_Gene_List.csv"
+gbk_file = "GL78RF_45_HMWF035_1_reference.gbk"
+output_csv = "gene_list_HMWF035.csv"
 
 gene_data = []
 
