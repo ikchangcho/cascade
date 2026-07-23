@@ -42,17 +42,16 @@ no2_accum_std = {id: np.nanstd(no2_accum_dict[id]) for id in ids}
 no2_accum_size = {id: np.sum(~np.isnan(no2_accum_dict[id])) for id in ids}
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.set_title('Accumulated nitrite after nitrate depletion (CHL+) | diamond = median')
+ax.set_title('Accumulated nitrite after nitrate depletion (CHL+)')
 ax.set_xticks(range(6))
 xlabels = [f'{batch_label}' + '\n' + f'(n={no2_accum_size[id]})' for batch_label, id in zip(batch_labels, ids)]
 ax.set_xticklabels(xlabels)
 ax.set_ylabel('Accumulated nitrite (mM)')
 
 for i, id in enumerate(ids):
-    ax.scatter(i, no2_accum_median[id], color='white', edgecolor='black', s=100, zorder=3, marker='D', alpha=0.5)
+    # ax.scatter(i, no2_accum_median[id], color='white', edgecolor='black', s=100, zorder=3, marker='D', alpha=0.5)
     for no2_accum in no2_accum_dict[id]:
         if not np.isnan(no2_accum):
-
             ax.scatter(i, no2_accum, color=batch_colors[i], alpha=0.5)
 ax.axhline(0, color='black', linestyle='--', linewidth=1, zorder=2)
-plt.savefig('plots/accumulated_nitrite_after_nitrate_depletion_CHL+.png', dpi=300, bbox_inches='tight')
+plt.savefig(f'plots/accumulated_nitrite_after_nitrate_depletion_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')

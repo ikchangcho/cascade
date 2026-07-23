@@ -30,22 +30,31 @@ for id in ids:
 epsilon = 0.05
 for id in ids:
     data_dict[id]['metadata']['nitrate_depletion_index'] = np.nan
-    data_dict[id]['metadata']['nitrite_cons_slope_until_depletion_cons_slope_until_depletion'] = np.nan
-    for index in data_dict[id]['no3_conc'].loc[mask_chl_blank_dict[id]].index:
+    data_dict[id]['metadata']['nitrite_cons_slope_until_depletion'] = np.nan
+    mask = mask_chl_blank_dict[id]
+    for index in data_dict[id]['no3_conc'].loc[mask].index:
         no3_conc = data_dict[id]['no3_conc'].loc[index].values.astype(float)
         no2_conc = data_dict[id]['no2_conc'].loc[index].values.astype(float)
         
         first_index_below_epsilon = np.argmax(no3_conc < epsilon) if np.any(no3_conc < epsilon) else len(no3_conc)
         data_dict[id]['metadata'].loc[index, 'nitrate_depletion_index'] = first_index_below_epsilon
 
-        if first_index_below_epsilon > 2:
-            x = data_dict[id]['no2_cons'].columns[:first_index_below_epsilon].values.astype(float)
-            y = data_dict[id]['no2_cons'].loc[index].iloc[:first_index_below_epsilon].values.astype(float)
+# n = 10
+# for id in ids:
+#     smallest_positive_numbers = data_dict[id]['metadata']['nitrate_depletion_index']
+#     smallest_positive_numbers = smallest_positive_numbers[smallest_positive_numbers > 0].nsmallest(n)
+#     print(f"Smallest {n} positive numbers for {id}:")
+#     print(smallest_positive_numbers)
+
+        if first_index_below_epsilon > 4:
+            regression_length = min(5, first_index_below_epsilon)
+            x = data_dict[id]['no2_cons'].columns[:regression_length].values.astype(float)
+            y = data_dict[id]['no2_cons'].loc[index].iloc[:regression_length].values.astype(float)
             slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-            data_dict[id]['metadata'].loc[index, 'nitrite_cons_slope_until_depletion_cons_slope_until_depletion'] = slope
-            
+            data_dict[id]['metadata'].loc[index, 'nitrite_cons_slope_until_depletion'] = slope
+
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.set_title(r'Nitrite consumption rate until nitrate depletion (CHL+) | marker = $A_{add}$')
+ax.set_title('Nitrite consumption rate for first five time points (CHL+)' + '\n' + r'marker = $A_{add}$ | color = batch')
 ax.set_xticks(range(6))
 ax.set_xticklabels([f'{batch_label}' for batch_label in batch_labels])
 ax.set_ylabel('Nitrite consumption rate (mM/h)')
@@ -57,12 +66,12 @@ ax.add_artist(legend)
 for i, id in enumerate(ids):
     mask = mask_chl_blank_dict[id]
     for index in data_dict[id]['no3_conc'].loc[mask].index:
-        slope = data_dict[id]['metadata'].loc[index, 'nitrite_cons_slope_until_depletion_cons_slope_until_depletion']
+        slope = data_dict[id]['metadata'].loc[index, 'nitrite_cons_slope_until_depletion']
         if not np.isnan(slope):
             no3_add = data_dict[id]['metadata'].loc[index, 'Nitrate_input']
             marker = markers[add_conc.index(no3_add)]
             ax.scatter(i + 0.1 * (add_conc.index(no3_add) - 1.0), slope, color=batch_colors[i], marker=marker, alpha=0.5)
-plt.savefig(f'plots/nitrite_consumption_rate_until_nitrate_depletion_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.savefig(f'plots/nitrite_consumption_rate_first_five_time_points_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
             
 
 
