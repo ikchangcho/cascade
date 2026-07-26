@@ -38,6 +38,59 @@ for id in ids:
             data_dict[id]['no2_cons_rate'].loc[index, f'first_{n}_points'] = slope
 
 
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+fig.suptitle(r'Nitrite consumption rate for first n = 3 ,6, 9 time points (CHL+) vs $I_{add}$', fontsize=16)
+for i, id in enumerate(ids):
+    ax = axes[i // 3, i % 3]
+    ax.set_title(f'{batch_labels[i]}', fontsize=12)
+    ax.set_xlabel(r'$I_{add}$ (mM)' if i >= 3 else '', fontsize=12)
+    ax.set_xlim(-0.1, 2.1)
+    ax.set_ylabel('Nitrite consumption rate (mM/h)' if i % 3 == 0 else '', fontsize=12)
+    mask = mask_chl_blank_dict[id]
+    
+    for k, n in enumerate([3, 6, 9]):
+        marker = markers[k]
+        color = colors[k]
+        df_meta = data_dict[id]['metadata'].loc[mask]
+        df_slope = data_dict[id]['no2_cons_rate'].loc[mask, f'first_{n}_points']
+
+        slope_mean = []
+        slope_sem = []
+        for j, no2_add in enumerate(add_conc):
+            mask_no2 = df_meta['Nitrite_input'] == no2_add
+            slopes = df_slope.loc[mask_no2]
+            slope_mean.append(slopes.mean())
+            slope_sem.append(slopes.sem())
+        ax.errorbar(add_conc, slope_mean, yerr=slope_sem, fmt=marker, color=color, linestyle='-', alpha=0.5,
+                    label=f'n = {n}', capsize=5, markersize=8, elinewidth=1.5)    
+    ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+    ax.legend() if i == 0 else None
+plt.tight_layout()
+plt.savefig(f'plots/nitrite_consumption_rate_vs_I_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+
+# for n in [3, 6, 9]:
+#     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+#     ax.set_title(f'Nitrite consumption rate for first {n} time points (CHL+)' + '\n' + r'marker = $I_{add}$ | color = batch | diamond = batch median', fontsize=14)
+#     ax.set_xticks(range(6))
+#     ax.set_xticklabels([f'{batch_label}' for batch_label in batch_labels])
+#     ax.set_ylabel('Nitrite consumption rate (mM/h)')
+#     custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+#     legend = ax.legend(handles=custom_lines)
+#     ax.add_artist(legend)
+#     for i, id in enumerate(ids):
+#         mask = mask_chl_blank_dict[id]
+#         for index in data_dict[id]['no2_cons_rate'].loc[mask].index:
+#             slope = data_dict[id]['no2_cons_rate'].loc[index, f'first_{n}_points']
+#             no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
+#             marker = markers[add_conc.index(no2_add)]
+#             ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), slope, color=batch_colors[i], marker=marker, alpha=0.5)
+#             slope_median = data_dict[id]['no2_cons_rate'].loc[mask, f'first_{n}_points'].median()
+#             ax.scatter(i, slope_median, color='white', edgecolors='black', marker='D', s=100)
+#     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+#     plt.savefig(f'plots/nitrite_consumption_rate_first_{n}_time_points_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+#     plt.show()
 
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
 # fig.suptitle(r'Nitrite consumption rate for first n time points (CHL+) | grouped by $I_{add}$', fontsize=16)
@@ -57,9 +110,10 @@ for id in ids:
 #         ax.errorbar(x + (no2_add - 1.0) * 0.2, df_no2_add.mean(), yerr=df_no2_add.sem(), fmt=markers[j], color=colors[j], linestyle='-'
 #                     , label=r'$I_{add}$ =' f'{no2_add} mM', capsize=5, markersize=8, elinewidth=1.5)
 #     ax.legend() if i == 0 else None
+#     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
 
 # plt.tight_layout()
-# plt.savefig(f'plots/nitrite_consumption_rate_first_n_time_points_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.savefig(f'plots/nitrite_consumption_rate_first_n_time_points_CHL+_grouped_by_I_add_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 # plt.show()
 
 
@@ -81,6 +135,7 @@ for id in ids:
 #         ax.errorbar(x + (no3_add - 1.0) * 0.2, df_no3_add.mean(), yerr=df_no3_add.sem(), fmt=markers[j], color=colors[j], linestyle='-'
 #                     , label=r'$A_{add}$ =' f'{no3_add} mM', capsize=5, markersize=8, elinewidth=1.5)
 #     ax.legend() if i == 0 else None
+#     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
 
 # plt.tight_layout()
 # plt.savefig(f'plots/nitrite_consumption_rate_first_n_time_points_CHL+_grouped_by_A_add_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
