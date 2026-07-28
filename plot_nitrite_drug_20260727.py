@@ -4,8 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 from scipy.optimize import fsolve
+from scipy.optimize import curve_fit
 from matplotlib.lines import Line2D
-import warnings
+
+def linear_func(x, m):
+    return m * x
 
 ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
 batch_colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
@@ -29,47 +32,48 @@ for id in ids:
 
 for id in ids:
     data_dict[id]['no2_cons_rate'] = pd.DataFrame(index=data_dict[id]['no2_cons'].index)
+    
     mask = mask_chl_blank_dict[id]
     for index in data_dict[id]['no3_conc'].loc[mask].index:
         for n in range(2, len(data_dict[id]['no2_cons'].columns) + 1):
             x = data_dict[id]['no2_cons'].columns[:n].values.astype(float)
             y = data_dict[id]['no2_cons'].loc[index].iloc[:n].values.astype(float)
-            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+            slope, _ = curve_fit(linear_func, x, y)
             data_dict[id]['no2_cons_rate'].loc[index, f'first_{n}_points'] = slope
 
-# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-# fig.suptitle('Total nitrite consumption (CHL+) vs $I_{add}$', fontsize=16)
-# for i, id in enumerate(ids):
-#     ax = axes[i // 3, i % 3]
-#     ax.set_xlabel(r'$I_{add}$ (mM)' if i >= 3 else '', fontsize=12)
-#     ax.set_xticks(add_conc)
-#     ax.set_xlim(-0.1, 2.1)
-#     ax.set_ylabel('Total nitrite consumption (mM)' if i % 3 == 0 else '', fontsize=12)
-#     mask = mask_chl_blank_dict[id]
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+fig.suptitle('Total nitrite consumption (CHL+) vs $I_{add}$ | diamond = mean', fontsize=16)
+for i, id in enumerate(ids):
+    ax = axes[i // 3, i % 3]
+    ax.set_xlabel(r'$I_{add}$ (mM)' if i >= 3 else '', fontsize=12)
+    ax.set_xticks(add_conc)
+    ax.set_xlim(-0.1, 2.1)
+    ax.set_ylabel('Total nitrite consumption (mM)' if i % 3 == 0 else '', fontsize=12)
+    ax.set_ylim(-0.2, 1.2)
+    mask = mask_chl_blank_dict[id]
     
-#     total_no2_consumption = data_dict[id]['no2_cons'].loc[mask].iloc[:, -1]
-#     df_meta = data_dict[id]['metadata'].loc[mask]
+    total_no2_consumption = data_dict[id]['no2_cons'].loc[mask].iloc[:, -1]
+    df_meta = data_dict[id]['metadata'].loc[mask]
     
-#     mean_consumption = []
-#     sem_consumption = []
-#     for no2_add in add_conc:
-#         mask_no2 = df_meta['Nitrite_input'] == no2_add
-#         consumption = total_no2_consumption.loc[mask_no2]
-#         mean_consumption.append(consumption.mean())
-#         sem_consumption.append(consumption.sem())
-#     ax.errorbar(add_conc, mean_consumption, yerr=sem_consumption, fmt='o', color=batch_colors[i], alpha=0.7,
-#                 capsize=5, markersize=8, elinewidth=1.5)
-#     for no2_add in add_conc:
-#         mask_no2 = df_meta['Nitrite_input'] == no2_add
-#         consumption = total_no2_consumption.loc[mask_no2]
-#         ax.scatter([no2_add] * len(consumption), consumption, color=batch_colors[i], alpha=0.2, s=50, label=f'$I_{{add}}$ = {no2_add} mM' if i == 0 else "")
+    median_consumption = []
+    for no2_add in add_conc:
+        mask_no2 = df_meta['Nitrite_input'] == no2_add
+        consumption = total_no2_consumption.loc[mask_no2]
+        median_consumption.append(consumption.median())
+    ax.scatter(add_conc, median_consumption, marker='D', color='white', edgecolor=batch_colors[i],
+               linewidths=1.5, alpha=0.7, s=100, zorder=3)
+    
+    for no2_add in add_conc:
+        mask_no2 = df_meta['Nitrite_input'] == no2_add
+        consumption = total_no2_consumption.loc[mask_no2]
+        ax.scatter([no2_add] * len(consumption), consumption, color=batch_colors[i], alpha=0.5, s=50, label=f'$I_{{add}}$ = {no2_add} mM' if i == 0 else "")
 
-#         batch_median = total_no2_consumption.median()
-#         ax.set_title(f'{batch_labels[i]} (Median: {batch_median:.2f} mM)', fontsize=12)
+        batch_median = total_no2_consumption.median()
+        ax.set_title(f'{batch_labels[i]} (Median: {batch_median:.2f} mM)', fontsize=12)
 
-# plt.tight_layout()
-# plt.savefig(f'plots/total_nitrite_consumption_vs_I_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
-# plt.show()
+plt.tight_layout()
+plt.savefig(f'plots/total_nitrite_consumption_vs_I_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.show()
 
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
 # fig.suptitle('Total nitrite consumption (CHL+) vs $A_{add}$', fontsize=16)
@@ -106,16 +110,17 @@ for id in ids:
 # plt.show()
 
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-# fig.suptitle(r'Nitrite consumption rate for first n = 3 ,6, 9 time points (CHL+) vs $I_{add}$', fontsize=16)
+# fig.suptitle(r'Nitrite consumption rate for first n = 6, 9, 11 time points (CHL+) vs $I_{add}$', fontsize=16)
 # for i, id in enumerate(ids):
 #     ax = axes[i // 3, i % 3]
 #     ax.set_title(f'{batch_labels[i]}', fontsize=12)
 #     ax.set_xlabel(r'$I_{add}$ (mM)' if i >= 3 else '', fontsize=12)
 #     ax.set_xlim(-0.1, 2.1)
 #     ax.set_ylabel('Nitrite consumption rate (mM/h)' if i % 3 == 0 else '', fontsize=12)
+#     ax.set_xticks(add_conc)
 #     mask = mask_chl_blank_dict[id]
     
-#     for k, n in enumerate([3, 6, 9]):
+#     for k, n in enumerate([6, 9, 11]):
 #         marker = markers[k]
 #         color = colors[k]
 #         df_meta = data_dict[id]['metadata'].loc[mask]
@@ -133,11 +138,11 @@ for id in ids:
 #     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
 #     ax.legend() if i == 0 else None
 # plt.tight_layout()
-# plt.savefig(f'plots/nitrite_consumption_rate_vs_I_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.savefig(f'plots/4.2.chl1_no2_cons_rate_vs_I_add_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 # plt.show()
 
 
-# for n in [3, 6, 9]:
+# for n in [3, 6, 9, 11]:
 #     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 #     ax.set_title(f'Nitrite consumption rate for first {n} time points (CHL+)' + '\n' + r'marker = $I_{add}$ | color = batch | diamond = batch median', fontsize=14)
 #     ax.set_xticks(range(6))
@@ -156,7 +161,7 @@ for id in ids:
 #             slope_median = data_dict[id]['no2_cons_rate'].loc[mask, f'first_{n}_points'].median()
 #             ax.scatter(i, slope_median, color='white', edgecolors='black', marker='D', s=100)
 #     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-#     plt.savefig(f'plots/nitrite_consumption_rate_first_{n}_time_points_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+#     plt.savefig(f'plots/4.2.chl1_no2_cons_rate_first_{n}_time_points_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 #     plt.show()
 
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
