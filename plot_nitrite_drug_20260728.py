@@ -4,8 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 from scipy.optimize import fsolve
+from scipy.optimize import curve_fit
 from matplotlib.lines import Line2D
-import warnings
+
+def linear_func(x, m):
+    return m * x
 
 ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
 batch_colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
@@ -38,7 +41,7 @@ row_labels = [
 ]
 
 
-for n in [3, 6, 9]:
+for n in [3, 6, 9, 11]:
     # Create the figure and subplots
     fig, axes = plt.subplots(7, 6, figsize=(18, 21))
     fig.text(0.5, 0.95, f'Linear Regression of Nitrite Consumption on Selected Conditions (First {n} Time Points)', ha='center', fontsize=20)
@@ -76,14 +79,15 @@ for n in [3, 6, 9]:
                     time, time_series.values,
                     marker=marker, color=color, alpha=0.5)
                 
-                # Perform linear regression for the first n time points
-                slope, intercept, r_value, p_value, std_err = stats.linregress(time[:n], time_series.values[:n])
-                regression_line = slope * time + intercept
-                ax.plot(
-                    time, regression_line,
-                    color=color, linestyle='--', alpha=0.8)
+                # Perform linear regression for the first n time points, fix the intercept at 0
+                x = time[:n]
+                y = time_series.values[:n]
+                slope, _ = curve_fit(linear_func, x, y)
+                ax.plot(time, linear_func(time, slope[0]), color=color, linewidth=1.0, alpha=0.7)
+                
 
             ax.set_ylabel(r'$- \Delta I - \Delta A$ (mM)', fontsize=12) if col_idx == 0 else None
             ax.set_xlabel('Time (h)', fontsize=12) if row_idx == 6 else None
 
     plt.savefig(f'plots/4.2.chl1_no2_cons_linear_regression_{n}_time_points_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300)
+    plt.show()
