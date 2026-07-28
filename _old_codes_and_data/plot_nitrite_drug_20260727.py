@@ -71,39 +71,39 @@ for id in ids:
 # plt.savefig(f'plots/total_nitrite_consumption_vs_I_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 # plt.show()
 
-fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-fig.suptitle('Total nitrite consumption (CHL+) vs $A_{add}$', fontsize=16)
-for i, id in enumerate(ids):
-    ax = axes[i // 3, i % 3]
-    ax.set_xlabel(r'$A_{add}$ (mM)' if i >= 3 else '', fontsize=12)
-    ax.set_xticks(add_conc)
-    ax.set_xlim(-0.1, 2.1)
-    ax.set_ylabel('Total nitrite consumption (mM)' if i % 3 == 0 else '', fontsize=12)
-    mask = mask_chl_blank_dict[id]
+# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+# fig.suptitle('Total nitrite consumption (CHL+) vs $A_{add}$', fontsize=16)
+# for i, id in enumerate(ids):
+#     ax = axes[i // 3, i % 3]
+#     ax.set_xlabel(r'$A_{add}$ (mM)' if i >= 3 else '', fontsize=12)
+#     ax.set_xticks(add_conc)
+#     ax.set_xlim(-0.1, 2.1)
+#     ax.set_ylabel('Total nitrite consumption (mM)' if i % 3 == 0 else '', fontsize=12)
+#     mask = mask_chl_blank_dict[id]
     
-    total_no2_consumption = data_dict[id]['no2_cons'].loc[mask].iloc[:, -1]
-    df_meta = data_dict[id]['metadata'].loc[mask]
+#     total_no2_consumption = data_dict[id]['no2_cons'].loc[mask].iloc[:, -1]
+#     df_meta = data_dict[id]['metadata'].loc[mask]
     
-    mean_consumption = []
-    sem_consumption = []
-    for no3_add in add_conc:
-        mask_no3 = df_meta['Nitrate_input'] == no3_add
-        consumption = total_no2_consumption.loc[mask_no3]
-        mean_consumption.append(consumption.mean())
-        sem_consumption.append(consumption.sem())
-    ax.errorbar(add_conc, mean_consumption, yerr=sem_consumption, fmt='o', color=batch_colors[i], alpha=0.7,
-                capsize=5, markersize=8, elinewidth=1.5)
-    for no3_add in add_conc:
-        mask_no3 = df_meta['Nitrate_input'] == no3_add
-        consumption = total_no2_consumption.loc[mask_no3]
-        ax.scatter([no3_add] * len(consumption), consumption, color=batch_colors[i], alpha=0.2, s=50, label=f'$A_{{add}}$ = {no3_add} mM' if i == 0 else "")
+#     mean_consumption = []
+#     sem_consumption = []
+#     for no3_add in add_conc:
+#         mask_no3 = df_meta['Nitrate_input'] == no3_add
+#         consumption = total_no2_consumption.loc[mask_no3]
+#         mean_consumption.append(consumption.mean())
+#         sem_consumption.append(consumption.sem())
+#     ax.errorbar(add_conc, mean_consumption, yerr=sem_consumption, fmt='o', color=batch_colors[i], alpha=0.7,
+#                 capsize=5, markersize=8, elinewidth=1.5)
+#     for no3_add in add_conc:
+#         mask_no3 = df_meta['Nitrate_input'] == no3_add
+#         consumption = total_no2_consumption.loc[mask_no3]
+#         ax.scatter([no3_add] * len(consumption), consumption, color=batch_colors[i], alpha=0.2, s=50, label=f'$A_{{add}}$ = {no3_add} mM' if i == 0 else "")
 
-        batch_median = total_no2_consumption.median()
-        ax.set_title(f'{batch_labels[i]} (Median: {batch_median:.2f} mM)', fontsize=12)
+#         batch_median = total_no2_consumption.median()
+#         ax.set_title(f'{batch_labels[i]} (Median: {batch_median:.2f} mM)', fontsize=12)
 
-plt.tight_layout()
-plt.savefig(f'plots/total_nitrite_consumption_vs_A_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
-plt.show()
+# plt.tight_layout()
+# plt.savefig(f'plots/total_nitrite_consumption_vs_A_add_CHL+_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# plt.show()
 
 # fig, axes = plt.subplots(2, 3, figsize=(15, 10))
 # fig.suptitle(r'Nitrite consumption rate for first n = 3 ,6, 9 time points (CHL+) vs $I_{add}$', fontsize=16)

@@ -59,9 +59,35 @@ for id in ids:
 # plt.show()
 
 
-# Nitrite consumption
+# # Nitrite consumption
+# fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+# fig.suptitle(r'Nitrite cumulative consumption, drug conditions | colour = nominal $A_{add}$', fontsize=16)
+# for i in range(6):
+#     ax = axes[i // 3, i % 3]
+#     ax.set_title(batch_labels[i])
+#     ax.set_xlabel('Time (hr)') if i // 3 == 1 else None
+#     ax.set_ylabel(r'$A(0) - A(t) + I(0) - I(t)$ (mM)') if i % 3 == 0 else None
+#     if i == 0:
+#         custom_lines = [Line2D([0], [0], color=colors[0]),
+#                         Line2D([0], [0], color=colors[1]),
+#                         Line2D([0], [0], color=colors[2]),
+#                         Line2D([0], [0], color=colors[3])]
+#         ax.legend(custom_lines, ['0.0 mM', '0.7 mM', '1.4 mM', '2.0 mM'], title=r'Nominal $A_{add}$')
+
+#     id = ids[i]
+#     df = data_dict[id]['no2_cons'].loc[mask_chl_blank_dict[id]]
+#     meta_df = data_dict[id]['metadata'].loc[mask_chl_blank_dict[id]]
+#     times = df.columns.values.astype(float)
+#     for index in df.index:
+#         no2_cons = df.loc[index].values.astype(float)
+#         no3_add = meta_df.loc[index, 'Nitrate_input']
+#         ax.plot(times, no2_cons, linestyle='-', color=colors[add_conc.index(no3_add)], alpha = 0.3)
+# plt.savefig(f'plots/4.2.chl1_B(t)-B(0)_color_A_add_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300)
+# plt.show()
+
+# Nitrite consumption colored by I_add
 fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-fig.suptitle(r'Nitrite cumulative consumption, drug conditions | colour = nominal $A_{add}$', fontsize=16)
+fig.suptitle(r'Nitrite cumulative consumption, drug conditions | colour = nominal $I_{add}$', fontsize=16)
 for i in range(6):
     ax = axes[i // 3, i % 3]
     ax.set_title(batch_labels[i])
@@ -72,7 +98,7 @@ for i in range(6):
                         Line2D([0], [0], color=colors[1]),
                         Line2D([0], [0], color=colors[2]),
                         Line2D([0], [0], color=colors[3])]
-        ax.legend(custom_lines, ['0.0 mM', '0.7 mM', '1.4 mM', '2.0 mM'], title=r'Nominal $A_{add}$')
+        ax.legend(custom_lines, ['0.0 mM', '0.7 mM', '1.4 mM', '2.0 mM'], title=r'Nominal $I_{add}$')
 
     id = ids[i]
     df = data_dict[id]['no2_cons'].loc[mask_chl_blank_dict[id]]
@@ -80,7 +106,7 @@ for i in range(6):
     times = df.columns.values.astype(float)
     for index in df.index:
         no2_cons = df.loc[index].values.astype(float)
-        no3_add = meta_df.loc[index, 'Nitrate_input']
-        ax.plot(times, no2_cons, linestyle='-', color=colors[add_conc.index(no3_add)], alpha = 0.3)
-plt.savefig(f'plots/4.2.chl1_B(t)-B(0)_color_A_add_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300)
+        no2_add = meta_df.loc[index, 'Nitrite_input']
+        ax.plot(times, no2_cons, linestyle='-', color=colors[add_conc.index(no2_add)], alpha=0.3)
+plt.savefig(f'plots/4.2.chl1_B(t)-B(0)_color_I_add_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300)
 plt.show()
