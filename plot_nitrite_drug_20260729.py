@@ -76,27 +76,57 @@ for id in ids:
             auc = np.trapezoid(no2_cons[:m], time[:m])
             norm_auc = auc / (time[m - 1] - time[0]) if m > 1 else 0
             data_dict[id]['no2_cons_norm_auc'].loc[index, f'first{m}'] = norm_auc
-
+            count_dict[id][f'no2_cons_norm_auc_first{m}'] = np.sum(~np.isnan(data_dict[id]['no2_cons_norm_auc'][f'first{m}']))
+    
+    data_dict[id]['no2_after_no3_depletion'] = pd.DataFrame(index=df.index)
+    for index in df.index:
+        no3_conc = data_dict[id]['no3_conc'].loc[index].values.astype(float)
+        no2_conc = data_dict[id]['no2_conc'].loc[index].values.astype(float)
+        first_below_epsilon = np.argmax(no3_conc < 0.05) if np.any(no3_conc < 0.05) else -1
+        data_dict[id]['no2_after_no3_depletion'].loc[index, 'time_point_no3_deplete'] = first_below_epsilon
+        no2_accum = no2_conc[-1] - no2_conc[first_below_epsilon] if first_below_epsilon != -1 else np.nan
+        data_dict[id]['no2_after_no3_depletion'].loc[index, 'no2_accum'] = no2_accum
+        count_dict[id]['no2_after_no3_depletion'] = np.sum(~np.isnan(data_dict[id]['no2_after_no3_depletion']['no2_accum']))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 for i, id in enumerate(ids):
-    df = data_dict[id]['no2_cons_norm_auc']
+    df = data_dict[id]['no2_after_no3_depletion']
     for index in df.index:
-        y = df.loc[index, 'first11']
+        y = df.loc[index, 'no2_accum']
         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
         marker = markers[add_conc.index(no2_add)]
         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
-        y_med = df['first11'].median()
+        y_med = df['no2_accum'].median()
         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.5)
 ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-ax.set_title(f'Nitrite consumption normalized AUC (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+ax.set_title(f'Accumulated nitrite after nitrate depletion (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
 ax.set_xticks(range(6))
-ax.set_xticklabels([f'{batch_label}' for batch_label in batch_labels])
-ax.set_ylabel(f'Normalized AUC (mM)')
+ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id][f'no2_after_no3_depletion'] for id in ids])])
+ax.set_ylabel(f'Accumulated nitrite (mM)')
 custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
 legend = ax.legend(handles=custom_lines)
 ax.add_artist(legend)
-plt.savefig(f'plots/4.2.chl1_no2_cons_norm_auc_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.savefig(f'plots/4.2.chl1_no2_accum_after_no3_depletion_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# for i, id in enumerate(ids):
+#     df = data_dict[id]['no2_cons_norm_auc']
+#     for index in df.index:
+#         y = df.loc[index, 'first11']
+#         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
+#         marker = markers[add_conc.index(no2_add)]
+#         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
+#         y_med = df['first11'].median()
+#         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.5)
+# ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+# ax.set_title(f'Nitrite consumption normalized AUC (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+# ax.set_xticks(range(6))
+# ax.set_xticklabels([f'{batch_label}' for batch_label in batch_labels])
+# ax.set_ylabel(f'Normalized AUC (mM)')
+# custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+# legend = ax.legend(handles=custom_lines)
+# ax.add_artist(legend)
+# plt.savefig(f'plots/4.2.chl1_no2_cons_norm_auc_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
             
 
 
