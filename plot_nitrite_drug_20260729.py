@@ -67,94 +67,125 @@ for id in ids:
             rmse = np.sqrt(np.mean((y_last - (slope_last * x_last + intercept_last))**2))
             data_dict[id][f'no2_cons_rate_last{n}'].loc[index, 'rmse'] = rmse
             count_dict[id][f'no2_cons_rate_last{n}'] = np.sum(~np.isnan(data_dict[id][f'no2_cons_rate_last{n}']['slope']))
+    
+    data_dict[id]['no2_cons_norm_auc'] = pd.DataFrame(index=df.index)
+    for index in df.index:
+        no2_cons = data_dict[id]['no2_cons'].loc[index].values
+        time = data_dict[id]['no2_cons'].columns.values.astype(float)
+        for m in range(2, len(no2_cons) + 1):
+            auc = np.trapezoid(no2_cons[:m], time[:m])
+            norm_auc = auc / (time[m - 1] - time[0]) if m > 1 else 0
+            data_dict[id]['no2_cons_norm_auc'].loc[index, f'first{m}'] = norm_auc
 
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 for i, id in enumerate(ids):
-    mask = mask_chl_blank_dict[id]
-    df = data_dict[id]['no2_cons'].loc[mask]
+    df = data_dict[id]['no2_cons_norm_auc']
     for index in df.index:
-        y = df.loc[index].iloc[-1]
+        y = df.loc[index, 'first11']
         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
         marker = markers[add_conc.index(no2_add)]
         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
-        y_med = df.iloc[:, -1].median()
-        ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.7)
+        y_med = df['first11'].median()
+        ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.5)
 ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-ax.set_title(f'Nitrite total consumption (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+ax.set_title(f'Nitrite consumption normalized AUC (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
 ax.set_xticks(range(6))
 ax.set_xticklabels([f'{batch_label}' for batch_label in batch_labels])
-ax.set_ylabel(f'Total consumption (mM)')
+ax.set_ylabel(f'Normalized AUC (mM)')
 custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
 legend = ax.legend(handles=custom_lines)
 ax.add_artist(legend)
-plt.savefig(f'plots/4.2.chl1_no2_cons_total_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+plt.savefig(f'plots/4.2.chl1_no2_cons_norm_auc_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+            
 
 
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-for i, id in enumerate(ids):
-    mask = mask_chl_blank_dict[id]
-    df = data_dict[id][f'no2_cons_rate_first{n}'].loc[mask, 'slope']
-    for index in df.index:
-        y = df.loc[index]
-        no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
-        marker = markers[add_conc.index(no2_add)]
-        ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
-        y_med = df.median()
-        ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.7)
-ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-ax.set_title(f'Nitrite consumption rate for the first {n} time points (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
-ax.set_xticks(range(6))
-ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id][f'no2_cons_rate_first{n}'] for id in ids])])
-ax.set_ylabel(f'Consumption rate (mM/h)')
-custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
-legend = ax.legend(handles=custom_lines)
-ax.add_artist(legend)
-plt.savefig(f'plots/4.2.chl1_no2_cons_rate_first{n}_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# for i, id in enumerate(ids):
+#     mask = mask_chl_blank_dict[id]
+#     df = data_dict[id]['no2_cons'].loc[mask]
+#     for index in df.index:
+#         y = df.loc[index].iloc[-1]
+#         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
+#         marker = markers[add_conc.index(no2_add)]
+#         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
+#         y_med = df.iloc[:, -1].median()
+#         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.7)
+# ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+# ax.set_title(f'Nitrite total consumption (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+# ax.set_xticks(range(6))
+# ax.set_xticklabels([f'{batch_label}' for batch_label in batch_labels])
+# ax.set_ylabel(f'Total consumption (mM)')
+# custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+# legend = ax.legend(handles=custom_lines)
+# ax.add_artist(legend)
+# plt.savefig(f'plots/4.2.chl1_no2_cons_total_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 
 
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-for i, id in enumerate(ids):
-    mask = mask_chl_blank_dict[id]
-    df = data_dict[id][f'no2_cons_rate_last{n}'].loc[mask, 'slope']
-    for index in df.index:
-        y = df.loc[index]
-        no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
-        marker = markers[add_conc.index(no2_add)]
-        ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
-        y_med = df.median()
-        ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha=0.7)
-ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-ax.set_title(f'Nitrite consumption rate for the last {n} time points (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
-ax.set_xticks(range(6))
-ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id][f'no2_cons_rate_last{n}'] for id in ids])])
-ax.set_ylabel(f'Consumption rate (mM/h)')
-custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
-legend = ax.legend(handles=custom_lines)
-ax.add_artist(legend)
-plt.savefig(f'plots/4.2.chl1_no2_cons_rate_last{n}_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# for i, id in enumerate(ids):
+#     mask = mask_chl_blank_dict[id]
+#     df = data_dict[id][f'no2_cons_rate_first{n}'].loc[mask, 'slope']
+#     for index in df.index:
+#         y = df.loc[index]
+#         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
+#         marker = markers[add_conc.index(no2_add)]
+#         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
+#         y_med = df.median()
+#         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha = 0.7)
+# ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+# ax.set_title(f'Nitrite consumption rate for the first {n} time points (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+# ax.set_xticks(range(6))
+# ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id][f'no2_cons_rate_first{n}'] for id in ids])])
+# ax.set_ylabel(f'Consumption rate (mM/h)')
+# custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+# legend = ax.legend(handles=custom_lines)
+# ax.add_artist(legend)
+# plt.savefig(f'plots/4.2.chl1_no2_cons_rate_first{n}_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 
 
-fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-for i, id in enumerate(ids):
-    mask = mask_chl_blank_dict[id]
-    df = data_dict[id]['no2_cons_rate'].loc[mask, 'slope']
-    for index in df.index:
-        y = df.loc[index]
-        no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
-        marker = markers[add_conc.index(no2_add)]
-        ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
-        y_med = df.median()
-        ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha=0.7)
-ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-ax.set_title('Nitrite consumption rate for the whole time series (CHL+)\ncolour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
-ax.set_xticks(range(6))
-ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id]['no2_cons_rate'] for id in ids])])
-ax.set_ylabel('Consumption rate (mM/h)')
-custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
-legend = ax.legend(handles=custom_lines)
-ax.add_artist(legend)
-plt.savefig(f'plots/4.2.chl1_no2_cons_rate_whole_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# for i, id in enumerate(ids):
+#     mask = mask_chl_blank_dict[id]
+#     df = data_dict[id][f'no2_cons_rate_last{n}'].loc[mask, 'slope']
+#     for index in df.index:
+#         y = df.loc[index]
+#         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
+#         marker = markers[add_conc.index(no2_add)]
+#         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
+#         y_med = df.median()
+#         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha=0.7)
+# ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+# ax.set_title(f'Nitrite consumption rate for the last {n} time points (CHL+)' + '\n' + r'colour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+# ax.set_xticks(range(6))
+# ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id][f'no2_cons_rate_last{n}'] for id in ids])])
+# ax.set_ylabel(f'Consumption rate (mM/h)')
+# custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+# legend = ax.legend(handles=custom_lines)
+# ax.add_artist(legend)
+# plt.savefig(f'plots/4.2.chl1_no2_cons_rate_last{n}_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
+
+
+# fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+# for i, id in enumerate(ids):
+#     mask = mask_chl_blank_dict[id]
+#     df = data_dict[id]['no2_cons_rate'].loc[mask, 'slope']
+#     for index in df.index:
+#         y = df.loc[index]
+#         no2_add = data_dict[id]['metadata'].loc[index, 'Nitrite_input']
+#         marker = markers[add_conc.index(no2_add)]
+#         ax.scatter(i + 0.1 * (add_conc.index(no2_add) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
+#         y_med = df.median()
+#         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha=0.7)
+# ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+# ax.set_title('Nitrite consumption rate for the whole time series (CHL+)\ncolour = batch | marker = $I_{add}$ | diamond = batch median', fontsize=14)
+# ax.set_xticks(range(6))
+# ax.set_xticklabels([f'{batch_label}\n(N={batch_count})' for (batch_label, batch_count) in zip(batch_labels, [count_dict[id]['no2_cons_rate'] for id in ids])])
+# ax.set_ylabel('Consumption rate (mM/h)')
+# custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'$I_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+# legend = ax.legend(handles=custom_lines)
+# ax.add_artist(legend)
+# plt.savefig(f'plots/4.2.chl1_no2_cons_rate_whole_{datetime.datetime.now().strftime("%Y%m%d")}.png', dpi=300, bbox_inches='tight')
 
 
 # fig, ax = plt.subplots(1, 1, figsize=(8, 6))
