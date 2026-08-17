@@ -7,6 +7,25 @@ from scipy.optimize import fsolve
 from scipy.optimize import curve_fit
 from matplotlib.lines import Line2D
 
+def depletion_time_point(conc, tol=0.02):
+    n = len(conc)
+    for i in range(n):
+        if conc[i] < tol:
+            return i
+    return n
+
+def full_consumption_time(time, cons, k, total):
+    """Time at which `cons` reaches its plateau (i.e. the analyte is fully
+    consumed), estimated by linearly extrapolating the line through the two
+    timepoints immediately before index `k` (the depletion time point), out
+    to `cons[k]`."""
+    if k < 2:
+        return time[k]
+    t0, y0 = time[k - 2], cons[k - 2]
+    t1, y1 = time[k - 1], cons[k - 1]
+    target = cons[k] if k < len(cons) else total
+    return t0 + (target - y0) / (y1 - y0) * (t1 - t0)
+
 def exceeds_time(time, cons, threshold):
     """Time at which `cons` first exceeds `threshold`, linearly interpolated
     between the bracketing timepoints. Returns NaN if `cons` never exceeds
@@ -17,36 +36,6 @@ def exceeds_time(time, cons, threshold):
             t0, t1 = time[i], time[i + 1]
             return t0 + (threshold - y0) / (y1 - y0) * (t1 - t0)
     return 0.0
-
-def depletion_time_point(conc, tol):
-    n = len(conc)
-    for i in range(n):
-        if conc[i] < tol:
-            return i
-    return n
-
-def plateau_start(cons, tol):
-    """First index i such that every later value in `cons` stays within
-    `tol` of `cons[i]` -- i.e. the earliest point after which nothing but
-    noise happens. Falls back to the last index if `cons` never settles."""
-    n = len(cons)
-    for i in range(n):
-        if np.max(np.abs(cons[i:] - cons[i])) <= tol:
-            return i
-    return n - 1
-
-
-PLATEAU_TOL = 0.02
-
-
-def full_consumption_time(time, cons, tol=PLATEAU_TOL):
-    k = plateau_start(cons, tol)
-    if k < 2:
-        return time[k]
-    t0, y0 = time[k - 2], cons[k - 2]
-    t1, y1 = time[k - 1], cons[k - 1]
-    target = cons[k]
-    return t0 + (target - y0) / (y1 - y0) * (t1 - t0)
 
 
 def rate_zero_intercept(t, y):
@@ -65,14 +54,12 @@ def rate_free_intercept(t, y):
     return slope if slope >= 0 else np.nan
 
 
-def pre_plateau_rates(time, cons, tol=PLATEAU_TOL):
+def pre_plateau_rates(time, cons, k):
     """(rate_zero_intercept, rate_free_intercept) of `cons` vs `time`, fit
-    using only the timepoints before the plateau starts. NaN pair if the
-    plateau starts at the very first point (k=0), since there's no
-    pre-plateau data at all. If it starts at the second point (k=1), there's
-    only one pre-plateau point, so the first two timepoints are used
-    instead."""
-    k = plateau_start(cons, tol)
+    using only the timepoints before index `k` (the depletion time point).
+    NaN pair if `k` is the very first point (k=0), since there's no
+    pre-plateau data at all. If it's the second point (k=1), there's only
+    one pre-plateau point, so the first two timepoints are used instead."""
     if k == 0:
         return np.nan, np.nan
     t, y = time[:max(k, 2)], cons[:max(k, 2)]
@@ -127,11 +114,8 @@ mask_chl0 = (data_dict['4.2.batch1']['metadata']['Chloramphenicol'] == 0.0) & (d
 
 for id in ids:
     time = data_dict[id]['no3_conc'].columns.values.astype(float)
-    data_dict[id]['auc'] = pd.DataFrame(index=data_dict[id]['no3_cons'].index, columns=['no3', 'no2'])
-    data_dict[id]['half_life'] = pd.DataFrame(index=data_dict[id]['no3_cons'].index, columns=['no3', 'no2'])
-    data_dict[id]['full_consumption'] = pd.DataFrame(index=data_dict[id]['no3_cons'].index, columns=['no3', 'no2'])
-    data_dict[id]['rate_zero_intercept'] = pd.DataFrame(index=data_dict[id]['no3_cons'].index, columns=['no3', 'no2'])
-    data_dict[id]['rate_free_intercept'] = pd.DataFrame(index=data_dict[id]['no3_cons'].index, columns=['no3', 'no2'])
+    for key in ['depletion_time_point', 'auc', 'half_life', 'full_consumption', 'rate_zero_intercept', 'rate_free_intercept']:
+        data_dict[id][key] = pd.DataFrame(index=data_dict[id]['no3_conc'].index, columns=['no3', 'no2'])
 
     no3_conc_chl0 = data_dict[id]['no3_conc'][mask_chl0]
     no2_conc_chl0 = data_dict[id]['no2_conc'][mask_chl0]
@@ -142,6 +126,12 @@ for id in ids:
         no2_conc = no2_conc_chl0.loc[index].values.astype(float)
         no3_cons = no3_cons_chl0.loc[index].values.astype(float)
         no2_cons = no2_cons_chl0.loc[index].values.astype(float)
+
+        no3_k = depletion_time_point(no3_conc)
+        no2_k = depletion_time_point(no2_conc)
+        data_dict[id]['depletion_time_point'].loc[index, 'no3'] = no3_k
+        data_dict[id]['depletion_time_point'].loc[index, 'no2'] = no2_k
+
         data_dict[id]['auc'].loc[index, 'no3'] = np.trapezoid(no3_conc, time)
         data_dict[id]['auc'].loc[index, 'no2'] = np.trapezoid(no2_conc, time)
 
@@ -150,13 +140,13 @@ for id in ids:
         data_dict[id]['half_life'].loc[index, 'no3'] = exceeds_time(time, no3_cons, no3_half)
         data_dict[id]['half_life'].loc[index, 'no2'] = exceeds_time(time, no2_cons, no2_half)
 
-        data_dict[id]['full_consumption'].loc[index, 'no3'] = full_consumption_time(time, no3_cons)
-        data_dict[id]['full_consumption'].loc[index, 'no2'] = full_consumption_time(time, no2_cons)
+        data_dict[id]['full_consumption'].loc[index, 'no3'] = full_consumption_time(time, no3_cons, no3_k, no3_conc[0])
+        data_dict[id]['full_consumption'].loc[index, 'no2'] = full_consumption_time(time, no2_cons, no2_k, no3_conc[0] + no2_conc[0])
 
-        rate0, rate_free = pre_plateau_rates(time, no3_cons)
+        rate0, rate_free = pre_plateau_rates(time, no3_cons, no3_k)
         data_dict[id]['rate_zero_intercept'].loc[index, 'no3'] = rate0
         data_dict[id]['rate_free_intercept'].loc[index, 'no3'] = rate_free
-        rate0, rate_free = pre_plateau_rates(time, no2_cons)
+        rate0, rate_free = pre_plateau_rates(time, no2_cons, no2_k)
         data_dict[id]['rate_zero_intercept'].loc[index, 'no2'] = rate0
         data_dict[id]['rate_free_intercept'].loc[index, 'no2'] = rate_free
 
@@ -169,14 +159,53 @@ for id in ids:
     data_dict[id]['auc'].loc[no2_conc_chl1.index, 'no2'] = auc_upto(no2_conc_chl1, end_time)
 
     for index in no3_conc_chl1.index:
+        no3_conc = no3_conc_chl1.loc[index].values.astype(float)
+        no2_conc = no2_conc_chl1.loc[index].values.astype(float)
         no3_cons = no3_cons_chl1.loc[index].values.astype(float)
         no2_cons = no2_cons_chl1.loc[index].values.astype(float)
-        rate0, rate_free = pre_plateau_rates(time, no3_cons)
+        
+        no3_k = depletion_time_point(no3_conc)
+        no2_k = depletion_time_point(no2_conc)
+        data_dict[id]['depletion_time_point'].loc[index, 'no3'] = no3_k
+        data_dict[id]['depletion_time_point'].loc[index, 'no2'] = no2_k
+
+        rate0, rate_free = pre_plateau_rates(time, no3_cons, no3_k)
         data_dict[id]['rate_zero_intercept'].loc[index, 'no3'] = rate0
         data_dict[id]['rate_free_intercept'].loc[index, 'no3'] = rate_free
-        rate0, rate_free = pre_plateau_rates(time, no2_cons)
+
+        rate0, rate_free = pre_plateau_rates(time, no2_cons, no2_k)
         data_dict[id]['rate_zero_intercept'].loc[index, 'no2'] = rate0
         data_dict[id]['rate_free_intercept'].loc[index, 'no2'] = rate_free
+
+
+OUTLIER_IQR_FACTOR = 2.0
+OUTLIER_COMPRESSION_THRESHOLD = 1.8
+
+
+def split_outliers(ys):
+    """Boolean mask flagging points far enough from the bulk of `ys` (by a
+    generous IQR rule) that showing them on the main axes would compress
+    everything else into an unreadable clump. Returns an all-False mask if
+    there's too little data, no spread, or the flagged points don't actually
+    compress the range by more than `OUTLIER_COMPRESSION_THRESHOLD`x."""
+    ys = np.asarray(ys, dtype=float)
+    finite = np.isfinite(ys)
+    outlier = np.zeros(len(ys), dtype=bool)
+    if finite.sum() < 4:
+        return outlier
+    q1, q3 = np.percentile(ys[finite], [25, 75])
+    iqr = q3 - q1
+    if iqr <= 0:
+        return outlier
+    lo_bound, hi_bound = q1 - OUTLIER_IQR_FACTOR * iqr, q3 + OUTLIER_IQR_FACTOR * iqr
+    outlier = finite & ((ys < lo_bound) | (ys > hi_bound))
+    if not outlier.any():
+        return outlier
+    inlier_range = ys[finite & ~outlier].max() - ys[finite & ~outlier].min()
+    full_range = ys[finite].max() - ys[finite].min()
+    if inlier_range <= 0 or full_range / inlier_range <= OUTLIER_COMPRESSION_THRESHOLD:
+        return np.zeros(len(ys), dtype=bool)
+    return outlier
 
 
 def plot_chl0_strip(quantity_key, analyte, quantity_label, ylabel):
@@ -185,16 +214,47 @@ def plot_chl0_strip(quantity_key, analyte, quantity_label, ylabel):
     analyte_label = 'Nitrate' if analyte == 'no3' else 'Nitrite'
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+
+    points = []
+    medians = []
     for i, id in enumerate(ids):
         df = data_dict[id][quantity_key].loc[mask_chl0, analyte].astype(float)
         for index in df.index:
             y = df.loc[index]
             add_val = data_dict[id]['metadata'].loc[index, add_col]
             marker = markers[add_conc.index(add_val)]
-            ax.scatter(i + 0.1 * (add_conc.index(add_val) - 1.0), y, color=batch_colors[i], marker=marker, alpha=0.5)
-        y_med = df.median()
+            x = i + 0.1 * (add_conc.index(add_val) - 1.0)
+            points.append((x, y, batch_colors[i], marker))
+        medians.append((i, df.median()))
+
+    ys = np.array([p[1] for p in points], dtype=float)
+    outlier = split_outliers(ys)
+
+    for x, y, color, marker in points:
+        ax.scatter(x, y, color=color, marker=marker, alpha=0.5)
+    for i, y_med in medians:
         ax.scatter(i, y_med, color='white', edgecolors='black', marker='D', s=100, alpha=0.7)
     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+
+    if outlier.any():
+        # zoom the main axes to the reliable data and annotate off-scale
+        # points in place (their value + a small edge marker) rather than
+        # drawing them in a separate inset
+        inlier_ys = ys[np.isfinite(ys) & ~outlier]
+        pad = 0.15 * (inlier_ys.max() - inlier_ys.min())
+        y0, y1 = inlier_ys.min() - pad, inlier_ys.max() + pad
+        ax.set_ylim(y0, y1)
+
+        edge = 0.03 * (y1 - y0)
+        for (x, y, color, marker), is_out in zip(points, outlier):
+            if not is_out:
+                continue
+            above = y > y1
+            yy = y1 - edge if above else y0 + edge
+            ax.scatter(x, yy, color=color, marker=marker, s=70, zorder=5, linewidths=0.8)
+            ax.annotate(f'{y:.3g}', (x, yy), xytext=(0, -8 if above else 8), textcoords='offset points',
+                        ha='center', va='top' if above else 'bottom', fontsize=7.5, color=color, fontweight='bold')
+
     ax.set_title(f'{analyte_label} {quantity_label} (CHL-)' + '\n' + rf'colour = batch | marker = ${add_symbol}_{{add}}$ | diamond = batch median', fontsize=14)
     ax.set_xticks(range(6))
     ax.set_xticklabels(batch_labels)
