@@ -250,9 +250,9 @@ def plot_chl0_mean_sem(quantity_key, analyte, quantity_label, ylabel):
                 continue
             mean = values.mean()
             sem = values.std(ddof=1) / np.sqrt(len(values)) if len(values) > 1 else 0.0
-            x = x_batch + offset_unit * (add_i - 1.5)
+            x = x_batch # + offset_unit * (add_i - 1.5)
             ax.errorbar(x, mean, yerr=sem, fmt=markers[add_i], color=batch_colors[i],
-                        markersize=6, capsize=4, elinewidth=1.5, markeredgecolor='black', markeredgewidth=0.5, alpha=0.8)
+                        markersize=6, capsize=4, elinewidth=1.5, markeredgecolor='black', markeredgewidth=0.5, alpha=0.5)
 
     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
     ax.set_title(f'{analyte_label} {quantity_label} (CHL-)' + '\n' +
@@ -261,6 +261,7 @@ def plot_chl0_mean_sem(quantity_key, analyte, quantity_label, ylabel):
     ax.set_ylabel(ylabel)
     custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'${add_symbol}_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
     ax.legend(handles=custom_lines)
+    ax.grid(True, alpha=0.5)
     fn = f'plots/4.2.chl0_{analyte}_{quantity_key}_mean_sem_{datetime.datetime.now().strftime("%Y%m%d")}.png'
     fig.savefig(fn, dpi=300, bbox_inches='tight')
     print(f'Figure saved to {fn}')
