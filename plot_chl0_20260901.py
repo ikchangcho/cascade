@@ -8,6 +8,22 @@ from scipy.optimize import fsolve
 from scipy.optimize import curve_fit
 from matplotlib.lines import Line2D
 
+# Create an array of the intervals between Nov 24 12:56, Dec 1 13:00, Dec 8 9:35, Dec 15 12:58, Dec 19 11:00, Jan 14 11:15, in days
+datetime_array = [
+    datetime.datetime(2024, 11, 24, 12, 56),
+    datetime.datetime(2024, 12, 1, 13, 0),
+    datetime.datetime(2024, 12, 8, 9, 35),
+    datetime.datetime(2024, 12, 19, 11, 0),
+    datetime.datetime(2025, 1, 14, 11, 15),
+    datetime.datetime(2025, 2, 23, 11, 37)]
+days_of_drought = [0]
+for i in range(1, len(datetime_array)):
+    time_diff = datetime_array[i] - datetime_array[0]
+    days_of_drought.append(time_diff.total_seconds() / 3600 / 24)
+
+water_contents =  [98.9, 62.5, 34.4, 7.44, 7.10, 5.16, 4.74]
+
+
 ids = ['4.2.batch1', '4.2.batch2', '4.2.batch3', '4.2.batch4', '4.2.batch5', '4.2.batch6']
 batch_colors = ['blue', 'green', 'orange', 'red', 'purple', 'cyan']
 batch_labels = ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']
@@ -37,12 +53,9 @@ def end_time_point(upper_bound, cons, tol=0.02):
 
 def pre_plateau_rates(time, upper_bound, cons):
     etp = end_time_point(upper_bound, cons)
-    if etp > 1:
-        k = etp
-    elif etp == 1:
-        k = 2
-    elif etp == 0:
+    if etp == 0:
         return np.nan, np.nan
+    k = max(etp + 1, 2)
 
     t = time[:k]
     y = cons[:k]
@@ -52,6 +65,9 @@ def pre_plateau_rates(time, upper_bound, cons):
     return rate_zero, rate_free
 
 def estimated_consumption_time(time, upper_bound, cons, r):
+    if upper_bound == 0:
+        return np.nan
+
     target = r * upper_bound
 
     k = None
@@ -91,29 +107,23 @@ def plot_illustration(id, analyte, rows):
     fig, axes = plt.subplots(len(rows), len(quantities), figsize=(4 * len(quantities), 3.2 * len(rows)))
 
     for r_i, row_id in enumerate(rows):
-        conc = conc_df.loc[row_id].values.astype(float)
         cons = cons_df.loc[row_id].values.astype(float)
         no3_conc0 = no3_conc_df.loc[row_id].values.astype(float)[0]
         no2_conc0 = no2_conc_df.loc[row_id].values.astype(float)[0]
         upper_bound = no3_conc0 if analyte == 'no3' else no3_conc0 + no2_conc0
 
-        k = max(end_time_point(upper_bound, cons), 2)
+        k = max(end_time_point(upper_bound, cons) + 1, 2)
         t_pre, y_pre = time[:k], cons[:k]
 
         for c_i, qty in enumerate(quantities):
             ax = axes[r_i, c_i]
 
             if qty == 'auc':
-                ax.plot(time, conc, 'o-', color='tab:blue', markersize=4)
-                if analyte == 'no2':
-                    no3_conc_curve = no3_conc_df.loc[row_id].values.astype(float)
-                    ax.plot(time, no3_conc_curve, 'o-', color='tab:blue', alpha=0.4, markersize=3)
-                    ax.fill_between(time, conc, no3_conc_curve, color='tab:blue', alpha=0.25)
-                    auc = np.trapezoid(conc, time) - np.trapezoid(no3_conc_curve, time)
-                else:
-                    ax.fill_between(time, conc, 0, color='tab:blue', alpha=0.25)
-                    auc = np.trapezoid(conc, time)
-                ax.set_ylabel(f'{analyte} conc (mM)')
+                ax.plot(time, cons, 'o', color='gray', alpha=0.4, markersize=4)
+                ax.plot(t_pre, y_pre, 'o-', color='tab:blue', markersize=4, zorder=3)
+                ax.fill_between(t_pre, y_pre, 0, color='tab:blue', alpha=0.25)
+                auc = np.trapezoid(y_pre, t_pre)
+                ax.set_ylabel(f'{analyte} cons (mM)')
                 ax.text(0.97, 0.95, f'AUC = {auc:.3f} mM\N{MIDDLE DOT}h', transform=ax.transAxes,
                         ha='right', va='top', fontsize=9, color='tab:blue')
 
@@ -134,7 +144,7 @@ def plot_illustration(id, analyte, rows):
                 ax.set_ylabel(f'{analyte} cons (mM)')
 
             elif qty in ('half_cons_time', 'full_cons_time'):
-                r_target = 0.5 if qty == 'half_cons_time' else 0.95
+                r_target = 0.5 if qty == 'half_cons_time' else 0.98
                 t_target = estimated_consumption_time(time, upper_bound, cons, r_target)
                 y_target = r_target * upper_bound
                 ax.plot(time, cons, 'o-', color='tab:green', markersize=4)
@@ -152,19 +162,21 @@ def plot_illustration(id, analyte, rows):
                 ax.annotate(row_id, xy=(-0.35, 0.5), xycoords='axes fraction', fontsize=13,
                             fontweight='bold', ha='center', va='center', rotation=90)
 
-    fig.suptitle(f'{id} / {analyte}: how each quantity is computed', fontsize=15, y=1.02)
+    fig.suptitle(f'{id} / {analyte} consumption : how each quantity is computed', fontsize=20, y=1.02)
     fig.tight_layout()
-    fn = f'plots/{id}_{analyte}_no_drug_examples_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fn = f'plots/{id}_{analyte}_chl0_quantitiy_illustration_{datetime.datetime.now().strftime("%Y%m%d")}.png'
     fig.savefig(fn, dpi=200, bbox_inches='tight')
     print(f'Figure saved to {fn}')
     plt.close(fig)
     return fn
 
 
-rows = ['E04', 'F04', 'G04', 'H04']
-for id in ids:
-    plot_illustration(id, 'no3', rows)
-    plot_illustration(id, 'no2', rows)
+# rows = ['E04', 'F04', 'G04', 'H04']
+# for id in ids:
+#     plot_illustration(id, 'no3', rows)
+#     plot_illustration(id, 'no2', rows)
+
+SUBSTRATE_EPS = 0.05  # below this, [analyte]_conc[0] is treated as "not present" (assay noise floor)
 
 for id in ids:
     time = data_dict[id]['no3_conc'].columns.values.astype(float)
@@ -181,17 +193,89 @@ for id in ids:
         no3_cons = no3_cons_chl0.loc[index].values.astype(float)
         no2_cons = no2_cons_chl0.loc[index].values.astype(float)
 
-        rate_zero_no3, rate_free_no3 = pre_plateau_rates(time, no3_conc[0], no3_cons)
-        rate_zero_no2, rate_free_no2 = pre_plateau_rates(time, no2_conc[0] + no3_conc[0], no2_cons)
+        no3_present = no3_conc[0] >= SUBSTRATE_EPS
+        no2_present = no3_present or no2_conc[0] >= SUBSTRATE_EPS
+
+        if no3_present:
+            rate_zero_no3, rate_free_no3 = pre_plateau_rates(time, no3_conc[0], no3_cons)
+            no3_k = end_time_point(no3_conc[0], no3_cons) + 1
+            auc_no3 = np.trapezoid(no3_cons[:no3_k], time[:no3_k])
+            half_no3 = estimated_consumption_time(time, no3_conc[0], no3_cons, 0.5)
+            full_no3 = estimated_consumption_time(time, no3_conc[0], no3_cons, 0.98)
+        else:
+            rate_zero_no3 = rate_free_no3 = auc_no3 = half_no3 = full_no3 = np.nan
+
+        if no2_present:
+            no2_upper_bound = no2_conc[0] + no3_conc[0]
+            rate_zero_no2, rate_free_no2 = pre_plateau_rates(time, no2_upper_bound, no2_cons)
+            no2_k = end_time_point(no2_upper_bound, no2_cons) + 1
+            auc_no2 = np.trapezoid(no2_cons[:no2_k], time[:no2_k])
+            half_no2 = estimated_consumption_time(time, no2_upper_bound, no2_cons, 0.5)
+            full_no2 = estimated_consumption_time(time, no2_upper_bound, no2_cons, 0.98)
+        else:
+            rate_zero_no2 = rate_free_no2 = auc_no2 = half_no2 = full_no2 = np.nan
+
         data_dict[id]['rate_zero_intercept'].loc[index, 'no3'] = rate_zero_no3
         data_dict[id]['rate_free_intercept'].loc[index, 'no3'] = rate_free_no3
         data_dict[id]['rate_zero_intercept'].loc[index, 'no2'] = rate_zero_no2
         data_dict[id]['rate_free_intercept'].loc[index, 'no2'] = rate_free_no2
 
-        data_dict[id]['auc'].loc[index, 'no3'] = np.trapezoid(no3_conc, time)
-        data_dict[id]['auc'].loc[index, 'no2'] = np.trapezoid(no2_conc, time) - np.trapezoid(no3_conc, time)
+        data_dict[id]['auc'].loc[index, 'no3'] = auc_no3
+        data_dict[id]['auc'].loc[index, 'no2'] = auc_no2
 
-        data_dict[id]['half_cons_time'].loc[index, 'no3'] = estimated_consumption_time(time, no3_conc[0], no3_cons, 0.5)
-        data_dict[id]['half_cons_time'].loc[index, 'no2'] = estimated_consumption_time(time, no2_conc[0] + no3_conc[0], no2_cons, 0.5)
-        data_dict[id]['full_cons_time'].loc[index, 'no3'] = estimated_consumption_time(time, no3_conc[0], no3_cons, 0.95)
-        data_dict[id]['full_cons_time'].loc[index, 'no2'] = estimated_consumption_time(time, no2_conc[0] + no3_conc[0], no2_cons, 0.95)
+        data_dict[id]['half_cons_time'].loc[index, 'no3'] = half_no3
+        data_dict[id]['half_cons_time'].loc[index, 'no2'] = half_no2
+        data_dict[id]['full_cons_time'].loc[index, 'no3'] = full_no3
+        data_dict[id]['full_cons_time'].loc[index, 'no2'] = full_no2
+
+
+def plot_chl0_mean_sem(quantity_key, analyte, quantity_label, ylabel):
+    add_col = 'Nitrate_input' if analyte == 'no3' else 'Nitrite_input'
+    add_symbol = 'A' if analyte == 'no3' else 'I'
+    analyte_label = 'Nitrate' if analyte == 'no3' else 'Nitrite'
+
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+
+    min_gap = np.min(np.diff(sorted(days_of_drought)))
+    offset_unit = 0.15 * min_gap
+
+    for i, id in enumerate(ids):
+        x_batch = days_of_drought[i]
+        values_all = data_dict[id][quantity_key].loc[mask_chl0, analyte].astype(float)
+        metadata = data_dict[id]['metadata']
+        for add_i, add_val in enumerate(add_conc):
+            group_index = metadata.index[metadata[add_col] == add_val].intersection(values_all.index)
+            values = values_all.loc[group_index].dropna()
+            if len(values) == 0:
+                continue
+            mean = values.mean()
+            sem = values.std(ddof=1) / np.sqrt(len(values)) if len(values) > 1 else 0.0
+            x = x_batch + offset_unit * (add_i - 1.5)
+            ax.errorbar(x, mean, yerr=sem, fmt=markers[add_i], color=batch_colors[i],
+                        markersize=6, capsize=4, elinewidth=1.5, markeredgecolor='black', markeredgewidth=0.5, alpha=0.8)
+
+    ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
+    ax.set_title(f'{analyte_label} {quantity_label} (CHL-)' + '\n' +
+                 rf'mean $\pm$ SEM | colour = batch | marker = ${add_symbol}_{{add}}$', fontsize=14)
+    ax.set_xlabel('Days of drought')
+    ax.set_ylabel(ylabel)
+    custom_lines = [Line2D([0], [0], color='black', marker=marker, linestyle='None', markersize=8, label=f'${add_symbol}_{{add}}$ = {conc} mM') for marker, conc in zip(markers, add_conc)]
+    ax.legend(handles=custom_lines)
+    fn = f'plots/4.2.chl0_{analyte}_{quantity_key}_mean_sem_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=300, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+mean_sem_plot_specs = [
+    ('rate_zero_intercept', 'consumption rate (zero intercept)', 'Rate (mM/h)'),
+    ('rate_free_intercept', 'consumption rate (free intercept)', 'Rate (mM/h)'),
+    ('auc', 'AUC', 'AUC (mM\N{MIDDLE DOT}h)'),
+    ('half_cons_time', 'half consumption time', 'Time (h)'),
+    ('full_cons_time', 'full consumption time', 'Time (h)'),
+]
+
+for quantity_key, quantity_label, ylabel in mean_sem_plot_specs:
+    for analyte in ['no3', 'no2']:
+        plot_chl0_mean_sem(quantity_key, analyte, quantity_label, ylabel)
