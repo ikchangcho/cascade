@@ -180,15 +180,170 @@ def plot_illustration(id, analyte, rows, target):
     batch_label = batch_labels[ids.index(id)]
     fig.suptitle(f'{analyte_label} ({symbol}) CHL- analysis, {batch_label}', fontsize=20, y=1.02)
     fig.tight_layout()
-    fn = f'plots/{id}_{analyte}_quantity_illustration_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fn = f'plots/{id}.chl0_{analyte}_analysis_{datetime.datetime.now().strftime("%Y%m%d")}.png'
     fig.savefig(fn, dpi=200, bbox_inches='tight')
     print(f'Figure saved to {fn}')
     plt.close(fig)
     return fn
 
-
+'''
 illustration_rows = ['E04', 'F10', 'G04', 'H04']
 illustration_targets = {'no3_cons': 0.7, 'no2_cons': 1.0}
 for id in ids:
     for analyte, target in illustration_targets.items():
         plot_illustration(id, analyte, illustration_rows, target)
+'''
+
+quantity_names = ['rate_zero', 'rate_free', 'consumption_time', 'norm_auc']
+analyte_targets = {'no3_cons': 0.7, 'no2_cons': 1.0}
+
+count_dict = {}
+for id in ids:
+    time = data_dict[id]['no3_conc'].columns.values.astype(float)
+
+    no3_conc_chl0 = data_dict[id]['no3_conc'][mask_chl0]
+    no2_conc_chl0 = data_dict[id]['no2_conc'][mask_chl0]
+    no3_cons_chl0 = data_dict[id]['no3_cons'][mask_chl0]
+    no2_cons_chl0 = data_dict[id]['no2_cons'][mask_chl0]
+
+    for qty in quantity_names:
+        data_dict[id][qty] = pd.DataFrame(index=no3_conc_chl0.index, columns=list(analyte_targets), dtype=float)
+
+    for index in no3_conc_chl0.index:
+        no3_conc0 = no3_conc_chl0.loc[index].values.astype(float)[0]
+        no2_conc0 = no2_conc_chl0.loc[index].values.astype(float)[0]
+
+        for analyte, target in analyte_targets.items():
+            cons = (no3_cons_chl0 if analyte == 'no3_cons' else no2_cons_chl0).loc[index].values.astype(float)
+            upper_bound = no3_conc0 if analyte == 'no3_cons' else no3_conc0 + no2_conc0
+
+            rate_zero, rate_free = pre_plateau_rates(time, upper_bound, cons)
+            data_dict[id]['rate_zero'].loc[index, analyte] = rate_zero
+            data_dict[id]['rate_free'].loc[index, analyte] = rate_free
+            data_dict[id]['consumption_time'].loc[index, analyte] = consumption_time(time, upper_bound, cons, target)
+            data_dict[id]['norm_auc'].loc[index, analyte] = norm_auc(time, upper_bound, cons)
+
+    count_dict[id] = {}
+    for qty in quantity_names:
+        for analyte in analyte_targets:
+            count_dict[id][f'{qty}_{analyte}'] = np.sum(~np.isnan(data_dict[id][qty][analyte]))
+
+count_df = pd.DataFrame(count_dict).T
+count_df.index = batch_labels
+
+
+quantity_units = {
+    'rate_zero': 'mM/h',
+    'rate_free': 'mM/h',
+    'consumption_time': 'h',
+    'norm_auc': 'h',
+}
+
+
+add_var_info = {
+    'A_add': ('Nitrate_input', 'A'),
+    'I_add': ('Nitrite_input', 'I'),
+}
+analyte_labels = {'no3_cons': 'Nitrate (A)', 'no2_cons': 'Nitrite (I)'}
+
+
+def quantity_display_name(quantity_key, analyte):
+    if quantity_key == 'consumption_time':
+        return f'$t_{{{analyte_targets[analyte]}}}$'
+    return quantity_key
+
+
+def plot_quantity_vs_add(quantity_key, analyte, add_var):
+    "Quantity (for the given analyte) vs the given add concentration, one subplot per batch (CHL-)."
+    add_col, symbol = add_var_info[add_var]
+    analyte_label = analyte_labels[analyte]
+    unit = quantity_units[quantity_key]
+    quantity_label = quantity_display_name(quantity_key, analyte)
+
+    all_values = pd.concat([data_dict[id][quantity_key][analyte] for id in ids]).dropna()
+    y_span = all_values.max() - all_values.min()
+    y_pad = 0.05 * y_span if y_span > 0 else 1.0
+    y_lim = (all_values.min() - y_pad, all_values.max() + y_pad)
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    fig.suptitle(f'{quantity_label} vs ${symbol}_{{add}}$ ({analyte_label} CHL-) | error bar = mean $\\pm$ SEM', fontsize=22)
+
+    for i, id in enumerate(ids):
+        ax = axes[i // 3, i % 3]
+        ax.set_xlabel(rf'${symbol}_{{add}}$ (mM)' if i >= 3 else '', fontsize=15)
+        ax.set_xticks(add_conc)
+        ax.set_xlim(-0.1, 2.1)
+        ax.set_ylim(y_lim)
+        ax.set_ylabel(f'{quantity_label} ({unit})' if i % 3 == 0 else '', fontsize=15)
+        ax.tick_params(axis='both', labelsize=13)
+
+        values = data_dict[id][quantity_key][analyte]
+        metadata = data_dict[id]['metadata'].loc[values.index]
+
+        mean_vals, sem_vals = [], []
+        for add_val in add_conc:
+            group = values.loc[metadata[add_col] == add_val].dropna()
+            mean_vals.append(group.mean())
+            sem_vals.append(group.sem())
+        ax.errorbar(add_conc, mean_vals, yerr=sem_vals, fmt='o', color=batch_colors[i], alpha=0.7,
+                    capsize=5, markersize=8, elinewidth=1.5, zorder=3)
+
+        for add_val in add_conc:
+            group = values.loc[metadata[add_col] == add_val].dropna()
+            ax.scatter([add_val] * len(group), group, color=batch_colors[i], alpha=0.2, s=50)
+
+        ax.set_title(batch_labels[i], fontsize=15)
+
+    fig.tight_layout()
+    fn = f'plots/4.2.chl0_{quantity_key}_{analyte}_vs_{symbol}_add_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=300, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+for quantity_key in quantity_names:
+    for analyte in analyte_targets:
+        for add_var in add_var_info:
+            plot_quantity_vs_add(quantity_key, analyte, add_var)
+
+
+def plot_quantity_vs_drought(quantity_key):
+    "Quantity vs days of drought for no3_cons and no2_cons, one point per batch, faint replicates behind (CHL-)."
+    unit = quantity_units[quantity_key]
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    for ax, analyte in zip(axes, analyte_targets):
+        analyte_label = analyte_labels[analyte]
+        quantity_label = quantity_display_name(quantity_key, analyte)
+
+        for i, id in enumerate(ids):
+            x_batch = days_of_drought[i]
+            values = data_dict[id][quantity_key][analyte].dropna()
+
+            ax.scatter([x_batch] * len(values), values, color=batch_colors[i], alpha=0.2, s=50)
+
+            median = values.median()
+            ax.scatter(x_batch, median, marker='D', color=batch_colors[i], s=100, zorder=3,
+                       edgecolor='black', linewidth=0.8, label=f'{batch_labels[i]} (N={len(values)})')
+
+        ax.set_xlabel('Days of drought', fontsize=15)
+        ax.set_ylabel(f'{quantity_label} ({unit})', fontsize=15)
+        ax.tick_params(axis='both', labelsize=13)
+        ax.set_title(analyte_label, fontsize=16)
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=10)
+    fig.suptitle(f'{quantity_key} vs days of drought (CHL-) | diamond = median', fontsize=18)
+    fig.tight_layout()
+    fn = f'plots/4.2.chl0_{quantity_key}_vs_drought_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=300, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+for quantity_key in quantity_names:
+    plot_quantity_vs_drought(quantity_key)
+
+
