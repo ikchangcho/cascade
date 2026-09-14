@@ -240,3 +240,71 @@ for quantity in quantity_info:
     for analyte in analyte_labels:
         for add_var in add_var_info:
             plot_quantity_vs_add(quantity, analyte, add_var)
+
+
+def plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag):
+    "Mean RMSE of the given fit by (A_add, I_add) condition, one heatmap per batch: rows = I_add, columns = A_add."
+    matrices = {}
+    counts = {}
+    for id in ids:
+        values = data_dict[id]['rates_chl01'][rmse_col].astype(float)
+        metadata = data_dict[id]['metadata'].loc[values.index]
+        mat = np.full((len(add_conc), len(add_conc)), np.nan)
+        n = np.zeros((len(add_conc), len(add_conc)), dtype=int)
+        for r, i_val in enumerate(add_conc):
+            for c, a_val in enumerate(add_conc):
+                group = values.loc[(metadata['Nitrite_input'] == i_val) & (metadata['Nitrate_input'] == a_val)].dropna()
+                n[r, c] = len(group)
+                if len(group) > 0:
+                    mat[r, c] = group.mean()
+        matrices[id] = mat
+        counts[id] = n
+
+    all_vals = np.concatenate([m[~np.isnan(m)] for m in matrices.values()])
+    vmin, vmax = (all_vals.min(), all_vals.max()) if len(all_vals) else (0, 1)
+
+    cmap = plt.get_cmap('YlOrRd').copy()
+    cmap.set_bad('#eeeeee')
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    im = None
+    for i, id in enumerate(ids):
+        ax = axes[i // 3, i % 3]
+        mat, n = matrices[id], counts[id]
+        im = ax.imshow(np.ma.masked_invalid(mat), cmap=cmap, vmin=vmin, vmax=vmax, aspect='auto')
+
+        for r in range(len(add_conc)):
+            for c in range(len(add_conc)):
+                val = mat[r, c]
+                text = f'{val:.2f}\n(n={n[r, c]})' if not np.isnan(val) else '–'
+                color = 'white' if (not np.isnan(val) and val > vmin + 0.6 * (vmax - vmin)) else 'black'
+                ax.text(c, r, text, ha='center', va='center', fontsize=10, color=color)
+
+        ax.set_xticks(range(len(add_conc)))
+        ax.set_xticklabels(add_conc)
+        ax.set_yticks(range(len(add_conc)))
+        ax.set_yticklabels(add_conc)
+        ax.set_xlabel('$A_{add}$ (mM)' if i >= 3 else '', fontsize=13)
+        ax.set_ylabel('$I_{add}$ (mM)' if i % 3 == 0 else '', fontsize=13)
+        ax.set_title(batch_labels[i], fontsize=15)
+
+    fig.suptitle(f'RMSE of {analyte_label} {fit_label} by ($A_{{add}}$, $I_{{add}}$)', fontsize=20)
+    fig.tight_layout(rect=[0, 0, 0.92, 0.95])
+    cbar_ax = fig.add_axes([0.94, 0.15, 0.015, 0.7])
+    fig.colorbar(im, cax=cbar_ax, label='RMSE (mM)')
+
+    fn = f'plots/4.2.chl0_rmse_{file_tag}_heatmap_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=300, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+rmse_configs = [
+    ('no3_chl0_rmse', 'Nitrate (A)', 'CHL- exponential fit', 'no3_chl0'),
+    ('no2_chl0_rmse', 'Nitrite (I)', 'CHL- exponential fit', 'no2_chl0'),
+    ('no3_chl1_rmse', 'Nitrate (A)', 'CHL+ linear fit', 'no3_chl1'),
+    ('no2_chl1_rmse', 'Nitrite (I)', 'CHL+ linear fit', 'no2_chl1'),
+]
+for rmse_col, analyte_label, fit_label, file_tag in rmse_configs:
+    plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag)
