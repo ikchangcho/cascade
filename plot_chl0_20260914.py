@@ -308,3 +308,109 @@ rmse_configs = [
 ]
 for rmse_col, analyte_label, fit_label, file_tag in rmse_configs:
     plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag)
+
+
+chl1_to_chl0 = {id: dict(zip(data_dict[id]['no3_cons'][mask_chl1].index, data_dict[id]['no3_cons'][mask_chl0].index))
+                for id in ids}
+
+
+def plot_cons_chl_compare_ax(ax, id, chl1_row, chl0_row, analyte='no3', legend=True):
+    "Draw the CHL+ vs CHL- consumption comparison (s fixed to the CHL+ slope) for a matched well pair onto ax."
+    cons_df = data_dict[id][f'{analyte}_cons']
+    time = cons_df.columns.values.astype(float)
+    n_lin = 6 if analyte == 'no3' else 8
+
+    cons_chl1 = cons_df.loc[chl1_row].values.astype(float)
+    cons_chl0 = cons_df.loc[chl0_row].values.astype(float)
+
+    no3_conc0 = data_dict[id]['no3_conc'].loc[chl0_row].values.astype(float)[0]
+    no2_conc0 = data_dict[id]['no2_conc'].loc[chl0_row].values.astype(float)[0]
+    upper_bound = no3_conc0 if analyte == 'no3' else no3_conc0 + no2_conc0
+
+    t_lin, y_lin = time[:n_lin], cons_chl1[:n_lin]
+    slope = np.dot(t_lin, y_lin) / np.dot(t_lin, t_lin)
+    s_fit, gamma, t_fit, y_fit, rmse = fit_exp_growth(time, cons_chl0, upper_bound, s=slope)
+    n_chl0_used = len(t_fit)
+
+    exp_formula_label = r'y = $\frac{s}{\gamma}(e^{\gamma t} - 1)$'
+
+    ax.scatter(time[:n_lin], cons_chl1[:n_lin], color='tab:purple', s=50, label='CHL+')
+    ax.scatter(time[n_lin:], cons_chl1[n_lin:], color='tab:purple', s=50, alpha=0.25)
+    ax.scatter(time[:n_chl0_used], cons_chl0[:n_chl0_used], color='tab:orange', s=50, label='CHL-')
+    ax.scatter(time[n_chl0_used:], cons_chl0[n_chl0_used:], color='tab:orange', s=50, alpha=0.25)
+
+    t_line = np.array([0, time[-1]])
+    ax.plot(t_line, slope * t_line, '--', color='tab:purple', label='y = st')
+
+    if not np.isnan(gamma):
+        t_curve = np.linspace(0, t_fit[-1], 100)
+        ax.plot(t_curve, exp_growth(t_curve, s_fit, gamma), '--', color='tab:orange', label=exp_formula_label)
+    else:
+        ax.plot([], [], '--', color='tab:orange', label=exp_formula_label)
+
+    ax.grid(True, alpha=0.3)
+    main_legend = ax.legend(fontsize=13) if legend else None
+
+    s_str = f'{s_fit:.4f}' if not np.isnan(s_fit) else 'NaN'
+    gamma_str = f'{gamma:.4f}' if not np.isnan(gamma) else 'NaN'
+    rmse_str = f'{rmse:.3f}' if not np.isnan(rmse) else 'NaN'
+    value_handles = [Line2D([], [], linestyle='none', label=f's = {s_str}'),
+                     Line2D([], [], linestyle='none', label=f'$\\gamma$ = {gamma_str}'),
+                     Line2D([], [], linestyle='none', label=f'rmse = {rmse_str}')]
+    ax.legend(handles=value_handles, fontsize=11, loc='lower right',
+              frameon=False, handlelength=0, handletextpad=0)
+    if main_legend is not None:
+        ax.add_artist(main_legend)
+
+    return slope, s_fit, gamma, rmse
+
+
+def plot_worst_fits_grid(analyte, n_top=24, n_cols=4):
+    "Grid of CHL+ vs CHL- fits for the n_top individual wells with the highest rmse (no grouping by condition)."
+    rmse_col = f'{analyte}_chl0_rmse'
+
+    cases = []
+    for id in ids:
+        values = data_dict[id]['rates_chl01'][rmse_col].astype(float).dropna()
+        for chl1_row, rmse_val in values.items():
+            cases.append((rmse_val, id, chl1_row))
+    cases.sort(key=lambda c: c[0], reverse=True)
+    cases = cases[:n_top]
+
+    n_rows = int(np.ceil(len(cases) / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.3 * n_cols, 3.4 * n_rows), squeeze=False)
+
+    legend_ax = None
+    for k, (rmse_val, id, chl1_row) in enumerate(cases):
+        ax = axes[k // n_cols, k % n_cols]
+        chl0_row = chl1_to_chl0[id][chl1_row]
+        plot_cons_chl_compare_ax(ax, id, chl1_row, chl0_row, analyte=analyte, legend=False)
+        legend_ax = ax
+
+        metadata = data_dict[id]['metadata']
+        a_val = metadata.loc[chl1_row, 'Nitrate_input']
+        i_val = metadata.loc[chl1_row, 'Nitrite_input']
+        batch_label = batch_labels[ids.index(id)]
+        ax.set_title(f'{batch_label}, {chl1_row}\n$A_{{add}}$={a_val}, $I_{{add}}$={i_val}', fontsize=11)
+        ax.tick_params(axis='both', labelsize=9)
+
+    for k in range(len(cases), n_rows * n_cols):
+        axes[k // n_cols, k % n_cols].axis('off')
+
+    if legend_ax is not None:
+        handles, labels = legend_ax.get_legend_handles_labels()
+        fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=18, bbox_to_anchor=(0.5, 1.01))
+
+    fig.text(0.06, 0.5, f'{analyte_labels[analyte]} consumption (mM)', va='center', rotation='vertical', fontsize=15)
+    fig.suptitle(f'{analyte_labels[analyte]} consumption: CHL+ vs CHL- (worst {len(cases)} individual fits by rmse, s fixed to CHL+ slope)',
+                 fontsize=20, y=1.02)
+    fig.tight_layout(rect=[0.03, 0, 1, 1])
+    fn = f'plots/4.2.chl0_{analyte}_worst_fits_grid_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=200, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+for analyte in analyte_labels:
+    plot_worst_fits_grid(analyte)
