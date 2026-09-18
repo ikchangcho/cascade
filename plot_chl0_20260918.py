@@ -81,14 +81,14 @@ def fit_exp_growth(time, cons, upper_bound, s=None, gamma_bounds=(-5.0, 5.0), s_
 
         try:
             (gamma_fit,), _ = curve_fit(exp_func, t_fit, y_fit, p0=[0.1], maxfev=5000, bounds=gamma_bounds)
-        except RuntimeError:
+        except (RuntimeError, ValueError):
             gamma_fit = np.nan
         s_fit = s
     else:
         try:
             (s_fit, gamma_fit), _ = curve_fit(exp_growth, t_fit, y_fit, p0=[0.1, 0.1], maxfev=5000,
                                            bounds=([-10.0, gamma_bounds[0]], [10.0, gamma_bounds[1]]))
-        except RuntimeError:
+        except (RuntimeError, ValueError):
             s_fit, gamma_fit = np.nan, np.nan
 
     if not np.isnan(s_fit) and not np.isnan(gamma_fit):
@@ -97,6 +97,16 @@ def fit_exp_growth(time, cons, upper_bound, s=None, gamma_bounds=(-5.0, 5.0), s_
         rmse = np.nan
 
     return s_fit, gamma_fit, t_fit, y_fit, rmse
+
+
+def fit_linear_chl0(time, cons, upper_bound):
+    """Through-origin OLS on CHL- data, excluding end_time_point.
+    Same window as fit_exp_growth(..., exclude_last=True). Returns (slope, k, rmse)."""
+    etp = end_time_point(upper_bound, cons)
+    k = max(etp, 2)
+    t, y = time[:k], cons[:k]
+    slope = np.dot(t, y) / np.dot(t, t)
+    return slope, k, np.sqrt(np.mean((y - slope * t) ** 2))
 
 
 for id in ids:
@@ -434,3 +444,238 @@ def plot_worst_fits_grid(analyte, n_top=24, n_cols=4, exclude_last=False):
 for analyte in analyte_labels:
     plot_worst_fits_grid(analyte)
     plot_worst_fits_grid(analyte, exclude_last=True)
+
+
+def plot_a_add_all_wells(analyte='no3', no3_add=2.0):
+    "9×6 grid: all A_add=no3_add wells, rows=wells grouped by I_add, columns=batches."
+    i_add_vals = [v for v in add_conc if v != no3_add]
+    n_rows = len(i_add_vals) * 3  # 3 replicates per I_add level
+    n_cols = len(ids)
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.5 * n_cols, 3.5 * n_rows), squeeze=False)
+
+    for col_idx, id in enumerate(ids):
+        metadata = data_dict[id]['metadata']
+        rates = data_dict[id]['rates_chl01']
+        a_add_rows = rates.index[metadata.loc[rates.index, 'Nitrate_input'] == no3_add]
+
+        row_idx = 0
+        for i_val in i_add_vals:
+            wells = [r for r in a_add_rows if metadata.loc[r, 'Nitrite_input'] == i_val]
+            for chl1_row in wells:
+                ax = axes[row_idx, col_idx]
+                chl0_row = chl1_to_chl0[id][chl1_row]
+                plot_cons_chl_compare_ax(ax, id, chl1_row, chl0_row, analyte=analyte,
+                                         legend=(row_idx == 0 and col_idx == 0))
+                ax.tick_params(axis='both', labelsize=8)
+                if row_idx == 0:
+                    ax.set_title(batch_labels[col_idx], fontsize=13, fontweight='bold')
+                if col_idx == 0:
+                    ax.set_ylabel(f'$I_{{add}}$={i_val}\nConsumption (mM)', fontsize=9)
+                ax.set_xlabel('Time (h)' if row_idx == n_rows - 1 else '', fontsize=9)
+                row_idx += 1
+
+    for i_idx in range(1, len(i_add_vals)):
+        y = 1.0 - i_idx / len(i_add_vals)
+        fig.add_artist(plt.Line2D([0, 1], [y, y], transform=fig.transFigure,
+                                  color='gray', linewidth=0.8, linestyle='--'))
+
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=14, bbox_to_anchor=(0.5, 1.005))
+    fig.suptitle(f'{analyte_labels[analyte]} consumption: all $A_{{add}}$={no3_add} wells | CHL+ vs CHL-',
+                 fontsize=20, y=1.015)
+    fig.tight_layout(rect=[0, 0, 1, 1])
+    fn = f'plots/4.2.chl0_{analyte}_Aadd{no3_add}_all_wells_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=150, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+plot_a_add_all_wells('no3', no3_add=2.0)
+
+
+def _lin_vs_exp_config(analyte):
+    "Return analyte-specific config dict for the lin-vs-exp comparison plots."
+    if analyte == 'no3':
+        return dict(
+            slope_col='no3_chl1_slope_six_points',
+            cons_key='no3_cons', conc_key='no3_conc',
+            ub_fn=lambda no3, no2: no3,
+            filter_fn=lambda meta, row, fval: abs(meta.loc[row, 'Nitrate_input'] - fval) < 0.01,
+            group_fn=lambda meta, rows, fval: [
+                (i_val, [r for r in rows if abs(meta.loc[r, 'Nitrite_input'] - i_val) < 0.01])
+                for i_val in add_conc if abs(i_val - fval) > 0.01
+            ],
+            ylabel_fn=lambda a_val, i_val: f'$I_{{add}}$={i_val} mM\nConsumption (mM)',
+            filter_tag_fn=lambda fval: f'Aadd{fval}',
+            filter_title_fn=lambda fval: f'$A_{{add}}$ = {fval} mM conditions',
+            x_col_fn=lambda meta, row: meta.loc[row, 'Nitrate_input'],
+            x_label='$A_{add}$ (mM)', x_tag='Aadd',
+        )
+    else:
+        return dict(
+            slope_col='no2_chl1_slope_eight_points',
+            cons_key='no2_cons', conc_key='no2_conc',
+            ub_fn=lambda no3, no2: no3 + no2,
+            filter_fn=lambda meta, row, fval: abs(meta.loc[row, 'Nitrate_input'] + meta.loc[row, 'Nitrite_input'] - fval) < 0.01,
+            group_fn=lambda meta, rows, fval: [
+                ((a, i), [r for r in rows if abs(meta.loc[r, 'Nitrate_input'] - a) < 0.01 and abs(meta.loc[r, 'Nitrite_input'] - i) < 0.01])
+                for a in add_conc for i in add_conc if abs(a + i - fval) < 0.01
+            ],
+            ylabel_fn=lambda a_val, i_val: f'$A_{{add}}$={a_val}, $I_{{add}}$={i_val} mM\nConsumption (mM)',
+            filter_tag_fn=lambda fval: f'Atot{fval}',
+            filter_title_fn=lambda fval: f'$A_{{add}}+I_{{add}}$ = {fval} mM conditions',
+            x_col_fn=lambda meta, row: meta.loc[row, 'Nitrate_input'] + meta.loc[row, 'Nitrite_input'],
+            x_label='$A_{add}+I_{add}$ (mM)', x_tag='Atot',
+        )
+
+
+def plot_lin_vs_exp_grid(analyte, filter_val):
+    "Grid of CHL- fits (linear vs constrained exponential) for a fixed concentration condition."
+    cfg = _lin_vs_exp_config(analyte)
+    analyte_label = analyte_labels[analyte]
+
+    # collect groups across all batches to know grid size
+    sample_meta = data_dict[ids[0]]['metadata']
+    sample_rates = data_dict[ids[0]]['rates_chl01']
+    sample_rows = [r for r in sample_rates.index if cfg['filter_fn'](sample_meta, r, filter_val)]
+    groups = cfg['group_fn'](sample_meta, sample_rows, filter_val)
+    n_rows = len(groups) * 3
+    n_cols = len(ids)
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.5 * n_cols, 3.8 * n_rows), squeeze=False)
+
+    for col_idx, id in enumerate(ids):
+        meta  = data_dict[id]['metadata']
+        rates = data_dict[id]['rates_chl01']
+        time  = data_dict[id][cfg['cons_key']].columns.astype(float)
+        id_rows = [r for r in rates.index if cfg['filter_fn'](meta, r, filter_val)]
+        id_groups = cfg['group_fn'](meta, id_rows, filter_val)
+
+        row_idx = 0
+        for grp_key, wells in id_groups:
+            a_val = grp_key[0] if isinstance(grp_key, tuple) else filter_val
+            i_val = grp_key[1] if isinstance(grp_key, tuple) else grp_key
+            for chl1_row in wells:
+                ax = axes[row_idx, col_idx]
+                chl0_row  = chl1_to_chl0[id][chl1_row]
+                cons_chl0 = data_dict[id][cfg['cons_key']].loc[chl0_row].values.astype(float)
+                no3_0 = data_dict[id]['no3_conc'].loc[chl0_row].values.astype(float)[0]
+                no2_0 = data_dict[id]['no2_conc'].loc[chl0_row].values.astype(float)[0]
+                ub     = cfg['ub_fn'](no3_0, no2_0)
+                slope_chl1 = float(rates.loc[chl1_row, cfg['slope_col']])
+
+                slope_lin, k_lin, rmse_lin = fit_linear_chl0(time, cons_chl0, ub)
+                _, _, _, _, rmse_exp = fit_exp_growth(time, cons_chl0, ub, s=slope_chl1, exclude_last=True)
+                s_exp, gamma, t_fit, _, _ = fit_exp_growth(time, cons_chl0, ub, s=slope_chl1, exclude_last=True)
+                k_exp = len(t_fit)
+                k = max(k_lin, k_exp)
+
+                ax.scatter(time[:k], cons_chl0[:k], color='tab:orange', s=35, label='CHL-', zorder=3)
+                ax.scatter(time[k:], cons_chl0[k:], color='tab:orange', s=35, alpha=0.2, zorder=2)
+
+                t_lin = np.linspace(0, time[k_lin - 1], 100)
+                ax.plot(t_lin, slope_lin * t_lin, '--', color='steelblue', lw=1.8, label=r'$y = s_- t$')
+                if not np.isnan(gamma):
+                    t_exp = np.linspace(0, t_fit[-1], 100)
+                    ax.plot(t_exp, exp_growth(t_exp, s_exp, gamma), '--', color='firebrick', lw=1.8,
+                            label=r'$y = \frac{s_+}{\gamma}(e^{\gamma t}-1)$')
+                else:
+                    ax.plot([], [], '--', color='firebrick', lw=1.8,
+                            label=r'$y = \frac{s_+}{\gamma}(e^{\gamma t}-1)$')
+
+                ax.grid(True, alpha=0.3)
+                ax.tick_params(labelsize=10)
+                if row_idx == 0:
+                    ax.set_title(batch_labels[col_idx], fontsize=13, fontweight='bold')
+                if col_idx == 0:
+                    ax.set_ylabel(cfg['ylabel_fn'](a_val, i_val), fontsize=11)
+                if row_idx == n_rows - 1:
+                    ax.set_xlabel('Time (h)', fontsize=11)
+
+                rmse_lin_s = f'{rmse_lin:.3f}' if not np.isnan(rmse_lin) else 'NaN'
+                rmse_exp_s = f'{rmse_exp:.3f}' if not np.isnan(rmse_exp) else 'NaN'
+                ax.text(0.97, 0.03, f'RMSE (Linear) = {rmse_lin_s}\nRMSE (Exp.) = {rmse_exp_s}',
+                        transform=ax.transAxes, fontsize=9, ha='right', va='bottom',
+                        bbox=dict(fc='white', alpha=0.7, pad=2))
+                row_idx += 1
+
+    handles, labels_leg = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels_leg, loc='upper center', ncol=3, fontsize=14, bbox_to_anchor=(0.5, 1.005))
+    fig.suptitle(f'{analyte_label} Consumption CHL- Fits: Linear vs Constrained Exponential\n'
+                 f'{cfg["filter_title_fn"](filter_val)} | faded points are not used for fitting',
+                 fontsize=18, y=1.022)
+    fig.tight_layout(rect=[0, 0, 1, 1])
+    fn = f'plots/4.2.chl0_{analyte}_lin_vs_exp_{cfg["filter_tag_fn"](filter_val)}_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=150, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+def plot_rmse_lin_vs_exp(analyte):
+    "2×3 grid: mean ± SEM RMSE vs concentration for linear and constrained-exp fits, one panel per batch."
+    cfg = _lin_vs_exp_config(analyte)
+    analyte_label = analyte_labels[analyte]
+
+    records = []
+    for id in ids:
+        meta  = data_dict[id]['metadata']
+        rates = data_dict[id]['rates_chl01']
+        time  = data_dict[id][cfg['cons_key']].columns.astype(float)
+        for chl1_row in rates.index:
+            chl0_row = chl1_to_chl0[id][chl1_row]
+            cons   = data_dict[id][cfg['cons_key']].loc[chl0_row].values.astype(float)
+            no3_0  = data_dict[id]['no3_conc'].loc[chl0_row].values.astype(float)[0]
+            no2_0  = data_dict[id]['no2_conc'].loc[chl0_row].values.astype(float)[0]
+            ub     = cfg['ub_fn'](no3_0, no2_0)
+            slope_chl1 = float(rates.loc[chl1_row, cfg['slope_col']])
+            _, _, rmse_lin = fit_linear_chl0(time, cons, ub)
+            _, _, _, _, rmse_exp = fit_exp_growth(time, cons, ub, s=slope_chl1, exclude_last=True)
+            records.append({'id': id, 'x': cfg['x_col_fn'](meta, chl1_row),
+                            'rmse_lin': rmse_lin, 'rmse_exp': rmse_exp})
+    df = pd.DataFrame(records)
+    x_vals = sorted(df['x'].unique())
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharey=False)
+    fig.suptitle(f'{analyte_label} CHL−: RMSE vs {cfg["x_label"]} — Linear vs Constrained Exponential'
+                 r' | error bar = mean $\pm$ SEM', fontsize=15)
+
+    for i, id in enumerate(ids):
+        ax = axes[i // 3, i % 3]
+        sub = df[df['id'] == id].dropna(subset=['rmse_lin', 'rmse_exp'])
+        for x_val in x_vals:
+            grp = sub[abs(sub['x'] - x_val) < 0.01]
+            ax.scatter([x_val - 0.04] * len(grp), grp['rmse_lin'], color='steelblue', alpha=0.3, s=35, zorder=2)
+            ax.scatter([x_val + 0.04] * len(grp), grp['rmse_exp'], color='firebrick', alpha=0.3, s=35, zorder=2)
+        means_lin = [sub[abs(sub['x'] - x) < 0.01]['rmse_lin'].mean() for x in x_vals]
+        sems_lin  = [sub[abs(sub['x'] - x) < 0.01]['rmse_lin'].sem()  for x in x_vals]
+        means_exp = [sub[abs(sub['x'] - x) < 0.01]['rmse_exp'].mean() for x in x_vals]
+        sems_exp  = [sub[abs(sub['x'] - x) < 0.01]['rmse_exp'].sem()  for x in x_vals]
+        xarr = np.array(x_vals)
+        ax.errorbar(xarr - 0.04, means_lin, yerr=sems_lin, fmt='o', color='steelblue',
+                    capsize=5, markersize=8, lw=0, elinewidth=2, label='Linear', zorder=4)
+        ax.errorbar(xarr + 0.04, means_exp, yerr=sems_exp, fmt='s', color='firebrick',
+                    capsize=5, markersize=8, lw=0, elinewidth=2, label='Exp.', zorder=4)
+        ax.set_title(batch_labels[i], fontsize=14)
+        ax.set_xticks(x_vals)
+        ax.set_xticklabels([f'{v:.1f}' for v in x_vals], rotation=45, fontsize=9)
+        ax.set_xlim(min(x_vals) - 0.2, max(x_vals) + 0.2)
+        ax.set_xlabel(cfg['x_label'] if i >= 3 else '', fontsize=13)
+        ax.set_ylabel('RMSE (mM)' if i % 3 == 0 else '', fontsize=13)
+        ax.tick_params(axis='y', labelsize=11)
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=11)
+
+    fig.tight_layout()
+    fn = f'plots/4.2.chl0_{analyte}_rmse_lin_vs_exp_vs_{cfg["x_tag"]}_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=150, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+for analyte, fval in [('no3', 2.0), ('no2', 3.4)]:
+    plot_lin_vs_exp_grid(analyte, fval)
+    plot_rmse_lin_vs_exp(analyte)
