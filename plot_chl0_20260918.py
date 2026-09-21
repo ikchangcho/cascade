@@ -249,11 +249,11 @@ def plot_quantity_vs_add(quantity, analyte, add_var):
     return fn
 
 
-for quantity in quantity_info:
-    plot_quantity_vs_drought(quantity)
-    for analyte in analyte_labels:
-        for add_var in add_var_info:
-            plot_quantity_vs_add(quantity, analyte, add_var)
+# for quantity in quantity_info:
+#     plot_quantity_vs_drought(quantity)
+#     for analyte in analyte_labels:
+#         for add_var in add_var_info:
+#             plot_quantity_vs_add(quantity, analyte, add_var)
 
 
 def plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag):
@@ -314,14 +314,14 @@ def plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag):
     return fn
 
 
-rmse_configs = [
-    ('no3_chl0_rmse', 'Nitrate (A)', 'CHL- exponential fit', 'no3_chl0'),
-    ('no2_chl0_rmse', 'Nitrite (I)', 'CHL- exponential fit', 'no2_chl0'),
-    ('no3_chl1_rmse', 'Nitrate (A)', 'CHL+ linear fit', 'no3_chl1'),
-    ('no2_chl1_rmse', 'Nitrite (I)', 'CHL+ linear fit', 'no2_chl1'),
-]
-for rmse_col, analyte_label, fit_label, file_tag in rmse_configs:
-    plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag)
+# rmse_configs = [
+#     ('no3_chl0_rmse', 'Nitrate (A)', 'CHL- exponential fit', 'no3_chl0'),
+#     ('no2_chl0_rmse', 'Nitrite (I)', 'CHL- exponential fit', 'no2_chl0'),
+#     ('no3_chl1_rmse', 'Nitrate (A)', 'CHL+ linear fit', 'no3_chl1'),
+#     ('no2_chl1_rmse', 'Nitrite (I)', 'CHL+ linear fit', 'no2_chl1'),
+# ]
+# for rmse_col, analyte_label, fit_label, file_tag in rmse_configs:
+#     plot_rmse_heatmap(rmse_col, analyte_label, fit_label, file_tag)
 
 
 chl1_to_chl0 = {id: dict(zip(data_dict[id]['no3_cons'][mask_chl1].index, data_dict[id]['no3_cons'][mask_chl0].index))
@@ -442,7 +442,7 @@ def plot_worst_fits_grid(analyte, n_top=24, n_cols=4, exclude_last=False):
 
 
 for analyte in analyte_labels:
-    plot_worst_fits_grid(analyte)
+    # plot_worst_fits_grid(analyte)
     plot_worst_fits_grid(analyte, exclude_last=True)
 
 
@@ -492,7 +492,7 @@ def plot_a_add_all_wells(analyte='no3', no3_add=2.0):
     return fn
 
 
-plot_a_add_all_wells('no3', no3_add=2.0)
+# plot_a_add_all_wells('no3', no3_add=2.0)
 
 
 def _lin_vs_exp_config(analyte):
@@ -676,6 +676,50 @@ def plot_rmse_lin_vs_exp(analyte):
     return fn
 
 
-for analyte, fval in [('no3', 2.0), ('no2', 3.4)]:
-    plot_lin_vs_exp_grid(analyte, fval)
-    plot_rmse_lin_vs_exp(analyte)
+# for analyte, fval in [('no3', 2.0), ('no2', 3.4)]:
+#     plot_lin_vs_exp_grid(analyte, fval)
+#     plot_rmse_lin_vs_exp(analyte)
+
+
+well_pairs = [('A04', 'E04'), ('B04', 'F04'), ('C04', 'G04'), ('D04', 'H04'), ('B01', 'F01'), ('B10', 'F10')]
+
+
+def plot_cons_chl_compare_grid(pairs, analyte='no3', exclude_last=False):
+    "Grid of CHL+ vs CHL- consumption comparisons (s fixed to CHL+ slope): rows = well pairs, columns = batches."
+    analyte_label = analyte_labels[analyte]
+    n_rows, n_cols = len(pairs), len(ids)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 3.2 * n_rows), sharex=True, sharey=True)
+
+    for r_i, (chl1_row, chl0_row) in enumerate(pairs):
+        for c_i, id in enumerate(ids):
+            ax = axes[r_i, c_i]
+            plot_cons_chl_compare_ax(ax, id, chl1_row, chl0_row, analyte=analyte, legend=False, exclude_last=exclude_last)
+
+            ax.tick_params(axis='both', labelsize=13)
+            if r_i == n_rows - 1:
+                ax.set_xlabel('Time (h)', fontsize=15)
+            if c_i == 0:
+                metadata = data_dict[ids[0]]['metadata']
+                a_add = metadata.loc[chl1_row, 'Nitrate_input']
+                i_add = metadata.loc[chl1_row, 'Nitrite_input']
+                ax.set_ylabel(f'{analyte_label} consumption (mM)', fontsize=15)
+                ax.annotate(f'$A_{{add}}$={a_add}, $I_{{add}}$={i_add}',
+                            xy=(-0.45, 0.5), xycoords='axes fraction', fontsize=17, fontweight='bold',
+                            ha='center', va='center', rotation=90, rotation_mode='anchor')
+            if r_i == 0:
+                ax.set_title(batch_labels[c_i], fontsize=18)
+
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=22, bbox_to_anchor=(0.5, 1.02))
+    excl_tag = ', last CHL- fit point excluded' if exclude_last else ''
+    fig.suptitle(f'{analyte_label} consumption: CHL+ vs CHL- (s fixed to CHL+ linear-fit slope{excl_tag})', fontsize=24, y=1.05)
+    fig.tight_layout()
+    fn = f'plots/4.2.{analyte}_cons_chl_compare_grid_fixed_s_{datetime.datetime.now().strftime("%Y%m%d")}.png'
+    fig.savefig(fn, dpi=200, bbox_inches='tight')
+    print(f'Figure saved to {fn}')
+    plt.close(fig)
+    return fn
+
+
+# for analyte in ['no3', 'no2']:
+#     plot_cons_chl_compare_grid(well_pairs, analyte=analyte, exclude_last=True)
