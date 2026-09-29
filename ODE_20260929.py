@@ -221,35 +221,35 @@ def fit_and_plot_batch_global(id, free_K=False, plot_fn=None):
 
 
 # ---------------------------------------------------------------------------
-# CHL- (chl0) ODE model: X grows on consumption and decays with the same delta
+# CHL- (chl0) ODE model: X grows on consumption (no decay)
 #   dA/dt = -r_A * X_A * A / (A + K_A)
 #   dI/dt = -dA/dt - r_I * X_I * I / (I + K_I)
-#   dX_A/dt = Gamma_A * X_A * A / (A + K_A) - delta * X_A
-#   dX_I/dt = Gamma_I * X_I * I / (I + K_I) - delta * X_I
+#   dX_A/dt = Gamma_A * X_A * A / (A + K_A)
+#   dX_I/dt = Gamma_I * X_I * I / (I + K_I)
 #   X_A(0) = X_I(0) = 1
 # ---------------------------------------------------------------------------
 
-def odes_chl0(t, y, r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I):
+def odes_chl0(t, y, r_A, r_I, K_A, K_I, Gamma_A, Gamma_I):
     A, I, X_A, X_I = y
     monod_A = A / (A + K_A)
     monod_I = I / (I + K_I)
     dAdt = -r_A * X_A * monod_A
     dIdt = -dAdt - r_I * X_I * monod_I
-    dX_Adt = Gamma_A * X_A * monod_A - delta * X_A
-    dX_Idt = Gamma_I * X_I * monod_I - delta * X_I
+    dX_Adt = Gamma_A * X_A * monod_A
+    dX_Idt = Gamma_I * X_I * monod_I
     return [dAdt, dIdt, dX_Adt, dX_Idt]
 
 
-def solve_model_chl0(t_eval, A0, I0, r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I):
+def solve_model_chl0(t_eval, A0, I0, r_A, r_I, K_A, K_I, Gamma_A, Gamma_I):
     t_span = (t_eval[0], t_eval[-1])
     sol = solve_ivp(odes_chl0, t_span, [A0, I0, 1.0, 1.0], t_eval=t_eval,
-                     args=(r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I),
+                     args=(r_A, r_I, K_A, K_I, Gamma_A, Gamma_I),
                      method='LSODA', rtol=1e-8, atol=1e-10)
     return sol.y  # shape (4, len(t_eval)): rows are A, I, X_A, X_I
 
 
 def fit_batch_global_chl0(id, free_K=False):
-    """Fit one shared set of parameters (r_A, r_I, delta, Gamma_A, Gamma_I[, K_A, K_I])
+    """Fit one shared set of parameters (r_A, r_I, Gamma_A, Gamma_I[, K_A, K_I])
     to all 45 chl0 replicates in a batch at once; only A0/I0 vary per condition."""
     conditions = []
     for I_add in add_conc:
@@ -266,15 +266,15 @@ def fit_batch_global_chl0(id, free_K=False):
     K_fixed = 1e-3
 
     def unpack(x):
-        r_A, r_I, delta, Gamma_A, Gamma_I = x[0], x[1], x[2], x[3], x[4]
-        K_A, K_I = (x[5], x[6]) if free_K else (K_fixed, K_fixed)
-        return r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I
+        r_A, r_I, Gamma_A, Gamma_I = x[0], x[1], x[2], x[3]
+        K_A, K_I = (x[4], x[5]) if free_K else (K_fixed, K_fixed)
+        return r_A, r_I, K_A, K_I, Gamma_A, Gamma_I
 
     def residuals(x):
-        r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I = unpack(x)
+        r_A, r_I, K_A, K_I, Gamma_A, Gamma_I = unpack(x)
         res = []
         for c in conditions:
-            y = solve_model_chl0(c['time'], c['A0'], c['I0'], r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I)
+            y = solve_model_chl0(c['time'], c['A0'], c['I0'], r_A, r_I, K_A, K_I, Gamma_A, Gamma_I)
             if y.shape[1] != len(c['time']):
                 res.append(np.full(c['A_reps'].size + c['I_reps'].size, 1e3))
                 continue
@@ -282,14 +282,14 @@ def fit_batch_global_chl0(id, free_K=False):
             res.append((y[1][None, :] - c['I_reps']).ravel())
         return np.concatenate(res)
 
-    x0 = [0.05, 0.03, 1 / 30, 0.05, 0.05] + ([K_fixed, K_fixed] if free_K else [])
-    lb = [1e-6, 1e-6, 1e-4, 1e-6, 1e-6] + ([1e-6, 1e-6] if free_K else [])
-    ub = [10.0, 10.0, 100.0, 10.0, 10.0] + ([10.0, 10.0] if free_K else [])
+    x0 = [0.05, 0.03, 0.05, 0.05] + ([K_fixed, K_fixed] if free_K else [])
+    lb = [1e-6, 1e-6, 1e-6, 1e-6] + ([1e-6, 1e-6] if free_K else [])
+    ub = [10.0, 10.0, 10.0, 10.0] + ([10.0, 10.0] if free_K else [])
 
     result = least_squares(residuals, x0, bounds=(lb, ub))
-    r_A, r_I, K_A, K_I, delta, Gamma_A, Gamma_I = unpack(result.x)
+    r_A, r_I, K_A, K_I, Gamma_A, Gamma_I = unpack(result.x)
     rmse = np.sqrt(np.mean(result.fun ** 2))
-    return {'r_A': r_A, 'r_I': r_I, 'K_A': K_A, 'K_I': K_I, 'delta': delta,
+    return {'r_A': r_A, 'r_I': r_I, 'K_A': K_A, 'K_I': K_I,
             'Gamma_A': Gamma_A, 'Gamma_I': Gamma_I, 'rmse': rmse, 'conditions': conditions}
 
 
@@ -309,7 +309,7 @@ def fit_and_plot_batch_global_chl0(id, free_K=False, plot_fn=None):
                 continue
 
             y_at_data = solve_model_chl0(c['time'], c['A0'], c['I0'], fit['r_A'], fit['r_I'],
-                                          fit['K_A'], fit['K_I'], fit['delta'], fit['Gamma_A'], fit['Gamma_I'])
+                                          fit['K_A'], fit['K_I'], fit['Gamma_A'], fit['Gamma_I'])
             n_rep = c['A_reps'].shape[0]
             rep_rmse = [np.sqrt(np.mean(np.concatenate([
                 y_at_data[0] - c['A_reps'][i], y_at_data[1] - c['I_reps'][i]]) ** 2)) for i in range(n_rep)]
@@ -320,7 +320,7 @@ def fit_and_plot_batch_global_chl0(id, free_K=False, plot_fn=None):
 
             t_plot = np.linspace(c['time'][0], c['time'][-1], 200)
             y_plot = solve_model_chl0(t_plot, c['A0'], c['I0'], fit['r_A'], fit['r_I'],
-                                       fit['K_A'], fit['K_I'], fit['delta'], fit['Gamma_A'], fit['Gamma_I'])
+                                       fit['K_A'], fit['K_I'], fit['Gamma_A'], fit['Gamma_I'])
             ax.plot(t_plot, y_plot[0], color='blue')
             ax.plot(t_plot, y_plot[1], color='red')
 
@@ -343,21 +343,21 @@ def fit_and_plot_batch_global_chl0(id, free_K=False, plot_fn=None):
     batch_num = id.split('batch')[-1]
     if free_K:
         fixed_line = 'Fixed: X_A(0) = X_I(0) = 1.0'
-        inferred_line = (f'Inferred: r_A={fit["r_A"]:.4f}, r_I={fit["r_I"]:.4f}, delta={fit["delta"]:.4f}, '
+        inferred_line = (f'Inferred: r_A={fit["r_A"]:.4f}, r_I={fit["r_I"]:.4f}, '
                           f'Gamma_A={fit["Gamma_A"]:.4f}, Gamma_I={fit["Gamma_I"]:.4f}, '
                           f'K_A={fit["K_A"]:.3g}, K_I={fit["K_I"]:.3g}, RMSE={fit["rmse"]:.4f}')
     else:
         fixed_line = 'Fixed: K_A = K_I = 0.001, X_A(0) = X_I(0) = 1.0'
-        inferred_line = (f'Inferred: r_A={fit["r_A"]:.4f}, r_I={fit["r_I"]:.4f}, delta={fit["delta"]:.4f}, '
+        inferred_line = (f'Inferred: r_A={fit["r_A"]:.4f}, r_I={fit["r_I"]:.4f}, '
                           f'Gamma_A={fit["Gamma_A"]:.4f}, Gamma_I={fit["Gamma_I"]:.4f}, RMSE={fit["rmse"]:.4f}')
     eq_line = (r"$\dot{A}=-r_A X_A \frac{A}{A+K_A}$,  $\dot{I}=-\dot{A}-r_I X_I \frac{I}{I+K_I}$,  "
-               r"$\dot{X}_A=\Gamma_A X_A \frac{A}{A+K_A}-\delta X_A$,  $\dot{X}_I=\Gamma_I X_I \frac{I}{I+K_I}-\delta X_I$")
+               r"$\dot{X}_A=\Gamma_A X_A \frac{A}{A+K_A}$,  $\dot{X}_I=\Gamma_I X_I \frac{I}{I+K_I}$")
     fig.suptitle(f'Batch {batch_num} CHL- Global Fit (worst replicate for each condition)\n{fixed_line}\n{inferred_line}\n{eq_line}', fontsize=14)
     fig.tight_layout(rect=[0.02, 0.02, 0.95, 0.90])
 
     if plot_fn:
         fig.savefig(plot_fn, dpi=200)
-        print(f'Saved {plot_fn}  (r_A={fit["r_A"]:.4f}, r_I={fit["r_I"]:.4f}, delta={fit["delta"]:.4f}, '
+        print(f'Saved {plot_fn}  (r_A={fit["r_A"]:.4f}, r_I={fit["r_I"]:.4f}, '
               f'Gamma_A={fit["Gamma_A"]:.4f}, Gamma_I={fit["Gamma_I"]:.4f}, RMSE={fit["rmse"]:.4f})')
     plt.close(fig)
     return fit
@@ -429,5 +429,3 @@ if __name__ == '__main__':
         fit_and_plot_batch_global(id, free_K=False, plot_fn=f'plots/{id}.chl1_ODE_global_Kfixed_{today}.png')
     for id in ids:
         fit_and_plot_batch_global_chl0(id, free_K=False, plot_fn=f'plots/{id}.chl0_ODE_global_Kfixed_{today}.png')
-    for id in ids:
-        fit_and_plot_batch_global_chl0(id, free_K=True, plot_fn=f'plots/{id}.chl0_ODE_global_Kfree_{today}.png')
