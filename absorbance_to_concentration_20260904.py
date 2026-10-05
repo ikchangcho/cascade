@@ -117,13 +117,15 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
     # Adjust layout to prevent overlap and set custom spacing
     plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
+
     # Save the figure
+    today = datetime.now().strftime('%Y%m%d')
     if figure_index is None:
         plt.savefig(f'{filename}.png')
-        print(f'Saved figure: {filename}.png')
+        print(f'Saved figure: {filename}_{today}.png')
     else:
         plt.savefig(f'{filename}_{figure_index}.png')
-        print(f'Saved figure: {filename}_{figure_index}.png')
+        print(f'Saved figure: {filename}_{figure_index}_{today}.png')
     plt.close()
         
 ################################################################################################################
