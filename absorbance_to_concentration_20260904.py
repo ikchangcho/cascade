@@ -121,10 +121,10 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
     # Save the figure
     today = datetime.now().strftime('%Y%m%d')
     if figure_index is None:
-        plt.savefig(f'{filename}.png')
+        plt.savefig(f'{filename}_{today}.png')
         print(f'Saved figure: {filename}_{today}.png')
     else:
-        plt.savefig(f'{filename}_{figure_index}.png')
+        plt.savefig(f'{filename}_{figure_index}_{today}.png')
         print(f'Saved figure: {filename}_{figure_index}_{today}.png')
     plt.close()
         
