@@ -11,7 +11,7 @@ import matplotlib.pylab as pylab
 import matplotlib.pyplot as plt
 from datetime import datetime
 import importlib
-import griess as gr
+import griess_isolate as gr
 import bmgdata as bd
 import denitfit as dn
 import ammonia as am
