@@ -11,7 +11,7 @@ import matplotlib.pylab as pylab
 import matplotlib.pyplot as plt
 from datetime import datetime
 import importlib
-import griess as gr
+import griess_isolate as gr
 import bmgdata as bd
 import denitfit as dn
 import ammonia as am
@@ -39,9 +39,10 @@ def no2_no3_abs_to_conc(date, exp_num, id):
     no3_conc_dic = {}
     col_num = 0
     for no2_540_fn, no2_900_fn, no2no3_540_fn, no2no3_900_fn in zip(no2_540_fns, no2_900_fns, no2no3_540_fns, no2no3_900_fns):
-        df = gr.get_concentration(no2_blank=no2_blank, no2no3_blank=no2no3_blank, g_fit=g_fit, v_fit=no3_fit,
+        df = gr.get_concentration(no2_blank=no2_blank, no2no3_blank=no2no3_blank, g_fit=g_fit, v_fit=v_fit,
                             meta_fn=meta_fn, no2_fn=None, no2_540_fn=no2_540_fn, no2_900_fn=no2_900_fn,
-                            no2no3_fn=None, no2no3_540_fn=no2no3_540_fn, no2no3_900_fn=no2no3_900_fn)
+                            no2no3_fn=None, no2no3_540_fn=no2no3_540_fn, no2no3_900_fn=no2no3_900_fn,
+                            extract_factor=1)
         no2_conc_dic[col_num] = df['NO2_mM'].copy()
         no3_conc_dic[col_num] = df['NO3_mM'].copy()
         col_num += 1
@@ -75,7 +76,14 @@ def nh4_abs_to_conc(date, chl):
 
     return nh4_conc
 
-def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=None, num_of_replicates=3, nh4_data=None):
+STRAIN_NAMES = {
+    'Strain1': 'Pseudomonadota',
+    'Strain2': 'Bacteroidota',
+    'Strain3': 'Bacillota',
+    'Blank': 'Blank',
+}
+
+def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=None, num_of_replicates=3, nh4_data=None, meta_df=None):
     # Determine the global y-axis limits
     all_values = pd.concat([no2_data, no3_data])
     if nh4_data is not None:
@@ -99,7 +107,14 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
                     ax.plot(times, no3_data.loc[row], color='b', marker=marker, linestyle='-', label='NO3')
                     if nh4_data is not None:
                         ax.plot(times, nh4_data.loc[row], 'g.-', label='NH4')
-            ax.set_title(f'{rows_chunk[i:i+num_of_replicates]}')
+            if meta_df is not None:
+                first_row = rows_chunk[i]
+                sample_type = meta_df.loc[first_row, 'Sample_type']
+                strain_name = STRAIN_NAMES.get(sample_type, sample_type)
+                chl = meta_df.loc[first_row, 'Chloramphenicol']
+                ax.set_title(f'{strain_name}, CHL {chl:g} mM')
+            else:
+                ax.set_title(f'{rows_chunk[i:i+num_of_replicates]}')
             ax.set_ylim(y_min, y_max)
             ax.legend().set_visible(False)  # Hide individual legends
 
@@ -117,19 +132,21 @@ def create_figure(times, no2_data, no3_data, rows_chunk, filename, figure_index=
     # Adjust layout to prevent overlap and set custom spacing
     plt.subplots_adjust(hspace=0.4, bottom=0.1, left=0.1)
 
+
     # Save the figure
+    today = datetime.now().strftime('%Y%m%d')
     if figure_index is None:
-        plt.savefig(f'{filename}.png')
-        print(f'Saved figure: {filename}.png')
+        plt.savefig(f'{filename}_{today}.png')
+        print(f'Saved figure: {filename}_{today}.png')
     else:
-        plt.savefig(f'{filename}_{figure_index}.png')
-        print(f'Saved figure: {filename}_{figure_index}.png')
+        plt.savefig(f'{filename}_{figure_index}_{today}.png')
+        print(f'Saved figure: {filename}_{figure_index}_{today}.png')
     plt.close()
         
 ################################################################################################################
 ################################################################################################################
 exp_num = '4.3'
-date = '20260904'
+date = '20261002'
 datetime_array = [ 
     datetime(2025, 1, 1, 17, 20),       # T0
     datetime(2025, 1, 1, 21, 25),       # T1
@@ -219,4 +236,4 @@ plots_per_figure = nrows * ncols
 for [times, no2_data, no3_data, filename] in zip([times, times], [no2_conc, no2_cons], [no3_conc, no3_cons], [f'plots/{exp_num}.{id}_no3_no2_conc_all', f'plots/{exp_num}.{id}_no3_no2_cons_all']):
     for i in range(0, len(rows_to_plot), plots_per_figure * num_rpl):
         rows_chunk = rows_to_plot[i:i + plots_per_figure * num_rpl]
-        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, filename=filename, num_of_replicates=num_rpl) #figure_index=i // (plots_per_figure * num_rpl)
+        create_figure(times=times, no2_data=no2_data, no3_data=no3_data, rows_chunk=rows_chunk, filename=filename, num_of_replicates=num_rpl, meta_df=meta_df) #figure_index=i // (plots_per_figure * num_rpl)
