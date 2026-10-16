@@ -1,0 +1,20 @@
+Well,Content,Raw_Data,Concentration,Sample_Name
+A1,Sample X1,17687,,Pool_1
+A2,Sample X2,1432,,Pool_2
+A3,Sample X3,275,,Pool_3
+B1,Standard S1,8300,10,
+B2,Standard S2,4076,5,
+B3,Standard S3,1323,2.5,
+B4,Standard S4,949,1.25,
+B5,Standard S5,416,0.625,
+B6,Standard S6,336,0.3125,
+B7,Standard S7,219,0.15625,
+B8,Standard S8,74,0.078125,
+C1,Standard S9,5188,10,
+C2,Standard S10,2669,5,
+C3,Standard S11,1487,2.5,
+C4,Standard S12,701,1.25,
+C5,Standard S13,372,0.625,
+C6,Standard S14,238,0.3125,
+C7,Standard S15,152,0.15625,
+C8,Standard S16,82,0.078125,
