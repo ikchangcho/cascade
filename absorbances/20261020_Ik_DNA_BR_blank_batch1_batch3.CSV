@@ -1,0 +1,18 @@
+User: USER,Path: C:\Program Files (x86)\BMG\CLARIOstar\User\Data,Test run no.: 4446
+Test name: Ik_DNA_BR,Date: 10/20/2026,Time: 2:19:37 PM
+
+ID1: blank_batch1_batch3,
+Fluorescence (FI)
+
+Average over replicates based on Raw Data (485-8/530-8)
+
+,1,2,3,4,5,6,7,8,9,10,11,12,
+A,145,,,,,,,,,,5259,5259
+B,129,,,,,,,,,,2633.5,2633.5
+C,4988,,,,,,,,,,1380.5,1380.5
+D,4539,,,,,,,,,,794.5,794.5
+E,4770,,,,,,,,,,438.5,438.5
+F,5874,,,,,,,,,,289,289
+G,4839,,,,,,,,,,224,224
+H,5019,,,,,,,,,,168,168
+
