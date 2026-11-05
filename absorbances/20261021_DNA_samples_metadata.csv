@@ -1,7 +1,7 @@
 Well,Nitrite_input,Nitrate_input,Chloramphenicol,Sample_type
-A01,1,1,1,T0
-A02,1,1,1,T0
-A03,1,1,1,T0
+A01,0,0,0,T0
+A02,0,0,0,T0
+A03,0,0,0,T0
 A04,2,1.4,1,T11
 A05,2,1.4,1,T11
 A06,2,1.4,1,T11
